@@ -15,6 +15,8 @@ public sealed class AppRuntimeConfig
     public const string KeyEnableAllTime = "ENABLE_ALL_STRATEGIES_TIME";
     public const string KeyEodTime = "EOD_CUTOFF_TIME";
     public const string KeyNtTemplateChoices = "NT_TEMPLATE_CHOICES";
+    public const string KeyNtTemplateDirsExtra = "NT_TEMPLATE_DIRS_EXTRA";
+    public const string KeyNtTemplateScanExtraOnly = "NT_TEMPLATE_SCAN_EXTRA_ONLY";
     public const string KeyIpcConnectTimeoutMs = "VINCERE_IPC_CONNECT_MS";
     public const string KeyIpcRetryAttempts = "VINCERE_IPC_RETRY_ATTEMPTS";
     public const string KeyIpcRetryDelayMs = "VINCERE_IPC_RETRY_DELAY_MS";
@@ -38,6 +40,14 @@ public sealed class AppRuntimeConfig
     /// <summary>Comma-separated template names for stack editor dropdown (optional).</summary>
     public IReadOnlyList<string> NtTemplateChoiceList =>
         ParseCommaList(_provider.Get(KeyNtTemplateChoices));
+
+    /// <summary>Extra semicolon-separated folders to scan for <c>*.xml</c> template names (in addition to auto NT paths unless <see cref="NtTemplateScanExclusiveExtraOnly"/>).</summary>
+    public IReadOnlyList<string> NtTemplateDirsExtra =>
+        ParseSemicolonList(_provider.Get(KeyNtTemplateDirsExtra));
+
+    /// <summary>If true, only <see cref="NtTemplateDirsExtra"/> are scanned (no auto Documents\NinjaTrader 8\templates).</summary>
+    public bool NtTemplateScanExclusiveExtraOnly =>
+        _provider.TryGetBool(KeyNtTemplateScanExtraOnly, false);
 
     /// <summary>Named-pipe connect timeout per attempt when talking to the NT add-on.</summary>
     public int IpcConnectTimeoutMs
@@ -80,6 +90,14 @@ public sealed class AppRuntimeConfig
         if (string.IsNullOrWhiteSpace(raw))
             return Array.Empty<string>();
         var parts = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length == 0 ? Array.Empty<string>() : parts.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    private static IReadOnlyList<string> ParseSemicolonList(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return Array.Empty<string>();
+        var parts = raw.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return parts.Length == 0 ? Array.Empty<string>() : parts.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
     }
 

@@ -28,7 +28,7 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<StackRowVm> _stackRows = new();
     private readonly ObservableCollection<ExcelMapRow> _excelMap = new();
 
-    /// <summary>Template dropdown options (.env NT_TEMPLATE_CHOICES + templates in DB).</summary>
+    /// <summary>Template dropdown: .env, *.xml under Documents\NinjaTrader 8\templates, saved stacks.</summary>
     public ObservableCollection<string> NtTemplateChoices { get; } = new();
 
     /// <summary>Period dropdown for each stack row.</summary>
@@ -104,9 +104,20 @@ public partial class MainWindow : Window
 
     private async Task RefreshNtTemplateChoicesAsync()
     {
-        NtTemplateChoices.Clear();
+        var merged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var x in _config.NtTemplateChoiceList)
-            NtTemplateChoices.Add(x);
+            merged.Add(x);
+
+        try
+        {
+            var disco = _sp.GetRequiredService<NinjaTraderTemplateDiscoveryService>();
+            foreach (var x in disco.DiscoverXmlTemplateNames(_config))
+                merged.Add(x);
+        }
+        catch
+        {
+            /* disk scan optional */
+        }
 
         try
         {
@@ -117,16 +128,24 @@ public partial class MainWindow : Window
                 .Where(t => !string.IsNullOrWhiteSpace(t))
                 .Distinct()
                 .ToListAsync();
-            foreach (var t in tpls.OrderBy(s => s))
-            {
-                if (!NtTemplateChoices.Contains(t))
-                    NtTemplateChoices.Add(t);
-            }
+            foreach (var t in tpls)
+                merged.Add(t);
         }
         catch
         {
-            // ignore template refresh if DB busy
+            /* ignore template refresh if DB busy */
         }
+
+        NtTemplateChoices.Clear();
+        foreach (var x in merged.OrderBy(s => s))
+            NtTemplateChoices.Add(x);
+    }
+
+    private async void RefreshNtTemplates_Click(object sender, RoutedEventArgs e)
+    {
+        await RefreshNtTemplateChoicesAsync();
+        StatusText.Text =
+            "Template list refreshed (.env + *.xml under NinjaTrader 8\\templates + saved stacks).";
     }
 
     private async Task ReloadAccountsAsync()

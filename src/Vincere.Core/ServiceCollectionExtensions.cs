@@ -28,6 +28,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ReportingService>();
         services.AddSingleton<StackApplyService>();
         services.AddSingleton<ExcelImportService>();
+        services.AddSingleton<NinjaTraderTemplateDiscoveryService>();
         services.AddSingleton<TradingBotOrchestrator>();
         services.AddDbContextFactory<VincereDbContext>(o =>
             o.UseSqlite($"Data Source={AppPaths.DatabasePath}"));

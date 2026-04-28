@@ -68,10 +68,11 @@
           </DockPanel>
           <StackPanel Grid.Row="1" Margin="0,0,0,8">
             <TextBlock TextWrapping="Wrap" FontSize="11" Margin="0,0,0,6"
-                       Text="Apply: include row in NinjaTrader apply. Period: Period 1 / Period 2 for split sessions. Template list from NT_TEMPLATE_CHOICES in .env plus templates already saved."/>
+                       Text="Apply / Period: controls what is sent on Apply to NT. Templates: *.xml names under Documents\NinjaTrader 8\templates (all subfolders), optional NT_TEMPLATE_CHOICES in .env, plus names from saved stacks. Use Refresh after adding templates in NinjaTrader."/>
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="Apply to NT:" VerticalAlignment="Center" Margin="0,0,8,0"/>
               <ComboBox x:Name="ApplyFilterCombo" Width="260" VerticalAlignment="Center"/>
+              <Button Content="Refresh template list" Click="RefreshNtTemplates_Click" Margin="16,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
           </StackPanel>
           <DataGrid x:Name="StackGrid" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" CellEditEnding="StackGrid_CellEditEnding">
