@@ -19,8 +19,8 @@ using NinjaTrader.Core;
 using NinjaTrader.NinjaScript;
 #endregion
 
-// This namespace is required for Add Ons
-namespace NinjaTrader.NinjaScript
+// AddOns must be declared under NinjaTrader.NinjaScript.AddOns so NT instantiates them on startup.
+namespace NinjaTrader.NinjaScript.AddOns
 {
 	/// <summary>Named-pipe IPC for the external Vincere Operator app (JSON one line in, one line out).</summary>
 	public class VincereOperatorIpcAddOn : AddOnBase
@@ -36,6 +36,7 @@ namespace NinjaTrader.NinjaScript
 			{
 				Name = "VincereOperatorIpc";
 				Description = @"Hosts a local named pipe for the Vincere Ops Windows app. See vincere-ops repo nt8-addon/README.md.";
+				Print($"{DateTime.Now}: Vincere IPC: SetDefaults reached.");
 			}
 			else if (State == State.Configure)
 			{
@@ -43,6 +44,7 @@ namespace NinjaTrader.NinjaScript
 				if (!_started)
 				{
 					_started = true;
+					Print($"{DateTime.Now}: Vincere IPC: Configure reached; starting pipe...");
 					StartPipe();
 				}
 			}
