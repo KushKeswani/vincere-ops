@@ -16,6 +16,8 @@ public sealed class AppRuntimeConfig
     public const string KeyEodTime = "EOD_CUTOFF_TIME";
     public const string KeyNtTemplateChoices = "NT_TEMPLATE_CHOICES";
     public const string KeyIpcConnectTimeoutMs = "VINCERE_IPC_CONNECT_MS";
+    public const string KeyIpcRetryAttempts = "VINCERE_IPC_RETRY_ATTEMPTS";
+    public const string KeyIpcRetryDelayMs = "VINCERE_IPC_RETRY_DELAY_MS";
 
     private readonly AppSettingsProvider _provider;
 
@@ -37,7 +39,7 @@ public sealed class AppRuntimeConfig
     public IReadOnlyList<string> NtTemplateChoiceList =>
         ParseCommaList(_provider.Get(KeyNtTemplateChoices));
 
-    /// <summary>Named-pipe connect timeout when talking to the NT add-on.</summary>
+    /// <summary>Named-pipe connect timeout per attempt when talking to the NT add-on.</summary>
     public int IpcConnectTimeoutMs
     {
         get
@@ -45,7 +47,31 @@ public sealed class AppRuntimeConfig
             var v = _provider.Get(KeyIpcConnectTimeoutMs);
             if (int.TryParse(v, out var ms) && ms >= 500 && ms <= 120_000)
                 return ms;
-            return 8_000;
+            return 20_000;
+        }
+    }
+
+    /// <summary>Total connection attempts (pipe busy / RDP jitter). Default 8.</summary>
+    public int IpcRetryAttempts
+    {
+        get
+        {
+            var v = _provider.Get(KeyIpcRetryAttempts);
+            if (int.TryParse(v, out var n) && n >= 1 && n <= 50)
+                return n;
+            return 8;
+        }
+    }
+
+    /// <summary>Pause between retries (ms). Default 400.</summary>
+    public int IpcRetryDelayMs
+    {
+        get
+        {
+            var v = _provider.Get(KeyIpcRetryDelayMs);
+            if (int.TryParse(v, out var ms) && ms >= 0 && ms <= 30_000)
+                return ms;
+            return 400;
         }
     }
 

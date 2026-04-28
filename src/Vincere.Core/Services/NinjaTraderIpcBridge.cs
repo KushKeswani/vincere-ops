@@ -39,33 +39,54 @@ public sealed class NinjaTraderIpcBridge : INinjaTraderBridge
         }
 
         var pipeName = _config.IpcPipeName;
-        try
-        {
-            using var client = new NamedPipeClientStream(
-                ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-            await client.ConnectAsync(_config.IpcConnectTimeoutMs, cancellationToken).ConfigureAwait(false);
+        var attempts = _config.IpcRetryAttempts;
+        var delayMs = _config.IpcRetryDelayMs;
+        var timeoutMs = _config.IpcConnectTimeoutMs;
 
-            var line = JsonSerializer.Serialize(request);
-            var bytes = Encoding.UTF8.GetBytes(line + "\n");
-            await client.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
-            await client.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-            var buffer = new byte[65536];
-            var n = await client.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-            if (n == 0)
-                return null;
-            var text = Encoding.UTF8.GetString(buffer.AsSpan(0, n)).Trim();
-            return JsonSerializer.Deserialize<IpcResponse>(text);
-        }
-        catch (Exception ex)
+        Exception? last = null;
+        for (var attempt = 1; attempt <= attempts; attempt++)
         {
-            _logger.LogWarning(ex, "NinjaTrader IPC failed; add-on may be offline.");
-            return new IpcResponse
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
             {
-                Id = request.Id,
-                Ok = false,
-                Message = "IPC unavailable: " + ex.Message
-            };
+                using var client = new NamedPipeClientStream(
+                    ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+
+                await client.ConnectAsync(timeoutMs, cancellationToken).ConfigureAwait(false);
+
+                var line = JsonSerializer.Serialize(request);
+                var bytes = Encoding.UTF8.GetBytes(line + "\n");
+                await client.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
+                await client.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+                var buffer = new byte[65536];
+                var n = await client.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+                if (n == 0)
+                    return null;
+                var text = Encoding.UTF8.GetString(buffer.AsSpan(0, n)).Trim();
+                return JsonSerializer.Deserialize<IpcResponse>(text);
+            }
+            catch (Exception ex)
+            {
+                last = ex;
+                _logger.LogWarning(ex,
+                    "NinjaTrader IPC attempt {Attempt}/{Attempts} failed (pipe={Pipe})",
+                    attempt, attempts, pipeName);
+
+                if (attempt < attempts && delayMs > 0)
+                    await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
+            }
         }
+
+        var detail = last?.Message ?? "unknown error";
+        _logger.LogWarning("NinjaTrader IPC exhausted retries; add-on may be offline or pipe leaked.");
+        return new IpcResponse
+        {
+            Id = request.Id,
+            Ok = false,
+            Message =
+                $"IPC unavailable after {attempts} attempt(s) ({timeoutMs} ms each): {detail}"
+        };
     }
 }

@@ -76,10 +76,10 @@ public partial class MainWindow : Window
             ? "DRY_RUN is enabled — NinjaTrader IPC calls return simulated success."
             : "";
         IpcHintText.Text =
-            $"Pipe name: {_config.IpcPipeName}  |  Connect: {_config.IpcConnectTimeoutMs} ms\n" +
+            $"Pipe name: {_config.IpcPipeName}  |  {_config.IpcRetryAttempts} attempts × {_config.IpcConnectTimeoutMs} ms + {_config.IpcRetryDelayMs} ms pause\n" +
             $"DRY_RUN: {_config.DryRun} (set false in .env for real named-pipe IPC)\n" +
             $"PROP_CONNECTION_NAME: {(_config.PropConnectionName ?? "(unset)")}\n" +
-            "IPC requires NinjaTrader running with the Vincere Add-On compiled (NT Output: pipe server starting…).";
+            "IPC requires NinjaTrader with the Add-On compiled (NT Output: pipe server starting…). Pull latest nt8-addon — older builds leaked pipe handles.";
 
         ApplyFilterCombo.Items.Clear();
         ApplyFilterCombo.Items.Add(new ComboBoxItem

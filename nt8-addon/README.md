@@ -8,6 +8,8 @@ The desktop app (`Vincere.Operator`) cannot safely drive Control Center by itsel
 
 Add-On C# targets **.NET Framework** inside NinjaTrader — avoid APIs only available on modern .NET (e.g. `string.Replace` with `StringComparison`).
 
+The pipe loop must **dispose** each `NamedPipeServerStream` after every client; leaking handles causes “timed out” / **all pipe instances busy** when connecting from Vincere.
+
 ## Install (quick)
 
 1. Close NinjaTrader.

@@ -94,35 +94,32 @@ namespace NinjaTrader.NinjaScript
 			Print($"{DateTime.Now}: Vincere IPC: loop running.");
 			while (!ct.IsCancellationRequested)
 			{
-				NamedPipeServerStream stream = null;
 				try
 				{
-					stream = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1,
-						PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-
-					stream.WaitForConnection(); // blocking; OK on background thread
-
-					using (var sr = new StreamReader(stream, Encoding.UTF8, false, 65536, true))
-					using (var sw = new StreamWriter(stream, Encoding.UTF8, 65536, true) { AutoFlush = true })
+					// Own the pipe with one using — do not null out before dispose (was leaking handles and starving clients).
+					using (var pipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1,
+						       PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
 					{
-						stream = null;
-						string line = sr.ReadLine();
-						if (string.IsNullOrWhiteSpace(line))
-							continue;
+						pipe.WaitForConnection(); // blocking; OK on background thread
 
-						string reply = HandleRequest(line);
-						sw.WriteLine(reply);
-						sw.Flush();
+						// leaveOpen: reader/writer must not close pipe until we're done — outer using disposes pipe.
+						using (var sr = new StreamReader(pipe, Encoding.UTF8, false, 65536, true))
+						using (var sw = new StreamWriter(pipe, Encoding.UTF8, 65536, true) { AutoFlush = true })
+						{
+							string line = sr.ReadLine();
+							if (string.IsNullOrWhiteSpace(line))
+								continue;
+
+							string reply = HandleRequest(line);
+							sw.WriteLine(reply);
+							sw.Flush();
+						}
 					}
 				}
 				catch (Exception ex)
 				{
 					if (!ct.IsCancellationRequested)
 						Print($"{DateTime.Now}: Vincere IPC: pipe error: {ex.Message}");
-				}
-				finally
-				{
-					try { stream?.Dispose(); } catch { }
 				}
 			}
 		}
