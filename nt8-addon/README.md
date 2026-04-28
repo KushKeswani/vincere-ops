@@ -17,7 +17,9 @@ The desktop app (`Vincere.Operator`) cannot safely drive Control Center by itsel
 
    Or manually copy **`VincereOperatorIpcAddOn.cs`** to:
 
-   `%USERPROFILE%\Documents\NinjaTrader 8\bin\Custom\AddOns\VincereOperator\`
+   `<Your Documents>\NinjaTrader 8\bin\Custom\AddOns\VincereOperator\`  
+   (Use the same **Documents** folder Windows uses — often OneDrive — or run **`Install-VincereAddon.ps1`** which resolves it and supports **`-CustomDocumentsRoot`**.)
+
 
 3. Open NinjaTrader → **New** → **NinjaScript Editor** → **Compile**. Fix any errors (your NT **8.1.x** build must compile this file).
 4. Restart NinjaTrader. Check **Control Center → Log** for **`Vincere Operator IPC`** messages / errors.
