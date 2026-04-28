@@ -26,9 +26,12 @@ namespace NinjaTrader.NinjaScript.AddOns
 	public class VincereOperatorIpcAddOn : AddOnBase
 	{
 		private const string PipeName = "VincereOperator";
+		private static readonly object StartStopLock = new object();
+		private static bool _globalStarted;
 		private CancellationTokenSource _cts;
 		private Task _loop;
 		private bool _started;
+		private NamedPipeServerStream _waitingPipe;
 
 		private void TraceInfo(string message)
 		{
@@ -64,27 +67,44 @@ namespace NinjaTrader.NinjaScript.AddOns
 
 		private void StartPipe()
 		{
-			try
+			lock (StartStopLock)
 			{
-				StopPipe();
-				_cts = new CancellationTokenSource();
-				var tok = _cts.Token;
-				_loop = Task.Run(() => PipeLoop(tok), tok);
-				TraceInfo($"pipe server starting ({PipeName})...");
-			}
-			catch (Exception ex)
-			{
-				TraceInfo("start failed: " + ex.Message);
+				try
+				{
+					StopPipeCore();
+					if (_globalStarted)
+					{
+						TraceInfo("start skipped: global listener already running.");
+						return;
+					}
+
+					_cts = new CancellationTokenSource();
+					var tok = _cts.Token;
+					_loop = Task.Run(() => PipeLoop(tok), tok);
+					_globalStarted = true;
+					TraceInfo($"pipe server starting ({PipeName})...");
+				}
+				catch (Exception ex)
+				{
+					TraceInfo("start failed: " + ex.Message);
+				}
 			}
 		}
 
 		private void StopPipe()
+		{
+			lock (StartStopLock)
+				StopPipeCore();
+		}
+
+		private void StopPipeCore()
 		{
 			try
 			{
 				if (_cts != null)
 				{
 					_cts.Cancel();
+					try { _waitingPipe?.Dispose(); } catch { }
 					try { _loop?.Wait(3000); } catch { }
 				}
 			}
@@ -94,13 +114,15 @@ namespace NinjaTrader.NinjaScript.AddOns
 				_loop = null;
 				_cts?.Dispose();
 				_cts = null;
+				_waitingPipe = null;
+				_globalStarted = false;
 				TraceInfo("pipe server stopped.");
 			}
 		}
 
 		private void PipeLoop(CancellationToken ct)
 		{
-			Print($"{DateTime.Now}: Vincere IPC: loop running.");
+			TraceInfo("loop running.");
 			while (!ct.IsCancellationRequested)
 			{
 				try
@@ -109,7 +131,9 @@ namespace NinjaTrader.NinjaScript.AddOns
 					using (var pipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1,
 						       PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
 					{
+						_waitingPipe = pipe;
 						pipe.WaitForConnection(); // blocking; OK on background thread
+						_waitingPipe = null;
 
 						// leaveOpen: reader/writer must not close pipe until we're done — outer using disposes pipe.
 						using (var sr = new StreamReader(pipe, Encoding.UTF8, false, 65536, true))
@@ -128,7 +152,10 @@ namespace NinjaTrader.NinjaScript.AddOns
 				catch (Exception ex)
 				{
 					if (!ct.IsCancellationRequested)
-						Print($"{DateTime.Now}: Vincere IPC: pipe error: {ex.Message}");
+					{
+						TraceInfo("pipe error: " + ex.Message);
+						Thread.Sleep(250);
+					}
 				}
 			}
 		}
