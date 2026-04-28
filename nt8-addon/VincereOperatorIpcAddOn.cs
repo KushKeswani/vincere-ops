@@ -191,7 +191,9 @@ namespace NinjaTrader.NinjaScript
 
 		private static string EscapeJson(string m)
 		{
-			return m.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
+			// .NET Framework (NinjaScript) has no Replace(string, string, StringComparison) — use 2-arg overloads.
+			if (m == null) return "";
+			return m.Replace("\\", "\\\\").Replace("\"", "\\\"");
 		}
 
 		private static string Extract(string input, string pattern)
