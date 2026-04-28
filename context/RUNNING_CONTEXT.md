@@ -4,6 +4,10 @@ Last updated: 2026-04-28
 
 This file is a living handoff log for humans and other AI agents. Update it after meaningful repo/debug changes.
 
+Related context docs:
+- `context/PROJECT_BRIEF.md` (big-picture goals, what we tried, target state)
+- `context/CODEBASE_BREAKDOWN.md` (technical code map and file responsibilities)
+
 ## 1) What this repo is
 
 `Vincere Ops` is a Windows WPF operator app for NinjaTrader 8.
