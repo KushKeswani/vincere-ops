@@ -35,7 +35,7 @@ function Get-NinjaTraderCustomDirs {
             [void]$result.Add((Resolve-Path $c).Path)
             return @($result)
         }
-        Write-Warning "No folder at: $c — will create default path under forced root."
+        Write-Warning "No folder at: $c - will create default path under forced root."
         [void]$result.Add($c)
         return @($result)
     }
@@ -92,7 +92,11 @@ if (-not (Test-Path $src)) {
     exit 1
 }
 
-$customDirs = Get-NinjaTraderCustomDirs -ForcedRoot $(if ([string]::IsNullOrWhiteSpace($CustomDocumentsRoot)) { "" } else { $CustomDocumentsRoot })
+$forcedRootArg = $CustomDocumentsRoot
+if ([string]::IsNullOrWhiteSpace($forcedRootArg)) {
+    $forcedRootArg = ""
+}
+$customDirs = Get-NinjaTraderCustomDirs -ForcedRoot $forcedRootArg
 
 # No existing Custom folder: create default under Windows Documents
 if ($customDirs.Count -eq 0) {
@@ -101,7 +105,7 @@ if ($customDirs.Count -eq 0) {
         $base = Join-Path $env:USERPROFILE 'Documents'
     }
     $fallback = Join-Path $base 'NinjaTrader 8\bin\Custom'
-    Write-Host "No existing NinjaTrader 8 ...\bin\Custom folder found — creating:" -ForegroundColor Yellow
+    Write-Host "No existing NinjaTrader 8 ...\bin\Custom folder found - creating:" -ForegroundColor Yellow
     Write-Host "  $fallback"
     Write-Host "(This is normal on a fresh NT install before first compile.)" -ForegroundColor DarkGray
     $customDirs = @($fallback)
@@ -130,7 +134,7 @@ Write-Host "Next in NinjaTrader: New -> NinjaScript Editor -> right-click Refere
 Write-Host "Then restart NinjaTrader and check Output for: pipe server starting (VincereOperator)" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "If NT still ignores the file: Tools -> Options -> NinjaScript -> note any custom path;" -ForegroundColor Yellow
-Write-Host "re-run with -CustomDocumentsRoot `"<folder that contains NinjaTrader 8>`"" -ForegroundColor Yellow
+Write-Host 'Re-run with: -CustomDocumentsRoot "<parent-folder-that-contains-NinjaTrader-8>"' -ForegroundColor Yellow
 
 if (-not $NoPause) {
     Read-Host "`nPress Enter to close"
