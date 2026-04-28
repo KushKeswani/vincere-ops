@@ -1,63 +1,137 @@
 <#
 .SYNOPSIS
-    Copies the Vincere NinjaTrader Add-On source into your NT8 Custom AddOns folder.
+    Copies the Vincere NinjaTrader Add-On into NT8's Custom\AddOns folder.
 .DESCRIPTION
-    Uses your actual Windows "Documents" folder (respects OneDrive redirection).
-    Safe to run multiple times (overwrites same file).
+    Finds existing NinjaTrader "Custom" folders under your profile, copies the .cs into each,
+    or creates the standard path under Documents if none exist yet.
+
+    If the window closes instantly when you double-click this file, use **Install-VincereAddon.cmd**
+    instead, or run from an open PowerShell window (see SETUP_WINDOWS.md).
 
 .PARAMETER CustomDocumentsRoot
-    If NinjaTrader looks elsewhere, pass the folder that contains "NinjaTrader 8",
-    e.g. C:\Users\Administrator\Documents or your OneDrive Documents root.
+    Parent folder that contains the "NinjaTrader 8" directory (optional override).
+.PARAMETER NoPause
+    Skip "Press Enter" at the end (for automation).
 .EXAMPLE
     .\Install-VincereAddon.ps1
 .EXAMPLE
-    .\Install-VincereAddon.ps1 -CustomDocumentsRoot "D:\Users\Admin\Documents"
+    .\Install-VincereAddon.ps1 -CustomDocumentsRoot "C:\Users\Administrator\Documents"
 #>
 param(
-    [string]$CustomDocumentsRoot = ""
+    [string]$CustomDocumentsRoot = "",
+    [switch]$NoPause
 )
 
 $ErrorActionPreference = "Stop"
 
+function Get-NinjaTraderCustomDirs {
+    param([string]$ForcedRoot)
+    $result = New-Object System.Collections.Generic.HashSet[string]
+
+    if (-not [string]::IsNullOrWhiteSpace($ForcedRoot)) {
+        $r = $ForcedRoot.TrimEnd('\')
+        $c = Join-Path $r "NinjaTrader 8\bin\Custom"
+        if (Test-Path $c) {
+            [void]$result.Add((Resolve-Path $c).Path)
+            return @($result)
+        }
+        Write-Warning "No folder at: $c — will create default path under forced root."
+        [void]$result.Add($c)
+        return @($result)
+    }
+
+    $docBases = New-Object System.Collections.ArrayList
+    foreach ($p in @(
+            [Environment]::GetFolderPath('MyDocuments'),
+            [Environment]::GetFolderPath('Personal'),
+            (Join-Path $env:USERPROFILE 'Documents')
+        )) {
+        if (-not [string]::IsNullOrWhiteSpace($p) -and (Test-Path $p)) { [void]$docBases.Add($p) }
+    }
+
+    # OneDrive: ...\OneDrive\Documents and ...\OneDrive - *\Documents
+    $odParent = Join-Path $env:USERPROFILE 'OneDrive'
+    if (Test-Path $odParent) {
+        $odDocs = Join-Path $odParent 'Documents'
+        if (Test-Path $odDocs) { [void]$docBases.Add($odDocs) }
+    }
+    Get-ChildItem $env:USERPROFILE -Directory -Filter 'OneDrive*' -ErrorAction SilentlyContinue |
+        ForEach-Object {
+            $d = Join-Path $_.FullName 'Documents'
+            if (Test-Path $d) { [void]$docBases.Add($d) }
+        }
+
+    foreach ($base in ($docBases | Select-Object -Unique)) {
+        $custom = Join-Path $base 'NinjaTrader 8\bin\Custom'
+        if (Test-Path $custom) {
+            [void]$result.Add((Resolve-Path $custom).Path)
+        }
+    }
+
+    # Shallow search: NinjaTrader 8 under profile (Documents / Desktop / etc.)
+    if ($result.Count -eq 0) {
+        Get-ChildItem $env:USERPROFILE -Directory -Filter 'NinjaTrader 8' -Recurse -Depth 5 -ErrorAction SilentlyContinue |
+            ForEach-Object {
+                $custom = Join-Path $_.FullName 'bin\Custom'
+                if (Test-Path $custom) {
+                    [void]$result.Add((Resolve-Path $custom).Path)
+                }
+            }
+    }
+
+    return @($result | Sort-Object -Unique)
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $src = Join-Path $repoRoot "nt8-addon\VincereOperatorIpcAddOn.cs"
 if (-not (Test-Path $src)) {
-    Write-Error "Missing $src — clone vincere-ops and run: .\scripts\Install-VincereAddon.ps1 from the repo (or cd to repo root first)."
+    Write-Host "ERROR: Missing source file:" -ForegroundColor Red
+    Write-Host "  $src"
+    Write-Host "Clone https://github.com/KushKeswani/vincere-ops and run this script from that repo." -ForegroundColor Yellow
+    if (-not $NoPause) { Read-Host "`nPress Enter to exit" }
+    exit 1
 }
 
-$documentsRoot = if (-not [string]::IsNullOrWhiteSpace($CustomDocumentsRoot)) {
-    $CustomDocumentsRoot.TrimEnd('\')
-} else {
-    [Environment]::GetFolderPath('MyDocuments')
+$customDirs = Get-NinjaTraderCustomDirs -ForcedRoot $(if ([string]::IsNullOrWhiteSpace($CustomDocumentsRoot)) { "" } else { $CustomDocumentsRoot })
+
+# No existing Custom folder: create default under Windows Documents
+if ($customDirs.Count -eq 0) {
+    $base = [Environment]::GetFolderPath('MyDocuments')
+    if ([string]::IsNullOrWhiteSpace($base) -or -not (Test-Path $base)) {
+        $base = Join-Path $env:USERPROFILE 'Documents'
+    }
+    $fallback = Join-Path $base 'NinjaTrader 8\bin\Custom'
+    Write-Host "No existing NinjaTrader 8 ...\bin\Custom folder found — creating:" -ForegroundColor Yellow
+    Write-Host "  $fallback"
+    Write-Host "(This is normal on a fresh NT install before first compile.)" -ForegroundColor DarkGray
+    $customDirs = @($fallback)
 }
 
-if (-not (Test-Path $documentsRoot)) {
-    Write-Error "Documents folder not found: $documentsRoot"
-}
-
-$destDir = Join-Path $documentsRoot "NinjaTrader 8\bin\Custom\AddOns\VincereOperator"
-New-Item -ItemType Directory -Force -Path $destDir | Out-Null
-$dest = Join-Path $destDir "VincereOperatorIpcAddOn.cs"
-
-Write-Host "Source: $src" -ForegroundColor Gray
-Write-Host "USERPROFILE: $($env:USERPROFILE)" -ForegroundColor Gray
-Write-Host "Documents root used: $documentsRoot" -ForegroundColor Gray
+Write-Host "Source: $src"
+Write-Host "USERPROFILE: $($env:USERPROFILE)"
 Write-Host ""
 
-Copy-Item -Path $src -Destination $dest -Force
-
-if (-not (Test-Path $dest)) {
-    Write-Error "Copy reported success but file missing at: $dest"
+$copiedTo = New-Object System.Collections.ArrayList
+foreach ($customRoot in $customDirs) {
+    $destDir = Join-Path $customRoot "AddOns\VincereOperator"
+    New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+    $dest = Join-Path $destDir "VincereOperatorIpcAddOn.cs"
+    Copy-Item -Path $src -Destination $dest -Force
+    if (-not (Test-Path $dest) -or (Get-Item $dest).Length -lt 1) {
+        Write-Error "Copy failed: $dest"
+    }
+    [void]$copiedTo.Add($dest)
+    Write-Host "Copied ($((Get-Item $dest).Length) bytes) to:" -ForegroundColor Green
+    Write-Host "  $dest"
+    Write-Host ""
 }
 
-$srcLen = (Get-Item $src).Length
-$dstLen = (Get-Item $dest).Length
-if ($dstLen -lt 1) {
-    Write-Error "Destination file is empty: $dest"
-}
-
-Write-Host "Copied Add-On ($dstLen bytes) to:" -ForegroundColor Green
-Write-Host "  $dest"
+Write-Host "Next in NinjaTrader: New -> NinjaScript Editor -> right-click References / compile all, or Compile." -ForegroundColor Cyan
+Write-Host "Then restart NinjaTrader and check Output for: pipe server starting (VincereOperator)" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "If NinjaTrader still does not see it, confirm in NT: Tools -> Options -> NinjaScript -> list where Custom is, or search your PC for an existing folder 'NinjaTrader 8\bin\Custom' and pass -CustomDocumentsRoot (parent of NinjaTrader 8)." -ForegroundColor Yellow
-Write-Host "Next: NinjaTrader -> NinjaScript Editor -> Compile, then restart NT." -ForegroundColor Yellow
+Write-Host "If NT still ignores the file: Tools -> Options -> NinjaScript -> note any custom path;" -ForegroundColor Yellow
+Write-Host "re-run with -CustomDocumentsRoot `"<folder that contains NinjaTrader 8>`"" -ForegroundColor Yellow
+
+if (-not $NoPause) {
+    Read-Host "`nPress Enter to close"
+}
