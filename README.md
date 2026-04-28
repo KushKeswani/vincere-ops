@@ -4,6 +4,18 @@
 
 This repository is the **control plane** beside NinjaTrader — not a replacement for NT’s execution engine.
 
+### One-shot install (Windows / VPS)
+
+1. Clone the repo on the VPS.
+2. **PowerShell (repo root):** `.\scripts\Setup-VincereOps.ps1 -PropConnectionName "Your NT connection"` — publishes to `%LOCALAPPDATA%\Programs\VincereOps\`, seeds `.env` if missing, sets **`DRY_RUN=false`**, and **`PROP_CONNECTION_NAME`** when you pass the parameter.
+3. Close NinjaTrader, then: `.\scripts\Install-VincereAddon.ps1` — copies the NT8 Add-On source into **Documents\...\Custom\AddOns\VincereOperator\**.
+4. Open **NinjaTrader → NinjaScript Editor → Compile**, restart NT.
+5. Confirm **`VINCERE_IPC_PIPE_NAME`** (and Telegram keys if used) in `%LocalAppData%\Vincere.Operator\.env`.
+
+**Later updates:** `.\scripts\Pull-VincereOps.ps1 -PropConnectionName "Your NT connection"` runs **`git pull`** then **`Setup-VincereOps.ps1`** with the same env behavior.
+
+Full walkthrough: **[SETUP_WINDOWS.md](SETUP_WINDOWS.md)** · Add-On details: **[nt8-addon/README.md](nt8-addon/README.md)**
+
 ---
 
 ## Why this exists
