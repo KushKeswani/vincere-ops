@@ -197,7 +197,7 @@ public partial class MainWindow : Window
             ? "No response."
             : res.Ok
                 ? string.IsNullOrWhiteSpace(detail) ? "OK" : $"OK ({detail})"
-                : detail;
+                : string.IsNullOrWhiteSpace(detail) ? "Failed (no detail)." : detail;
     }
 
     private async void AccountList_SelectionChanged(object sender, SelectionChangedEventArgs e)

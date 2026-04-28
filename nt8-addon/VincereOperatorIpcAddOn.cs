@@ -184,6 +184,7 @@ namespace NinjaTrader.NinjaScript.AddOns
 				switch (cmd)
 				{
 					case "PING":
+						TraceInfo("PING received.");
 						return JsonResp(id, true, "pong");
 
 					case "GET_STATUS":
