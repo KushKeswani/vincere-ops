@@ -6,6 +6,8 @@ This folder contains **`VincereOperatorIpcAddOn.cs`**, which runs **inside Ninja
 
 The desktop app (`Vincere.Operator`) cannot safely drive Control Center by itself. This Add-On runs **in-process** with NinjaTrader and handles JSON commands over a **local named pipe**.
 
+Add-On C# targets **.NET Framework** inside NinjaTrader — avoid APIs only available on modern .NET (e.g. `string.Replace` with `StringComparison`).
+
 ## Install (quick)
 
 1. Close NinjaTrader.
