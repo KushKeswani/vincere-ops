@@ -43,7 +43,7 @@ public sealed class NinjaTraderIpcBridge : INinjaTraderBridge
         {
             using var client = new NamedPipeClientStream(
                 ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-            await client.ConnectAsync(3_000, cancellationToken).ConfigureAwait(false);
+            await client.ConnectAsync(_config.IpcConnectTimeoutMs, cancellationToken).ConfigureAwait(false);
 
             var line = JsonSerializer.Serialize(request);
             var bytes = Encoding.UTF8.GetBytes(line + "\n");

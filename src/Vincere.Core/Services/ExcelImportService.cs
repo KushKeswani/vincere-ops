@@ -19,7 +19,13 @@ public sealed class ExcelImportService
         _logger = logger;
     }
 
-    public sealed record ImportedRowDto(string RawAccountHint, string StrategyType, string TemplateName, string InstanceLabel, string? StackId);
+    public sealed record ImportedRowDto(
+        string RawAccountHint,
+        string StrategyType,
+        string TemplateName,
+        string InstanceLabel,
+        string? StackId,
+        string TradingPeriod);
 
     /// <returns>Flattened rows + unmatched raw accounts needing mapping UX.</returns>
     public Task<(List<ImportedRowDto> Rows, HashSet<string> DistinctAccounts)> ParseAsync(Stream xlsxStream,
@@ -50,14 +56,18 @@ public sealed class ExcelImportService
                     if (parts.Any(p => kv.Key.Contains(p, StringComparison.OrdinalIgnoreCase)))
                         return kv.Value;
                 }
+
                 return null;
             }
 
-            var cAcc = Col("Account") ?? Col("AccountNumber") ?? Col("RawAccount") ?? FindCol("account", "number", "login");
+            var cAcc = Col("Account") ?? Col("AccountNumber") ?? Col("RawAccount") ??
+                       FindCol("account", "number", "login");
             var cType = Col("StrategyType") ?? Col("Algo") ?? FindCol("strategy", "type", "algo");
             var cTempl = Col("TemplateName") ?? Col("Template") ?? FindCol("template");
             var cLabel = Col("InstanceLabel") ?? Col("Label") ?? Col("Name") ?? FindCol("label", "name", "instance");
             var cStack = Col("StackId") ?? Col("AlgoStack") ?? FindCol("stack");
+            var cPeriod = Col("Period") ?? Col("TradingPeriod") ?? Col("EvalPeriod") ??
+                          FindCol("period", "session", "eval");
 
             if (cAcc is null)
             {
@@ -75,11 +85,30 @@ public sealed class ExcelImportService
                 var tpl = cTempl is not null ? ws.Cell(r, cTempl.Value).GetString().Trim() : "";
                 var label = cLabel is not null ? ws.Cell(r, cLabel.Value).GetString().Trim() : "";
                 var stack = cStack is not null ? ws.Cell(r, cStack.Value).GetString().Trim() : null;
-                rows.Add(new ImportedRowDto(acc, type, tpl, label, stack));
+                var perRaw = cPeriod is not null ? ws.Cell(r, cPeriod.Value).GetString().Trim() : "";
+                rows.Add(new ImportedRowDto(acc, type, tpl, label, stack, NormalizeTradingPeriod(perRaw)));
             }
 
             return (rows, accounts);
         }, ct);
+
+    internal static string NormalizeTradingPeriod(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return "";
+        var t = raw.Trim();
+        if (t.Equals("Period 1", StringComparison.OrdinalIgnoreCase) ||
+            t.Equals("Period1", StringComparison.OrdinalIgnoreCase) ||
+            t.Equals("P1", StringComparison.OrdinalIgnoreCase) ||
+            t.Equals("1", StringComparison.OrdinalIgnoreCase))
+            return "Period1";
+        if (t.Equals("Period 2", StringComparison.OrdinalIgnoreCase) ||
+            t.Equals("Period2", StringComparison.OrdinalIgnoreCase) ||
+            t.Equals("P2", StringComparison.OrdinalIgnoreCase) ||
+            t.Equals("2", StringComparison.OrdinalIgnoreCase))
+            return "Period2";
+        return "";
+    }
 
     /// <summary>After user maps raw account → existing <see cref="TradingAccountEntity"/>, upsert stack rows.</summary>
     public async Task UpsertStacksFromImportAsync(
@@ -106,6 +135,8 @@ public sealed class ExcelImportService
                 {
                     Id = Guid.NewGuid(),
                     AccountId = accountId,
+                    TradingPeriod = r.TradingPeriod,
+                    IncludeInApply = true,
                     StrategyTypeName = r.StrategyType,
                     TemplateName = r.TemplateName,
                     InstanceLabel = r.InstanceLabel,

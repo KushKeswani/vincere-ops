@@ -32,7 +32,7 @@ This creates a **Release** build under:
 
 `%LOCALAPPDATA%\Programs\VincereOps\`
 
-It creates `%LocalAppData%\Vincere.Operator\.env` from `.env.example` if missing, then **always** writes **`DRY_RUN=false`** (real IPC). To rehearse without the pipe: append `-DryRun $true`.
+It creates `%LocalAppData%\Vincere.Operator\.env` from `.env.example` if missing, then **always** writes `**DRY_RUN=false`** (real IPC). To rehearse without the pipe: append `-DryRun $true`.
 
 ### Updates from GitHub
 
@@ -50,7 +50,7 @@ Manual equivalent: `git pull`, then `**.\scripts\Setup-VincereOps.ps1`** with th
 ## 4) Install the NinjaTrader Add-On (pipe server)
 
 1. **Close** NinjaTrader.
-2. Run from the repo root (recommended: **`Install-VincereAddon.cmd`** so the window stays open):
+2. Run from the repo root (recommended: `**Install-VincereAddon.cmd`** so the window stays open):
 
 ```powershell
 .\scripts\Install-VincereAddon.cmd
@@ -62,14 +62,14 @@ Or:
 .\scripts\Install-VincereAddon.ps1
 ```
 
-Double-clicking **`.ps1`** alone often closes the console **before you can read it** unless you launched PowerShell first. **`Install-VincereAddon.cmd`** avoids that.
+Double-clicking `**.ps1**` alone often closes the console **before you can read it** unless you launched PowerShell first. `**Install-VincereAddon.cmd`** avoids that.
 
-The installer **searches** under your profile for **`NinjaTrader 8\bin\Custom`** and copies **`...\AddOns\VincereOperator\VincereOperatorIpcAddOn.cs`** into every match (or creates the usual path under Windows **Documents** if NT has never created **`Custom`** yet — normal on a brand-new install).
+The installer **searches** under your profile for `**NinjaTrader 8\bin\Custom`** and copies `**...\AddOns\VincereOperator\VincereOperatorIpcAddOn.cs`** into every match (or creates the usual path under Windows **Documents** if NT has never created `**Custom`** yet — normal on a brand-new install).
 
-If you use **OneDrive** or the file still doesn’t show in NinjaScript Editor, search the PC for **`VincereOperatorIpcAddOn.cs`** after running the script, or pass **`-CustomDocumentsRoot`** (the folder that **contains** `NinjaTrader 8`).
+If you use **OneDrive** or the file still doesn’t show in NinjaScript Editor, search the PC for `**VincereOperatorIpcAddOn.cs`** after running the script, or pass `**-CustomDocumentsRoot`** (the folder that **contains** `NinjaTrader 8`).
 
-3. Open **NinjaTrader** → **New** → **NinjaScript Editor** → **Compile** (fix any errors for your exact 8.1 build).
-4. **Restart** NinjaTrader. In **Log / Output**, you should see **Vincere IPC** lines when the add-on loads.
+1. Open **NinjaTrader** → **New** → **NinjaScript Editor** → **Compile** (fix any errors for your exact 8.1 build).
+2. **Restart** NinjaTrader. In **Log / Output**, you should see **Vincere IPC** lines when the add-on loads.
 
 ## 5) Wire config
 

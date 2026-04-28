@@ -28,12 +28,24 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<StackRowVm> _stackRows = new();
     private readonly ObservableCollection<ExcelMapRow> _excelMap = new();
 
+    /// <summary>Template dropdown options (.env NT_TEMPLATE_CHOICES + templates in DB).</summary>
+    public ObservableCollection<string> NtTemplateChoices { get; } = new();
+
+    /// <summary>Period dropdown for each stack row.</summary>
+    public ObservableCollection<PeriodChoiceItem> PeriodChoices { get; } = new();
+
     private List<ExcelImportService.ImportedRowDto> _lastExcelRows = new();
 
     public MainWindow(IServiceProvider sp)
     {
         _sp = sp;
         InitializeComponent();
+
+        DataContext = this;
+
+        PeriodChoices.Add(new PeriodChoiceItem { Label = "(none)", Value = "" });
+        PeriodChoices.Add(new PeriodChoiceItem { Label = "Period 1", Value = "Period1" });
+        PeriodChoices.Add(new PeriodChoiceItem { Label = "Period 2", Value = "Period2" });
 
         _orchestrator = sp.GetRequiredService<TradingBotOrchestrator>();
         _telegram = sp.GetRequiredService<TelegramNotifier>();
@@ -50,16 +62,71 @@ public partial class MainWindow : Window
         Loaded += MainWindow_Loaded;
     }
 
+    public sealed class PeriodChoiceItem
+    {
+        public string Label { get; init; } = "";
+        public string Value { get; init; } = "";
+    }
+
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         PathsText.Text =
             $"Data: {AppPaths.RootDataDirectory}\nEnv: {AppPaths.EnvFilePath}\nDatabase: {AppPaths.DatabasePath}";
-        DryRunText.Text = _config.DryRun ? "DRY_RUN is enabled — NinjaTrader IPC calls return simulated success." : "";
+        DryRunText.Text = _config.DryRun
+            ? "DRY_RUN is enabled — NinjaTrader IPC calls return simulated success."
+            : "";
+        IpcHintText.Text =
+            $"Pipe name: {_config.IpcPipeName}  |  Connect: {_config.IpcConnectTimeoutMs} ms\n" +
+            $"DRY_RUN: {_config.DryRun} (set false in .env for real named-pipe IPC)\n" +
+            $"PROP_CONNECTION_NAME: {(_config.PropConnectionName ?? "(unset)")}\n" +
+            "IPC requires NinjaTrader running with the Vincere Add-On compiled (NT Output: pipe server starting…).";
+
+        ApplyFilterCombo.Items.Clear();
+        ApplyFilterCombo.Items.Add(new ComboBoxItem
+            { Content = "All checked rows", Tag = StackApplyPeriodFilter.AllEnabled });
+        ApplyFilterCombo.Items.Add(new ComboBoxItem
+            { Content = "Period 1 only (checked rows)", Tag = StackApplyPeriodFilter.Period1Only });
+        ApplyFilterCombo.Items.Add(new ComboBoxItem
+            { Content = "Period 2 only (checked rows)", Tag = StackApplyPeriodFilter.Period2Only });
+        ApplyFilterCombo.SelectedIndex = 0;
 
         await ReloadAccountsAsync();
+        await RefreshNtTemplateChoicesAsync();
 
         StackAccountCombo.ItemsSource = _accounts;
         BotStateText.Text = "Stopped";
+    }
+
+    private StackApplyPeriodFilter SelectedApplyPeriodFilter =>
+        ApplyFilterCombo.SelectedItem is ComboBoxItem i && i.Tag is StackApplyPeriodFilter f
+            ? f
+            : StackApplyPeriodFilter.AllEnabled;
+
+    private async Task RefreshNtTemplateChoicesAsync()
+    {
+        NtTemplateChoices.Clear();
+        foreach (var x in _config.NtTemplateChoiceList)
+            NtTemplateChoices.Add(x);
+
+        try
+        {
+            var dbf = _sp.GetRequiredService<IDbContextFactory<VincereDbContext>>();
+            await using var db = await dbf.CreateDbContextAsync();
+            var tpls = await db.StackStrategies.AsNoTracking()
+                .Select(s => s.TemplateName)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Distinct()
+                .ToListAsync();
+            foreach (var t in tpls.OrderBy(s => s))
+            {
+                if (!NtTemplateChoices.Contains(t))
+                    NtTemplateChoices.Add(t);
+            }
+        }
+        catch
+        {
+            // ignore template refresh if DB busy
+        }
     }
 
     private async Task ReloadAccountsAsync()
@@ -106,7 +173,12 @@ public partial class MainWindow : Window
     {
         var bridge = _sp.GetRequiredService<INinjaTraderBridge>();
         var res = await bridge.SendAsync(new IpcRequest { Command = IpcCommands.Ping });
-        PingResult.Text = res?.Ok == true ? "OK" : (res?.Message ?? "no response");
+        var detail = res?.Message ?? "";
+        PingResult.Text = res == null
+            ? "No response."
+            : res.Ok
+                ? string.IsNullOrWhiteSpace(detail) ? "OK" : $"OK ({detail})"
+                : detail;
     }
 
     private async void AccountList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -151,6 +223,8 @@ public partial class MainWindow : Window
             {
                 Id = r.Id,
                 AccountId = r.AccountId,
+                IncludeInApply = r.IncludeInApply,
+                TradingPeriod = string.IsNullOrEmpty(r.TradingPeriod) ? "" : r.TradingPeriod,
                 StrategyTypeName = r.StrategyTypeName,
                 TemplateName = r.TemplateName,
                 InstanceLabel = r.InstanceLabel,
@@ -176,6 +250,8 @@ public partial class MainWindow : Window
         {
             Id = Guid.NewGuid(),
             AccountId = acct.Id,
+            IncludeInApply = true,
+            TradingPeriod = "",
             StrategyTypeName = "",
             TemplateName = "",
             InstanceLabel = "",
@@ -200,13 +276,15 @@ public partial class MainWindow : Window
         var old = db.StackStrategies.Where(s => s.AccountId == acct.Id);
         db.StackStrategies.RemoveRange(old);
 
-        int n = 0;
+        var n = 0;
         foreach (var row in _stackRows)
         {
             db.StackStrategies.Add(new StackStrategyRowEntity
             {
                 Id = row.Id,
                 AccountId = acct.Id,
+                IncludeInApply = row.IncludeInApply,
+                TradingPeriod = row.TradingPeriod ?? "",
                 StrategyTypeName = row.StrategyTypeName,
                 TemplateName = row.TemplateName,
                 InstanceLabel = row.InstanceLabel,
@@ -217,6 +295,7 @@ public partial class MainWindow : Window
 
         await db.SaveChangesAsync();
         StatusText.Text = "Stack saved locally.";
+        await RefreshNtTemplateChoicesAsync();
     }
 
     private async void ApplyStack_Click(object sender, RoutedEventArgs e)
@@ -224,12 +303,15 @@ public partial class MainWindow : Window
         if (StackAccountCombo.SelectedItem is not TradingAccountEntity acct)
             return;
 
-        var preview = MessageBox.Show("Apply current stack to NinjaTrader via IPC?", "Confirm",
+        var preview = MessageBox.Show(
+            "Apply current stack (respecting Apply checkboxes and Period filter above) to NinjaTrader via IPC?",
+            "Confirm",
             MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (preview != MessageBoxResult.Yes)
             return;
 
-        var (ok, msg) = await _stackApply.ExecuteAsync(acct.Id, _config.DryRun, default);
+        var filter = SelectedApplyPeriodFilter;
+        var (ok, msg) = await _stackApply.ExecuteAsync(acct.Id, _config.DryRun, filter, default);
         MessageBox.Show(ok ? msg : msg, ok ? "Apply" : "Error", MessageBoxButton.OK,
             ok ? MessageBoxImage.Information : MessageBoxImage.Warning);
     }
@@ -288,6 +370,7 @@ public partial class MainWindow : Window
 
         await _excel.UpsertStacksFromImportAsync(map, _lastExcelRows, ReplaceStacks.IsChecked == true, default);
         await ReloadAccountsAsync();
+        await RefreshNtTemplateChoicesAsync();
         await LoadStackForSelectedAccountAsync();
         MessageBox.Show("Import complete.");
     }
@@ -311,26 +394,45 @@ public partial class MainWindow : Window
     {
         public Guid Id { get; set; }
         public Guid AccountId { get; set; }
+
+        private bool _includeInApply = true;
+        private string _tradingPeriod = "";
         private string _strategyTypeName = "";
         private string _templateName = "";
         private string _instanceLabel = "";
         private string _accountAttachment = "";
+
+        public bool IncludeInApply
+        {
+            get => _includeInApply;
+            set { _includeInApply = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IncludeInApply))); }
+        }
+
+        /// <summary>Empty, Period1, or Period2.</summary>
+        public string TradingPeriod
+        {
+            get => _tradingPeriod;
+            set { _tradingPeriod = value ?? ""; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TradingPeriod))); }
+        }
 
         public string StrategyTypeName
         {
             get => _strategyTypeName;
             set { _strategyTypeName = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StrategyTypeName))); }
         }
+
         public string TemplateName
         {
             get => _templateName;
             set { _templateName = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TemplateName))); }
         }
+
         public string InstanceLabel
         {
             get => _instanceLabel;
             set { _instanceLabel = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InstanceLabel))); }
         }
+
         public string AccountAttachment
         {
             get => _accountAttachment;

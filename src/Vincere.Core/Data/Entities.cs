@@ -40,6 +40,13 @@ public sealed class StackStrategyRowEntity
 {
     public Guid Id { get; set; }
     public Guid AccountId { get; set; }
+
+    /// <summary>Empty, <c>Period1</c>, or <c>Period2</c> — used with apply filter and Excel "Period" column.</summary>
+    public string TradingPeriod { get; set; } = "";
+
+    /// <summary>If false, row is skipped when applying stack to NinjaTrader.</summary>
+    public bool IncludeInApply { get; set; } = true;
+
     public string StrategyTypeName { get; set; } = "";
     public string TemplateName { get; set; } = "";
     public string InstanceLabel { get; set; } = "";

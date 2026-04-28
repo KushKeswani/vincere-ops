@@ -14,6 +14,8 @@ public sealed class AppRuntimeConfig
     public const string KeyConnectionRefreshTime = "CONNECTION_REFRESH_TIME";
     public const string KeyEnableAllTime = "ENABLE_ALL_STRATEGIES_TIME";
     public const string KeyEodTime = "EOD_CUTOFF_TIME";
+    public const string KeyNtTemplateChoices = "NT_TEMPLATE_CHOICES";
+    public const string KeyIpcConnectTimeoutMs = "VINCERE_IPC_CONNECT_MS";
 
     private readonly AppSettingsProvider _provider;
 
@@ -30,6 +32,30 @@ public sealed class AppRuntimeConfig
     public TimeOnly ConnectionRefreshTime => ParseTime(_provider.Get(KeyConnectionRefreshTime), new TimeOnly(8, 20));
     public TimeOnly EnableAllStrategiesTime => ParseTime(_provider.Get(KeyEnableAllTime), new TimeOnly(8, 25));
     public TimeOnly EodCutoffTime => ParseTime(_provider.Get(KeyEodTime), new TimeOnly(16, 5));
+
+    /// <summary>Comma-separated template names for stack editor dropdown (optional).</summary>
+    public IReadOnlyList<string> NtTemplateChoiceList =>
+        ParseCommaList(_provider.Get(KeyNtTemplateChoices));
+
+    /// <summary>Named-pipe connect timeout when talking to the NT add-on.</summary>
+    public int IpcConnectTimeoutMs
+    {
+        get
+        {
+            var v = _provider.Get(KeyIpcConnectTimeoutMs);
+            if (int.TryParse(v, out var ms) && ms >= 500 && ms <= 120_000)
+                return ms;
+            return 8_000;
+        }
+    }
+
+    private static IReadOnlyList<string> ParseCommaList(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return Array.Empty<string>();
+        var parts = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length == 0 ? Array.Empty<string>() : parts.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    }
 
     private static TimeOnly ParseTime(string? value, TimeOnly fallback)
     {

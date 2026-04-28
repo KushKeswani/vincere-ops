@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         var f = sp.GetRequiredService<IDbContextFactory<VincereDbContext>>();
         await using var db = await f.CreateDbContextAsync(ct).ConfigureAwait(false);
         await db.Database.EnsureCreatedAsync(ct).ConfigureAwait(false);
+        await VincereSchemaPatcher.PatchAsync(db, ct).ConfigureAwait(false);
         if (!await db.AppState.AnyAsync(ct).ConfigureAwait(false))
         {
             db.AppState.Add(new AppStateEntity { Id = 1, OnboardingCompleted = false });
