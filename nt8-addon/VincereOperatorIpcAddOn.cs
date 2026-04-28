@@ -28,6 +28,7 @@ namespace NinjaTrader.NinjaScript.AddOns
 		private const string PipeName = "VincereOperator";
 		private static readonly object StartStopLock = new object();
 		private static bool _globalStarted;
+		private static Mutex _pipeOwnerMutex;
 		private CancellationTokenSource _cts;
 		private Task _loop;
 		private bool _started;
@@ -77,6 +78,13 @@ namespace NinjaTrader.NinjaScript.AddOns
 						TraceInfo("start skipped: global listener already running.");
 						return;
 					}
+					if (_pipeOwnerMutex == null)
+						_pipeOwnerMutex = new Mutex(false, "Local\\VincereOperatorPipeOwner");
+					if (!_pipeOwnerMutex.WaitOne(0))
+					{
+						TraceInfo("start skipped: another Vincere IPC owner already active in this session.");
+						return;
+					}
 
 					_cts = new CancellationTokenSource();
 					var tok = _cts.Token;
@@ -116,6 +124,7 @@ namespace NinjaTrader.NinjaScript.AddOns
 				_cts = null;
 				_waitingPipe = null;
 				_globalStarted = false;
+				try { _pipeOwnerMutex?.ReleaseMutex(); } catch { }
 				TraceInfo("pipe server stopped.");
 			}
 		}
@@ -128,7 +137,7 @@ namespace NinjaTrader.NinjaScript.AddOns
 				try
 				{
 					// Own the pipe with one using — do not null out before dispose (was leaking handles and starving clients).
-					using (var pipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1,
+					using (var pipe = new NamedPipeServerStream(PipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
 						       PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
 					{
 						_waitingPipe = pipe;
