@@ -30,13 +30,20 @@ namespace NinjaTrader.NinjaScript.AddOns
 		private Task _loop;
 		private bool _started;
 
+		private void TraceInfo(string message)
+		{
+			string full = $"{DateTime.Now}: Vincere IPC: {message}";
+			try { Print(full); } catch { }
+			try { Log("Vincere IPC: " + message, LogLevel.Information); } catch { }
+		}
+
 		protected override void OnStateChange()
 		{
 			if (State == State.SetDefaults)
 			{
 				Name = "VincereOperatorIpc";
 				Description = @"Hosts a local named pipe for the Vincere Ops Windows app. See vincere-ops repo nt8-addon/README.md.";
-				Print($"{DateTime.Now}: Vincere IPC: SetDefaults reached.");
+				TraceInfo("SetDefaults reached.");
 			}
 			else if (State == State.Configure)
 			{
@@ -44,7 +51,7 @@ namespace NinjaTrader.NinjaScript.AddOns
 				if (!_started)
 				{
 					_started = true;
-					Print($"{DateTime.Now}: Vincere IPC: Configure reached; starting pipe...");
+					TraceInfo("Configure reached; starting pipe...");
 					StartPipe();
 				}
 			}
@@ -63,11 +70,11 @@ namespace NinjaTrader.NinjaScript.AddOns
 				_cts = new CancellationTokenSource();
 				var tok = _cts.Token;
 				_loop = Task.Run(() => PipeLoop(tok), tok);
-				Print($"{DateTime.Now}: Vincere IPC: pipe server starting ({PipeName})...");
+				TraceInfo($"pipe server starting ({PipeName})...");
 			}
 			catch (Exception ex)
 			{
-				Print($"{DateTime.Now}: Vincere IPC: start failed: {ex.Message}");
+				TraceInfo("start failed: " + ex.Message);
 			}
 		}
 
@@ -87,7 +94,7 @@ namespace NinjaTrader.NinjaScript.AddOns
 				_loop = null;
 				_cts?.Dispose();
 				_cts = null;
-				Print($"{DateTime.Now}: Vincere IPC: pipe server stopped.");
+				TraceInfo("pipe server stopped.");
 			}
 		}
 
