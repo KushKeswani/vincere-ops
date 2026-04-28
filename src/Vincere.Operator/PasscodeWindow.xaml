@@ -1,0 +1,16 @@
+<Window x:Class="Vincere.Operator.PasscodeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Developer access" Height="160" Width="360" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+  <Grid Margin="12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <TextBlock Text="Enter passcode" Margin="0,0,0,8"/>
+    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+      <PasswordBox x:Name="Box" Width="200" Margin="0,0,8,0"/>
+      <Button Content="OK" IsDefault="True" Width="60" Click="Ok_Click"/>
+    </StackPanel>
+  </Grid>
+</Window>

@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Vincere.Core/Vincere.Core.csproj" />
+    <Project Path="src/Vincere.Ipc.Contract/Vincere.Ipc.Contract.csproj" />
+    <Project Path="src/Vincere.Operator/Vincere.Operator.csproj" />
+  </Folder>
+</Solution>

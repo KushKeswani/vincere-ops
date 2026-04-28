@@ -1,0 +1,25 @@
+<Window x:Class="Vincere.Operator.DeveloperEnvWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Developer — environment" Height="480" Width="640" WindowStartupLocation="CenterOwner">
+  <Grid Margin="10">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <TextBlock TextWrapping="Wrap" Margin="0,0,0,8"
+               Text="Edits are written to your local .env (see path below). Windows user/system environment variables still override on next app start. Do not log or share this window."/>
+    <TextBlock x:Name="PathText" Grid.Row="0" Margin="0,40,0,8" FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
+    <DataGrid x:Name="Grid" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="True" BeginningEdit="Grid_OnBeginningEdit">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="*"/>
+        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="2*"/>
+      </DataGrid.Columns>
+    </DataGrid>
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+      <Button Content="Reload" Margin="0,0,8,0" Click="Reload_Click"/>
+      <Button Content="Save &amp; reload app config" Click="Save_Click"/>
+    </StackPanel>
+  </Grid>
+</Window>

@@ -1,0 +1,128 @@
+﻿<Window x:Class="Vincere.Operator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Vincere Operator" Height="640" Width="980"
+        WindowStartupLocation="CenterScreen">
+  <DockPanel>
+    <StatusBar DockPanel.Dock="Bottom">
+      <TextBlock x:Name="StatusText" Text="Ready"/>
+    </StatusBar>
+    <TabControl Margin="8">
+      <TabItem Header="Dashboard">
+        <Grid Margin="8">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+            <Button x:Name="StartBotBtn" Content="Start bot" Width="100" Margin="0,0,8,0" Click="StartBot_Click"/>
+            <Button x:Name="StopBotBtn" Content="Stop bot" Width="100" Margin="0,0,8,0" Click="StopBot_Click" IsEnabled="False"/>
+            <TextBlock x:Name="BotStateText" VerticalAlignment="Center" Margin="12,0,0,0" FontWeight="Bold"/>
+          </StackPanel>
+          <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,0,0,12">
+            <TextBlock x:Name="DryRunText" Foreground="DarkOrange" TextWrapping="Wrap"/>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+              <Button Content="Test IPC (PING)" Click="Ping_Click" Width="120" Margin="0,0,8,0"/>
+              <TextBlock x:Name="PingResult" VerticalAlignment="Center" TextWrapping="Wrap"/>
+            </StackPanel>
+          </StackPanel>
+          <GroupBox Grid.Row="2" Header="Data location">
+            <TextBlock x:Name="PathsText" TextWrapping="Wrap"/>
+          </GroupBox>
+        </Grid>
+      </TabItem>
+
+      <TabItem Header="Accounts &amp; performance">
+        <Grid Margin="8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="Accounts" FontWeight="Bold" Margin="0,0,0,4"/>
+            <ListBox x:Name="AccountList" SelectionChanged="AccountList_SelectionChanged"/>
+          </DockPanel>
+          <DataGrid x:Name="PerfGrid" Grid.Column="1" Margin="8,0,0,0" AutoGenerateColumns="False" IsReadOnly="True">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Date (Eastern)" Binding="{Binding DateEastern}" Width="*"/>
+              <DataGridTextColumn Header="PnL" Binding="{Binding Pnl}" Width="*"/>
+              <DataGridTextColumn Header="Trades" Binding="{Binding TradeCount}" Width="*"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </Grid>
+      </TabItem>
+
+      <TabItem Header="Edit stack">
+        <Grid Margin="8">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <DockPanel LastChildFill="True" Margin="0,0,0,8">
+            <TextBlock DockPanel.Dock="Top" Text="Select account" FontWeight="Bold" Margin="0,0,0,4"/>
+            <ComboBox x:Name="StackAccountCombo" DisplayMemberPath="DisplayName" SelectionChanged="StackAccountCombo_SelectionChanged"/>
+          </DockPanel>
+          <DataGrid x:Name="StackGrid" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" CellEditEnding="StackGrid_CellEditEnding">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Strategy type" Binding="{Binding StrategyTypeName}" Width="*"/>
+              <DataGridTextColumn Header="Template" Binding="{Binding TemplateName}" Width="*"/>
+              <DataGridTextColumn Header="Instance label" Binding="{Binding InstanceLabel}" Width="*"/>
+              <DataGridTextColumn Header="Account attach" Binding="{Binding AccountAttachment}" Width="*"/>
+            </DataGrid.Columns>
+          </DataGrid>
+          <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+            <Button Content="Add row" Click="AddStackRow_Click" Margin="0,0,8,0"/>
+            <Button Content="Delete selected" Click="DeleteStackRow_Click" Margin="0,0,8,0"/>
+            <Button Content="Save stack" Click="SaveStack_Click" Margin="0,0,8,0"/>
+            <Button Content="Apply to NinjaTrader" Click="ApplyStack_Click"/>
+          </StackPanel>
+        </Grid>
+      </TabItem>
+
+      <TabItem Header="Excel import">
+        <Grid Margin="8">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <Button Content="Choose .xlsx" Click="PickExcel_Click" HorizontalAlignment="Left"/>
+          <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="ExcelMappingItems">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="160"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Raw}" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="1" DisplayMemberPath="DisplayName"
+                              SelectedValuePath="Id"
+                              SelectedValue="{Binding SelectedAccountId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding AccountChoices}"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+            <CheckBox x:Name="ReplaceStacks" Content="Replace existing stack for matched accounts" IsChecked="True" Margin="0,0,16,0" VerticalAlignment="Center"/>
+            <Button Content="Import stacks" Click="ImportExcel_Click"/>
+          </StackPanel>
+        </Grid>
+      </TabItem>
+
+      <TabItem Header="Developer">
+        <Grid Margin="8">
+          <StackPanel>
+            <TextBlock Text="Passcode-protected env editor — passcode never logged." TextWrapping="Wrap" Margin="0,0,0,8"/>
+            <Button Content="Open developer tools" Click="DevOpen_Click" HorizontalAlignment="Left"/>
+          </StackPanel>
+        </Grid>
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</Window>

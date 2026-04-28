@@ -1,0 +1,36 @@
+## Build
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+[Tt]est[Rr]esults/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.cache
+*.DotSettings.user
+.vs/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Secrets — never commit
+.env
+.env.local
+*.pfx
+**/secrets/
+
+## Logs / local data (optional clones)
+logs/
+*.db
+*.db-shm
+*.db-wal
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## NuGet
+*.nupkg
