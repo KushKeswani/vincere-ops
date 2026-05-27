@@ -15,11 +15,13 @@ Drop **non-secret** reference material here so the team (and tooling) can reason
 
 ## Suggested filenames
 
-| File | Purpose |
-|------|---------|
-| `prop-firm-notes.md` | Firm-specific rules & connection names |
-| `ninjatrader-8.md` | NT8 version pin, paths, manual steps |
-| `excel-schema.md` | Columns your `.xlsx` imports use |
-| `vps-checklist.md` | How you log on, reboot, verify the session |
+
+| File                 | Purpose                                    |
+| -------------------- | ------------------------------------------ |
+| `prop-firm-notes.md` | Firm-specific rules & connection names     |
+| `ninjatrader-8.md`   | NT8 version pin, paths, manual steps       |
+| `excel-schema.md`    | Columns your `.xlsx` imports use           |
+| `vps-checklist.md`   | How you log on, reboot, verify the session |
+
 
 Keep files **markdown** when possible so they render on GitHub.

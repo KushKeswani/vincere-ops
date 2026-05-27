@@ -22,6 +22,7 @@ public sealed class ExcelImportService
     public sealed record ImportedRowDto(
         string RawAccountHint,
         string StrategyType,
+        string Instrument,
         string TemplateName,
         string InstanceLabel,
         string? StackId,
@@ -68,6 +69,11 @@ public sealed class ExcelImportService
             var cStack = Col("StackId") ?? Col("AlgoStack") ?? FindCol("stack");
             var cPeriod = Col("Period") ?? Col("TradingPeriod") ?? Col("EvalPeriod") ??
                           FindCol("period", "session", "eval");
+            var algoCols = hdrMap
+                .Where(kv => kv.Key.StartsWith("Algo", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(kv => kv.Value)
+                .Select(kv => kv.Value)
+                .ToArray();
 
             if (cAcc is null)
             {
@@ -86,11 +92,112 @@ public sealed class ExcelImportService
                 var label = cLabel is not null ? ws.Cell(r, cLabel.Value).GetString().Trim() : "";
                 var stack = cStack is not null ? ws.Cell(r, cStack.Value).GetString().Trim() : null;
                 var perRaw = cPeriod is not null ? ws.Cell(r, cPeriod.Value).GetString().Trim() : "";
-                rows.Add(new ImportedRowDto(acc, type, tpl, label, stack, NormalizeTradingPeriod(perRaw)));
+                var period = NormalizeTradingPeriod(perRaw);
+
+                if (algoCols.Length > 0)
+                {
+                    var n = 1;
+                    foreach (var algoCol in algoCols)
+                    {
+                        var rawAlgo = ws.Cell(r, algoCol).GetString().Trim();
+                        if (string.IsNullOrWhiteSpace(rawAlgo) || rawAlgo == "-")
+                            continue;
+
+                        var parsed = ParseAlgoInstrument(rawAlgo);
+                        rows.Add(new ImportedRowDto(
+                            acc,
+                            parsed.StrategyType,
+                            parsed.Instrument,
+                            tpl,
+                            string.IsNullOrWhiteSpace(label) ? $"{parsed.StrategyType} {parsed.Instrument}".Trim() : $"{label} #{n}",
+                            stack,
+                            period));
+                        n++;
+                    }
+                }
+                else
+                {
+                    var parsed = ParseAlgoInstrument(type);
+                    rows.Add(new ImportedRowDto(acc, parsed.StrategyType, parsed.Instrument, tpl, label, stack, period));
+                }
             }
 
             return (rows, accounts);
         }, ct);
+
+    public static string ResolveDefaultInstrument(string strategyType)
+    {
+        var key = StrategyKey(strategyType);
+        return key switch
+        {
+            "ARPD" => "MGC",
+            "CDGN" => "CL",
+            "DJDR" => "YM",
+            "FSA" => "MNQ",
+            "IFSP" => "NG",
+            "MST" => "YM",
+            "OGX" => "MNQ",
+            "PLPI" => "PL",
+            "RBO" => "M2K",
+            "SYFY" => "MES",
+            "TDC" => "MNQ",
+            _ => ""
+        };
+    }
+
+    public static string ResolveInstrumentForStrategy(string strategyType, string? instrument)
+    {
+        var expected = ResolveDefaultInstrument(strategyType);
+        var candidate = instrument?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(expected))
+            return candidate;
+        if (string.IsNullOrWhiteSpace(candidate))
+            return expected;
+        return NormalizeKey(candidate).StartsWith(NormalizeKey(expected), StringComparison.OrdinalIgnoreCase)
+            ? candidate
+            : expected;
+    }
+
+    private static string StrategyKey(string value)
+    {
+        var normalized = NormalizeKey(value).Replace("PF", "", StringComparison.OrdinalIgnoreCase);
+        var letters = new string(normalized.TakeWhile(char.IsLetter).ToArray());
+        return letters;
+    }
+
+    private static string NormalizeKey(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "";
+        return new string(value.Where(char.IsLetterOrDigit).Select(char.ToUpperInvariant).ToArray());
+    }
+
+    private static (string StrategyType, string Instrument) ParseAlgoInstrument(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return ("", "");
+
+        var text = raw.Trim();
+        var open = text.LastIndexOf('(');
+        var close = text.LastIndexOf(')');
+        if (open > 0 && close > open)
+        {
+            var strategy = text[..open].Trim();
+            var instrument = text[(open + 1)..close].Trim();
+            strategy = NormalizeStrategyAlias(strategy);
+            return (strategy, ResolveInstrumentForStrategy(strategy, instrument));
+        }
+
+        text = NormalizeStrategyAlias(text);
+        return (text, ResolveInstrumentForStrategy(text, ""));
+    }
+
+    private static string NormalizeStrategyAlias(string strategy)
+    {
+        if (string.Equals(strategy.Trim(), "B2X", StringComparison.OrdinalIgnoreCase))
+            return "RBO";
+        return strategy;
+    }
 
     internal static string NormalizeTradingPeriod(string? raw)
     {
@@ -138,6 +245,7 @@ public sealed class ExcelImportService
                     TradingPeriod = r.TradingPeriod,
                     IncludeInApply = true,
                     StrategyTypeName = r.StrategyType,
+                    Instrument = r.Instrument,
                     TemplateName = r.TemplateName,
                     InstanceLabel = r.InstanceLabel,
                     AccountAttachment = r.RawAccountHint,

@@ -60,11 +60,25 @@ public sealed class NinjaTraderIpcBridge : INinjaTraderBridge
                 await client.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
                 await client.FlushAsync(cancellationToken).ConfigureAwait(false);
 
-                var buffer = new byte[65536];
-                var n = await client.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-                if (n == 0)
+                using var response = new MemoryStream();
+                var buffer = new byte[8192];
+                while (response.Length < 1024 * 1024)
+                {
+                    var n = await client.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+                    if (n == 0)
+                        break;
+
+                    response.Write(buffer, 0, n);
+                    if (buffer.AsSpan(0, n).IndexOf((byte)'\n') >= 0)
+                        break;
+                }
+
+                if (response.Length == 0)
                     return null;
-                var text = Encoding.UTF8.GetString(buffer.AsSpan(0, n)).Trim();
+
+                var text = Encoding.UTF8.GetString(response.ToArray())
+                    .TrimStart('\uFEFF')
+                    .Trim();
                 return JsonSerializer.Deserialize<IpcResponse>(text);
             }
             catch (Exception ex)

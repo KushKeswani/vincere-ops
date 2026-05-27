@@ -162,11 +162,11 @@ All trade during **New York** futures sessions per approved descriptions.
 
 **Starting-point order (only ranking to verbalize)**
 
-1. Lucid Trading  
-2. TheLegendsTrading  
-3. MyFundedFutures  
-4. BlueSky  
-5. Funded Futures Family  
+1. Lucid Trading
+2. TheLegendsTrading
+3. MyFundedFutures
+4. BlueSky
+5. Funded Futures Family
 
 Recommend working **top-down** and **maxing allocation** before moving lower on broader lists.
 
@@ -193,25 +193,27 @@ The authoritative wide tables (Tradovate vs Rithmic rows, max stacks, audition c
 
 Below is a **cleaned excerpt** of the **firm list / URLs / algo-friendly score** portion from that workbook-style export (**0 = algo-friendly Yes**, **1 = Semi**, **2 = No** per source). Verify against the firm before advising.
 
-| Firm (examples from sheet) | Notes / URL pattern (verify live) | Algo-friendly flag (0/1/2) |
-|---------------------------|-------------------------------------|----------------------------|
-| Lucid Trading | lucidtrading.com — Lucid Flex $50K | 0 |
-| TheLegendsTrading | thelegendstrading.com/plans — Elite $50K | 0 |
-| MyFundedFutures | myfundedfutures.com — Flex $50K | 0 |
-| BlueSky | blusky.pro — Launch $50K | 0 |
-| Funded Futures Family | fundedfuturesfamily.com — Elite $50K | 2 |
-| Bulenox | bulenox.com | 0 |
-| Purdia Capital | purdia.com | 1 |
-| Tradeify | tradeify.co | 1 |
-| Take Profit Trader | takeprofittrader.com | 2 |
-| TradeDay | tradeday.com | 2 |
-| Top One Futures | toponefutures.com | 2 |
-| FXify | fxifyfutures.com | 0 |
-| TopStep | topstep.com | 0 |
-| Alpha Futures | alpha-futures.com | 2 |
-| Emerge Profit | emergeprofit.com | 2 |
-| The Trading Pit | thetradingpit.com | 0 |
-| The Futures Desk | thefuturesdesk.com (*sheet notes market close time*) | 0 |
+
+| Firm (examples from sheet) | Notes / URL pattern (verify live)                    | Algo-friendly flag (0/1/2) |
+| -------------------------- | ---------------------------------------------------- | -------------------------- |
+| Lucid Trading              | lucidtrading.com — Lucid Flex $50K                   | 0                          |
+| TheLegendsTrading          | thelegendstrading.com/plans — Elite $50K             | 0                          |
+| MyFundedFutures            | myfundedfutures.com — Flex $50K                      | 0                          |
+| BlueSky                    | blusky.pro — Launch $50K                             | 0                          |
+| Funded Futures Family      | fundedfuturesfamily.com — Elite $50K                 | 2                          |
+| Bulenox                    | bulenox.com                                          | 0                          |
+| Purdia Capital             | purdia.com                                           | 1                          |
+| Tradeify                   | tradeify.co                                          | 1                          |
+| Take Profit Trader         | takeprofittrader.com                                 | 2                          |
+| TradeDay                   | tradeday.com                                         | 2                          |
+| Top One Futures            | toponefutures.com                                    | 2                          |
+| FXify                      | fxifyfutures.com                                     | 0                          |
+| TopStep                    | topstep.com                                          | 0                          |
+| Alpha Futures              | alpha-futures.com                                    | 2                          |
+| Emerge Profit              | emergeprofit.com                                     | 2                          |
+| The Trading Pit            | thetradingpit.com                                    | 0                          |
+| The Futures Desk           | thefuturesdesk.com (*sheet notes market close time*) | 0                          |
+
 
 For **platform / max funded accounts / Bullet Bot usability / stack limits**, use the **full** Structure 2026 markdown or PDF — columns are dense and subject to updates.
 
@@ -225,10 +227,10 @@ For **platform / max funded accounts / Bullet Bot usability / stack limits**, us
 
 ### Connection — logon / disconnect / “bad input”
 
-1. **Control Center → Connections** — correct template; **Configure** credentials (no stray spaces); Apply/OK.  
-2. **Single session** — no duplicate logins across PC/VPS/mobile where forbidden.  
-3. **Network** — wired where possible; test without VPN.  
-4. **License** — Help → About; renew if expired.  
+1. **Control Center → Connections** — correct template; **Configure** credentials (no stray spaces); Apply/OK.
+2. **Single session** — no duplicate logins across PC/VPS/mobile where forbidden.
+3. **Network** — wired where possible; test without VPN.
+4. **License** — Help → About; renew if expired.
 5. **Logs** — NinjaScript Output + Log tab; escalate to broker/NT with traces if needed.
 
 ### Rithmic session limits
@@ -257,16 +259,18 @@ Backup `Custom`, **F5** compile, fix top error, remove conflicting third-party c
 
 ### Quick symptom → direction
 
-| Symptom | First direction |
-|--------|------------------|
-| Logon / bad input | Credentials, session count, firewall |
-| Session disconnect | Rithmic multi-session / plugin settings |
-| No real-time | Connection + data series + symbol |
-| Delayed banner | Subscriptions + signed agreements + bundles |
-| OCO / reuse | Clear OCO, reconnect |
-| Admin / liquidation | Broker account status |
-| Red compile (general) | F5, isolate custom code |
-| Red compile after Vincere zip | Duplicates in `Custom`, clean re-import |
+
+| Symptom                       | First direction                             |
+| ----------------------------- | ------------------------------------------- |
+| Logon / bad input             | Credentials, session count, firewall        |
+| Session disconnect            | Rithmic multi-session / plugin settings     |
+| No real-time                  | Connection + data series + symbol           |
+| Delayed banner                | Subscriptions + signed agreements + bundles |
+| OCO / reuse                   | Clear OCO, reconnect                        |
+| Admin / liquidation           | Broker account status                       |
+| Red compile (general)         | F5, isolate custom code                     |
+| Red compile after Vincere zip | Duplicates in `Custom`, clean re-import     |
+
 
 ---
 
@@ -285,9 +289,9 @@ Backup `Custom`, **F5** compile, fix top error, remove conflicting third-party c
 
 When execution looks wrong:
 
-1. **Log** tab → Save as CSV  
-2. **Executions** tab → Save as CSV  
-3. **Orders** tab → Save as CSV  
+1. **Log** tab → Save as CSV
+2. **Executions** tab → Save as CSV
+3. **Orders** tab → Save as CSV
 
 Then review timeline: connection events, submissions, fills, rejects, RMS. *Full flow: `30_TRADE_EXECUTION_HELP.md`.*
 
@@ -309,10 +313,12 @@ Vincere tests on **tick data** (granular). Backtests assume **perfect fills**; l
 
 ## Vincere tools
 
-| Tool | Safe summary |
-|------|----------------|
+
+| Tool                     | Safe summary                                                                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Account Cycling Tool** | Builds **compliant** multi-account algo stacks using firm + account inputs; **never** explain internal scoring (“best combo” math). |
-| **Blueprint Tool** | Maps **scaling** paths from capital + risk tolerance (Conservative / Moderate / Aggressive framing); **not** a profit promise. |
+| **Blueprint Tool**       | Maps **scaling** paths from capital + risk tolerance (Conservative / Moderate / Aggressive framing); **not** a profit promise.      |
+
 
 ---
 
@@ -336,10 +342,10 @@ Typical preparation: **VPS** access, broker (**Tradovate** /**Rithmic**) logins,
 
 **Install pattern (high level)**
 
-1. Download full package from distribution (e.g. Whop) — skip MT4/MT5 if futures-only.  
-2. Place **indicators** / **strategies** / **.dll** / **strategy .set** files per NinjaTrader folder layout.  
-3. **Workspace** chart layout often uses multiple Vincere symbols/timeframes (e.g. OGX 5m MNQ, FSA 1m MNQ, TDC 3m MNQ, MST2 10m YM) — follow current SOP video.  
-4. **Timezone** correct (often **EST** per SOP).  
+1. Download full package from distribution (e.g. Whop) — skip MT4/MT5 if futures-only.
+2. Place **indicators** / **strategies** / **.dll** / **strategy .set** files per NinjaTrader folder layout.
+3. **Workspace** chart layout often uses multiple Vincere symbols/timeframes (e.g. OGX 5m MNQ, FSA 1m MNQ, TDC 3m MNQ, MST2 10m YM) — follow current SOP video.
+4. **Timezone** correct (often **EST** per SOP).
 5. Compile **incrementally**; resolve duplicate strategy files before scaling chart templates.
 
 For step-by-step client education, rely on **current videos** + **Discord** resources linked in the SOP.
@@ -348,29 +354,31 @@ For step-by-step client education, rely on **current videos** + **Discord** reso
 
 ## Source documents in this repo
 
-| File | Role |
-|------|------|
-| `VINCERE_CONTEXT.md` | Short company/voice template (fill in marketing details). |
-| `NT8_PLAYBOOK.md` | Full NT8 symptom playbook. |
-| `Vincere ChatGPT/00_BOT_INSTRUCTIONS.md` | Master tone, IP, firms, escalation. |
-| `Vincere ChatGPT/10_ALGO_DESCRIPTIONS (1).md` | Authoritative algo one-liners. |
-| `Vincere ChatGPT/20_PROP_FIRM_REFERENCE.md` | Prop messaging + ranking rules. |
-| `Vincere ChatGPT/Vincere Trading - Prop Firm Structure 2026 - Prop Firms.md` | Wide firm matrix (PDF export). |
-| `Vincere ChatGPT/30_TRADE_EXECUTION_HELP.md` | Log CSV review flow. |
-| `Vincere ChatGPT/40_TICK_DATA_AND_SLIPPAGE.md` | Tick vs live fills. |
-| `Vincere ChatGPT/50_NINJATRADER_WORKFLOWS.md` | NT workflows for Vincere algos. |
-| `Vincere ChatGPT/60_VPS_AND_INFRASTRUCTURE.md` | VPS positioning. |
-| `Vincere ChatGPT/70_ACCOUNT_CYCLING_TOOL.md` | Cycling tool messaging. |
-| `Vincere ChatGPT/80_BLUEPRINT_TOOL.md` | Blueprint tool messaging. |
-| `Vincere ChatGPT/90_BULLET_BOT.md` | Bullet Bot (auditions). |
-| `Vincere ChatGPT/100_CAM_SERVICE.md` | CAM (mention-if-asked). |
-| `Vincere ChatGPT/Consolidated_Master_SOP.md` | Onboarding / install SOP. |
-| `Vincere ChatGPT/01_Video_Breakdowns.md` | Video index / notes. |
-| `Vincere ChatGPT/02_All_Loom_Transcripts.md` | Large — use as reference, not single prompt payload. |
-| `Vincere ChatGPT/03_Full_Roadmap_Text.md` | Large roadmap text. |
-| `Vincere ChatGPT/CSM Training.md`, `Ticket Organization.md`, etc. | Ops / training. |
-| `Vincere ChatGPT/Equity Curve vs Date.md` | Visual reference (`Equity Curve vs Date.png`). |
-| `knowledge/tool-links.example.yaml` | Allowed URL keys for assistants. |
+
+| File                                                                         | Role                                                      |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `VINCERE_CONTEXT.md`                                                         | Short company/voice template (fill in marketing details). |
+| `NT8_PLAYBOOK.md`                                                            | Full NT8 symptom playbook.                                |
+| `Vincere ChatGPT/00_BOT_INSTRUCTIONS.md`                                     | Master tone, IP, firms, escalation.                       |
+| `Vincere ChatGPT/10_ALGO_DESCRIPTIONS (1).md`                                | Authoritative algo one-liners.                            |
+| `Vincere ChatGPT/20_PROP_FIRM_REFERENCE.md`                                  | Prop messaging + ranking rules.                           |
+| `Vincere ChatGPT/Vincere Trading - Prop Firm Structure 2026 - Prop Firms.md` | Wide firm matrix (PDF export).                            |
+| `Vincere ChatGPT/30_TRADE_EXECUTION_HELP.md`                                 | Log CSV review flow.                                      |
+| `Vincere ChatGPT/40_TICK_DATA_AND_SLIPPAGE.md`                               | Tick vs live fills.                                       |
+| `Vincere ChatGPT/50_NINJATRADER_WORKFLOWS.md`                                | NT workflows for Vincere algos.                           |
+| `Vincere ChatGPT/60_VPS_AND_INFRASTRUCTURE.md`                               | VPS positioning.                                          |
+| `Vincere ChatGPT/70_ACCOUNT_CYCLING_TOOL.md`                                 | Cycling tool messaging.                                   |
+| `Vincere ChatGPT/80_BLUEPRINT_TOOL.md`                                       | Blueprint tool messaging.                                 |
+| `Vincere ChatGPT/90_BULLET_BOT.md`                                           | Bullet Bot (auditions).                                   |
+| `Vincere ChatGPT/100_CAM_SERVICE.md`                                         | CAM (mention-if-asked).                                   |
+| `Vincere ChatGPT/Consolidated_Master_SOP.md`                                 | Onboarding / install SOP.                                 |
+| `Vincere ChatGPT/01_Video_Breakdowns.md`                                     | Video index / notes.                                      |
+| `Vincere ChatGPT/02_All_Loom_Transcripts.md`                                 | Large — use as reference, not single prompt payload.      |
+| `Vincere ChatGPT/03_Full_Roadmap_Text.md`                                    | Large roadmap text.                                       |
+| `Vincere ChatGPT/CSM Training.md`, `Ticket Organization.md`, etc.            | Ops / training.                                           |
+| `Vincere ChatGPT/Equity Curve vs Date.md`                                    | Visual reference (`Equity Curve vs Date.png`).            |
+| `knowledge/tool-links.example.yaml`                                          | Allowed URL keys for assistants.                          |
+
 
 ---
 

@@ -21,10 +21,11 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddSingleton<AppRuntimeConfig>();
-        services.AddSingleton<DeveloperAccessGate>();
         services.AddSingleton<INinjaTraderBridge, NinjaTraderIpcBridge>();
         services.AddSingleton<TelegramNotifier>();
         services.AddSingleton<NtLogHealthWatcher>();
+        services.AddSingleton<LicenseVerificationService>();
+        services.AddSingleton<NinjaTraderProcessService>();
         services.AddSingleton<ReportingService>();
         services.AddSingleton<StackApplyService>();
         services.AddSingleton<ExcelImportService>();

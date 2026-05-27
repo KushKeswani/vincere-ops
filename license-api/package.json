@@ -1,0 +1,13 @@
+{
+  "name": "vincere-license-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Server-side Whop license verification proxy for Vincere Ninja Manager.",
+  "type": "commonjs",
+  "scripts": {
+    "check": "node --check api/verify-license.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

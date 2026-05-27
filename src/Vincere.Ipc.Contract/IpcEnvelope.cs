@@ -33,10 +33,16 @@ public sealed class IpcResponse
 public static class IpcCommands
 {
     public const string GetStatus = "GET_STATUS";
+    public const string ListConnections = "LIST_CONNECTIONS";
+    public const string ListAccounts = "LIST_ACCOUNTS";
     public const string EnableAllStrategies = "ENABLE_ALL_STRATEGIES";
     public const string DisableAllStrategies = "DISABLE_ALL_STRATEGIES";
+    public const string ConnectConnection = "CONNECT_CONNECTION";
     public const string RefreshConnection = "REFRESH_CONNECTION";
     public const string DisconnectConnection = "DISCONNECT_CONNECTION";
     public const string ApplyStack = "APPLY_STACK";
+    public const string GetAccountState = "GET_ACCOUNT_STATE";
+    public const string FlattenAll = "FLATTEN_ALL";
+    public const string FlattenAccount = "FLATTEN_ACCOUNT";
     public const string Ping = "PING";
 }

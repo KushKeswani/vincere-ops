@@ -20,6 +20,19 @@ public sealed class NinjaTraderTemplateDiscoveryService
     public IReadOnlyList<string> DiscoverXmlTemplateNames(AppRuntimeConfig config)
     {
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var template in DiscoverXmlTemplates(config))
+            names.Add(template.TemplateName);
+
+        return names.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    /// <summary>
+    /// Returns template names plus the NinjaTrader strategy folder when available
+    /// (<c>templates\Strategy\ARPD\My template.xml</c> => <c>ARPD</c>).
+    /// </summary>
+    public IReadOnlyList<NinjaTraderTemplateInfo> DiscoverXmlTemplates(AppRuntimeConfig config)
+    {
+        var templates = new Dictionary<string, NinjaTraderTemplateInfo>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var dir in GetTemplateScanRoots(config))
         {
@@ -32,7 +45,12 @@ public sealed class NinjaTraderTemplateDiscoveryService
                 {
                     var fn = Path.GetFileNameWithoutExtension(file);
                     if (!string.IsNullOrWhiteSpace(fn))
-                        names.Add(fn);
+                    {
+                        var strategyName = TryGetStrategyTemplateFolder(file);
+                        templates.TryAdd(
+                            $"{strategyName}\u001f{fn}",
+                            new NinjaTraderTemplateInfo(fn, strategyName));
+                    }
                 }
             }
             catch (Exception ex)
@@ -41,7 +59,29 @@ public sealed class NinjaTraderTemplateDiscoveryService
             }
         }
 
-        return names.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
+        return templates.Values
+            .OrderBy(x => x.StrategyName ?? "", StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.TemplateName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static string? TryGetStrategyTemplateFolder(string file)
+    {
+        var directory = Path.GetDirectoryName(file);
+        if (string.IsNullOrWhiteSpace(directory))
+            return null;
+
+        var parts = directory.Split(
+            new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar },
+            StringSplitOptions.RemoveEmptyEntries);
+
+        for (var i = 0; i < parts.Length - 1; i++)
+        {
+            if (parts[i].Equals("Strategy", StringComparison.OrdinalIgnoreCase))
+                return parts[i + 1];
+        }
+
+        return null;
     }
 
     private static IEnumerable<string> GetTemplateScanRoots(AppRuntimeConfig config)
@@ -63,3 +103,5 @@ public sealed class NinjaTraderTemplateDiscoveryService
             yield return t;
     }
 }
+
+public sealed record NinjaTraderTemplateInfo(string TemplateName, string? StrategyName);

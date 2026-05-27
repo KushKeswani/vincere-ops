@@ -13,6 +13,7 @@ Build a reliable "operator control plane" for NinjaTrader-based prop trading wor
 - reproducible setup for redeploy/recovery
 
 The long-term goal is not just "send one IPC command." It is to create an operationally safe system where:
+
 - an operator can hand over to another operator/AI quickly,
 - setup and restore are one-command,
 - breakages are diagnosable in minutes (not hours),
@@ -21,6 +22,7 @@ The long-term goal is not just "send one IPC command." It is to create an operat
 ## 2) Product Scope (Current vs Target)
 
 ### Current
+
 - WPF desktop app for onboarding + dashboard + account/stack editing
 - Excel import of stack rows
 - local SQLite persistence
@@ -29,6 +31,7 @@ The long-term goal is not just "send one IPC command." It is to create an operat
 - command scripts for pull/setup/install/test
 
 ### Target
+
 - stable IPC under real VPS constraints
 - deterministic NT Add-On lifecycle
 - richer validation before apply
@@ -44,21 +47,21 @@ The long-term goal is not just "send one IPC command." It is to create an operat
 ## 4) What We Tried (Timeline-style)
 
 1. Initial setup and repo scaffolding:
-   - operator app + core services + IPC contract + setup docs/scripts
+  - operator app + core services + IPC contract + setup docs/scripts
 2. Added NT Add-On copy/install scripts:
-   - improved folder detection and OneDrive/Documents path handling
+  - improved folder detection and OneDrive/Documents path handling
 3. Fixed Add-On compile compatibility:
-   - .NET Framework-safe APIs in NinjaScript context
+  - .NET Framework-safe APIs in NinjaScript context
 4. Fixed Add-On load discovery:
-   - moved add-on class into `NinjaTrader.NinjaScript.AddOns` namespace
+  - moved add-on class into `NinjaTrader.NinjaScript.AddOns` namespace
 5. Added startup traces/logging:
-   - startup and loop traces in NT logs/messages
+  - startup and loop traces in NT logs/messages
 6. Added IPC resilience:
-   - retries/timeouts/backoff on app client side
+  - retries/timeouts/backoff on app client side
 7. Added stack UX improvements:
-   - template dropdown, period fields, apply filters
+  - template dropdown, period fields, apply filters
 8. Added template discovery:
-   - scan `NinjaTrader 8\templates\**\*.xml`
+  - scan `NinjaTrader 8\templates\**\*.xml`
 9. Added smoke tests and one-command sync scripts
 10. Added context handoff docs + prompts
 
@@ -80,6 +83,7 @@ The architecture is "local-first ops control":
 - Scripts are deployment glue and operator ergonomics.
 
 This separation is good, but reliability depends on robust boundaries:
+
 - contract version visibility,
 - startup health checks,
 - explicit, repeatable environment sync.
@@ -87,6 +91,7 @@ This separation is good, but reliability depends on robust boundaries:
 ## 7) Why This Matters for Other AIs
 
 Any AI continuing work should optimize for:
+
 - operational certainty over elegant abstractions,
 - transparent diagnostics over silent fallbacks,
 - scripts that reduce manual operator memory load.
@@ -96,18 +101,18 @@ The quality bar is "can a tired human at 8 AM on VPS recover in 5 minutes."
 ## 8) Suggested Next Milestones
 
 1. IPC hardening milestone
-   - add duplicate-class detector script
-   - add add-on self-health endpoint (`GET_STATUS` richer payload)
-   - add client-visible latency and last-failure details in UI
+  - add duplicate-class detector script
+  - add add-on self-health endpoint (`GET_STATUS` richer payload)
+  - add client-visible latency and last-failure details in UI
 2. Data safety milestone
-   - auto backup `vincere.db` before sync/setup writes
-   - backup/restore commands in scripts
+  - auto backup `vincere.db` before sync/setup writes
+  - backup/restore commands in scripts
 3. Apply execution milestone
-   - finalize `APPLY_STACK` behavior for real template attach flow
-   - preflight validations before send
+  - finalize `APPLY_STACK` behavior for real template attach flow
+  - preflight validations before send
 4. Operator UX milestone
-   - guided "red/yellow/green" diagnostics panel
-   - integrated script runner logs in-app
+  - guided "red/yellow/green" diagnostics panel
+  - integrated script runner logs in-app
 
 ## 9) Definition of "Project Healthy"
 
@@ -115,4 +120,3 @@ The quality bar is "can a tired human at 8 AM on VPS recover in 5 minutes."
 - Smoke test passes consistently.
 - PING + apply round-trip diagnostics are visible and unambiguous.
 - Context docs stay current after each meaningful change.
-

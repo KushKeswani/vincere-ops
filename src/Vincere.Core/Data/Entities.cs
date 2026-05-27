@@ -17,8 +17,23 @@ public sealed class AppStateEntity
     /// <summary>Eastern calendar yyyy-MM-dd — enable-all fired.</summary>
     public string? LastEnableAllDayIso { get; set; }
 
+    /// <summary>Eastern calendar yyyy-MM-dd — stack setup already applied to NinjaTrader.</summary>
+    public string? LastStackApplyDayIso { get; set; }
+
+    /// <summary>Current account-cycling period used by scheduled setup: Period1 or Period2.</summary>
+    public string? ActiveTradingPeriod { get; set; }
+
+    /// <summary>Eastern calendar yyyy-MM-dd — latest day when the active period changed.</summary>
+    public string? LastAccountCycleIso { get; set; }
+
     /// <summary>Eastern calendar yyyy-MM-dd — EOD ingest/report fired.</summary>
     public string? LastEodDayIso { get; set; }
+
+    /// <summary>Eastern calendar yyyy-MM-dd — scheduled close-all already fired.</summary>
+    public string? LastCloseAllDayIso { get; set; }
+
+    /// <summary>Eastern calendar yyyy-MM-dd — scheduled NinjaTrader reset already fired.</summary>
+    public string? LastNinjaTraderResetIso { get; set; }
 
     /// <summary>Eastern Friday yyyy-MM-dd — weekly digest fired.</summary>
     public string? LastWeeklyReportFridayIso { get; set; }
@@ -48,6 +63,7 @@ public sealed class StackStrategyRowEntity
     public bool IncludeInApply { get; set; } = true;
 
     public string StrategyTypeName { get; set; } = "";
+    public string Instrument { get; set; } = "";
     public string TemplateName { get; set; } = "";
     public string InstanceLabel { get; set; } = "";
     public string? AccountAttachment { get; set; }

@@ -16,6 +16,9 @@ public sealed class VincereDbContext : DbContext
     {
         modelBuilder.Entity<AppStateEntity>().HasKey(x => x.Id);
         modelBuilder.Entity<TradingAccountEntity>().HasKey(x => x.Id);
+        modelBuilder.Entity<TradingAccountEntity>()
+            .HasIndex(x => x.RawAccountNumber)
+            .IsUnique();
         modelBuilder.Entity<StackStrategyRowEntity>().HasKey(x => x.Id);
         modelBuilder.Entity<PerformanceDailyEntity>().HasKey(x => x.Id);
         modelBuilder.Entity<ExcelAccountMappingEntity>().HasKey(x => x.Id);

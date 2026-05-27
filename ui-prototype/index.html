@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vincere Ninja Manager UI Prototype</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <section class="brand">
+          <img class="brand-logo" src="../src/Vincere.Operator/Assets/logo.png" alt="" />
+          <div>
+            <div class="brand-name">Vincere Trading Ninja Manager</div>
+            <div class="nt-state"><span class="status-dot"></span>NinjaTrader: Managed</div>
+          </div>
+        </section>
+
+        <section class="bot-pill" aria-label="Bot status">
+          <span>Bot:</span>
+          <strong id="botState">Stopped</strong>
+        </section>
+
+        <section class="session-meta">
+          <span>License: --</span>
+          <strong id="clock">--:--:--</strong>
+        </section>
+      </header>
+
+      <div class="workspace">
+        <nav class="sidebar" aria-label="Main sections">
+          <button class="nav-item active" data-panel="dashboard">Dashboard</button>
+          <button class="nav-item" data-panel="accounts">Accounts</button>
+          <button class="nav-item" data-panel="stack">Edit Stack</button>
+          <button class="nav-item" data-panel="blueprint">Blueprint Import</button>
+          <button class="nav-item" data-panel="settings">Settings</button>
+          <button class="nav-item" data-panel="developer">Developer</button>
+        </nav>
+
+        <section class="content">
+          <section class="panel-view active" id="dashboard">
+            <div class="dashboard-grid">
+              <div class="main-column">
+                <section class="toolbar panel">
+                  <button class="button primary" id="startBot">Start Bot</button>
+                  <button class="button" id="stopBot" disabled>Stop Bot</button>
+                  <button class="button">Connect Prop Firms</button>
+                  <button class="button">Disconnect Prop Firms</button>
+                  <button class="button">Enable Algos</button>
+                  <button class="button">Disable Algos</button>
+                  <button class="button">Test IPC</button>
+                  <p class="toolbar-status" id="toolbarStatus">UI prototype mode. No live NinjaTrader commands are sent.</p>
+                </section>
+
+                <section class="activity panel">
+                  <div class="section-heading">
+                    <h1>Activity Feed</h1>
+                    <span class="warning">DRY RUN</span>
+                  </div>
+                  <div class="log-lines">
+                    <p>Automation control is armed from this dashboard. Health checks watch NinjaTrader logs for freezes, stale data, disconnects, and broker feed failures.</p>
+                    <p>Risk controls, blueprint import, stack editing, scheduled enable, and close-all rules are configured through the panels in this manager.</p>
+                    <pre>IPC pipe: \\.\pipe\vincere-operator-ipc
+Last scan: waiting for NinjaTrader add-on reload
+Default close-all time: 16:55 ET</pre>
+                  </div>
+                </section>
+
+                <section class="paths panel">
+                  <span>Runtime path:</span>
+                  <strong>C:\Users\Administrator\AppData\Local\Vincere.Operator</strong>
+                </section>
+              </div>
+
+              <aside class="control-rail panel">
+                <h2>Manager Controls</h2>
+                <div class="form-section">
+                  <h3>EOD Controls</h3>
+                  <label class="check-row"><input type="checkbox" checked /> Close all before EOD</label>
+                  <label>Close-all time (ET)<input value="16:55" /></label>
+                  <label class="check-row"><input type="checkbox" checked /> Avoid overnight holds</label>
+                </div>
+                <div class="divider"></div>
+                <div class="form-section">
+                  <h3>Risk Limits</h3>
+                  <label>Risk limit scope<input value="Per account" /></label>
+                  <label>Daily loss limit<input value="$0.00" /></label>
+                  <label>Daily profit limit<input value="$0.00" /></label>
+                  <label>Unrealized loss limit<input value="$0.00" /></label>
+                  <label>Unrealized profit limit<input value="$0.00" /></label>
+                  <button class="button primary full">Save Setup</button>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="panel-view" id="accounts">
+            <div class="accounts-grid">
+              <aside class="panel list-panel">
+                <h1>Accounts</h1>
+                <button class="account-row active">LFE0506703503008</button>
+                <button class="account-row">LFE0506703503010</button>
+                <button class="account-row">Lucid Trading #4</button>
+              </aside>
+              <section class="panel table-panel">
+                <table>
+                  <thead>
+                    <tr><th>Date (Eastern)</th><th>PnL</th><th>Trades</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>2026-05-22</td><td class="profit">$1,095.00</td><td>11</td></tr>
+                    <tr><td>2026-05-21</td><td class="loss">($420.00)</td><td>7</td></tr>
+                    <tr><td>2026-05-20</td><td class="profit">$830.00</td><td>9</td></tr>
+                  </tbody>
+                </table>
+              </section>
+            </div>
+          </section>
+
+          <section class="panel-view" id="stack">
+            <section class="panel stack-header">
+              <label>Select account
+                <select>
+                  <option>LFE0506703503008</option>
+                  <option>LFE0506703503010</option>
+                  <option>Lucid Trading #4</option>
+                </select>
+              </label>
+              <label>Apply to NT
+                <select>
+                  <option>All checked rows</option>
+                  <option>Period 1 only</option>
+                  <option>Period 2 only</option>
+                </select>
+              </label>
+              <button class="button">Refresh Templates</button>
+            </section>
+            <p class="hint">Apply / Period controls what is sent to NinjaTrader. Templates come from .env, NinjaTrader template XML files, and saved stacks.</p>
+            <section class="panel table-panel">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Apply</th><th>Period</th><th>Strategy type</th><th>Instrument</th><th>Template</th><th>Instance label</th><th>Account attach</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input type="checkbox" checked /></td><td>Period 1</td><td>IFSP (PF)</td><td>NQ</td><td>Vincere_Default</td><td>IFSP NQ</td><td>Lucid Trading #4</td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" checked /></td><td>Period 2</td><td>DJDR (PF)</td><td>YM</td><td>PropFirm_CloseSafe</td><td>DJDR YM</td><td>LFE0506703503008</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section class="button-row">
+              <button class="button">Add Row</button>
+              <button class="button">Delete Selected</button>
+              <button class="button">Save Stack</button>
+              <button class="button primary">Apply to NinjaTrader</button>
+            </section>
+          </section>
+
+          <section class="panel-view" id="blueprint">
+            <section class="panel blueprint-drop" id="dropZone">
+              <h1>Blueprint Import</h1>
+              <p id="blueprintStatus">Drag the account cycling blueprint here or choose an .xlsx or .csv file.</p>
+              <input id="blueprintFileInput" class="visually-hidden" type="file" accept=".xlsx,.csv" />
+              <button class="button primary" id="chooseBlueprint">Choose Blueprint</button>
+            </section>
+            <section class="panel mapping-panel" id="blueprintMapping">
+              <div class="mapping-summary">
+                <strong>No blueprint loaded</strong>
+                <span>Choose or drop a blueprint to preview account mappings.</span>
+              </div>
+              <div class="mapping-list" id="mappingList"></div>
+              <label class="check-row"><input id="replaceStacks" type="checkbox" checked /> Replace existing stack for matched accounts</label>
+              <button class="button" id="importStacks" disabled>Import Stacks</button>
+            </section>
+          </section>
+
+          <section class="panel-view" id="settings">
+            <div class="settings-grid">
+              <section class="panel settings-form">
+                <h1>Prop Firm Setup</h1>
+                <label>Prop firm<input value="Lucid Trading" /></label>
+                <label>Account type<input value="Prop firm evaluation" /></label>
+                <label>Trading platform<input value="NinjaTrader" /></label>
+                <label>Selected prop connection(s)<input value="Lucid, Rithmic" /></label>
+                <button class="button primary full">Save Prop Firm Settings</button>
+              </section>
+              <section class="scan-area">
+                <div class="panel scan-bar">
+                  <button class="button primary">Scan NinjaTrader</button>
+                  <span>Scan for available NinjaTrader connections and accounts.</span>
+                </div>
+                <div class="scan-lists">
+                  <section class="panel">
+                    <h2>Available Prop Firm Connections</h2>
+                    <button class="scan-row active">Lucid</button>
+                    <button class="scan-row">Rithmic</button>
+                    <button class="scan-row">Tradovate</button>
+                  </section>
+                  <section class="panel">
+                    <h2>Available Accounts</h2>
+                    <button class="scan-row active">LFE0506703503008</button>
+                    <button class="scan-row">LFE0506703503010</button>
+                    <button class="scan-row">Sim101</button>
+                  </section>
+                </div>
+                <div class="panel button-row">
+                  <button class="button">Use Selected Connections</button>
+                  <button class="button">Import Selected Accounts</button>
+                  <button class="button primary">Save All Settings</button>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="panel-view" id="developer">
+            <section class="panel developer-panel">
+              <h1>Developer Tools</h1>
+              <p>Passcode-protected env editor. The passcode is never logged.</p>
+              <button class="button">Open Developer Tools</button>
+            </section>
+          </section>
+        </section>
+      </div>
+
+      <footer class="statusbar">
+        <button>Open logs</button>
+        <span id="statusText">Ready</span>
+        <strong>vincere-ops</strong>
+      </footer>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>

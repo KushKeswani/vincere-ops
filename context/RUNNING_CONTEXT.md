@@ -5,6 +5,7 @@ Last updated: 2026-04-28
 This file is a living handoff log for humans and other AI agents. Update it after meaningful repo/debug changes.
 
 Related context docs:
+
 - `context/PROJECT_BRIEF.md` (big-picture goals, what we tried, target state)
 - `context/CODEBASE_BREAKDOWN.md` (technical code map and file responsibilities)
 
@@ -13,6 +14,7 @@ Related context docs:
 `Vincere Ops` is a Windows WPF operator app for NinjaTrader 8.
 
 Main responsibilities:
+
 - Manage account stacks (strategy rows, templates, labels, apply flags, period selection)
 - Import stack rows from Excel
 - Run timed orchestration tasks (connection refresh, enable-all, EOD digest hooks)
@@ -31,23 +33,27 @@ Main responsibilities:
 ## 3) Current runtime architecture
 
 Operator app:
+
 - Published EXE path: `%LOCALAPPDATA%\Programs\VincereOps\Vincere.Operator.exe`
 - Runtime data path: `%LocalAppData%\Vincere.Operator\`
   - `.env`
   - `vincere.db`
 
 NinjaTrader side:
+
 - Add-On C# copied into:
   - `<Documents>\NinjaTrader 8\bin\Custom\AddOns\VincereOperator\VincereOperatorIpcAddOn.cs`
 - Must compile in NinjaScript Editor and restart NT.
 
 IPC:
+
 - App client: `src/Vincere.Core/Services/NinjaTraderIpcBridge.cs`
 - Add-On server: `nt8-addon/VincereOperatorIpcAddOn.cs`
 
 ## 4) Key changes made in this chat
 
 ### Setup/ops scripts
+
 - Added/updated:
   - `scripts/Setup-VincereOps.ps1`
   - `scripts/Pull-VincereOps.ps1`
@@ -59,24 +65,27 @@ IPC:
   - `scripts/Sync-VincereOps.cmd`
 
 ### Stack UX/data model
+
 - Added stack row controls:
   - `IncludeInApply` flag
   - `TradingPeriod` (`Period1`, `Period2`, or empty)
 - Added apply filter selection in UI (all checked / Period1 / Period2)
 - Added template dropdown population from:
-  1) `.env` explicit list
-  2) discovered NinjaTrader template XML files
-  3) templates already stored in DB
+  1. `.env` explicit list
+  2. discovered NinjaTrader template XML files
+  3. templates already stored in DB
 - Added DB patching to add new columns without migrations:
   - `src/Vincere.Core/Infrastructure/VincereSchemaPatcher.cs`
 
 ### Template discovery
+
 - Added:
   - `src/Vincere.Core/Infrastructure/NinjaTraderInstallationPaths.cs`
   - `src/Vincere.Core/Services/NinjaTraderTemplateDiscoveryService.cs`
 - Scans `...\NinjaTrader 8\templates\**\*.xml` and surfaces names into template dropdown.
 
 ### IPC reliability/debugging
+
 - Increased and parameterized app-side timeouts/retries:
   - `VINCERE_IPC_CONNECT_MS`
   - `VINCERE_IPC_RETRY_ATTEMPTS`
@@ -94,11 +103,13 @@ IPC:
 Even with Add-On startup visible, smoke tests still showed connection timeouts in some runs.
 
 Observed behaviors:
+
 - NT messages showed add-on startup lines.
 - Some runs showed repeated `All pipe instances are busy`.
 - Smoke test in CMD timed out connecting.
 
 Likely contributors:
+
 - stale duplicate add-on class copies under NT custom source tree
 - stale NT compile artifacts (`bin/obj`)
 - pipe-name mismatch (`VincereOperator` vs `VincereOperator2`)
@@ -107,21 +118,22 @@ Likely contributors:
 ## 6) Current recommended debug sequence
 
 1. Ensure single source copy:
-   - search for multiple `VincereOperatorIpcAddOn.cs` copies in `...\NinjaTrader 8\bin\Custom\`
-   - ensure only one class definition `class VincereOperatorIpcAddOn`
+  - search for multiple `VincereOperatorIpcAddOn.cs` copies in `...\NinjaTrader 8\bin\Custom\`
+  - ensure only one class definition `class VincereOperatorIpcAddOn`
 2. Remove `...\bin\Custom\bin` and `...\bin\Custom\obj`.
 3. Run one-command sync:
-   - `.\scripts\Sync-VincereOps.cmd`
+  - `.\scripts\Sync-VincereOps.cmd`
 4. Compile in NinjaScript Editor.
 5. Restart NinjaTrader.
 6. Run smoke test:
-   - `.\scripts\Test-VincereIpcSmoke.cmd <pipe-name>`
+  - `.\scripts\Test-VincereIpcSmoke.cmd <pipe-name>`
 7. Confirm same Windows identity:
-   - `whoami` in shell and NT session context
+  - `whoami` in shell and NT session context
 
 ## 7) Important config keys
 
 In `%LocalAppData%\Vincere.Operator\.env`:
+
 - `VINCERE_IPC_PIPE_NAME`
 - `VINCERE_IPC_CONNECT_MS`
 - `VINCERE_IPC_RETRY_ATTEMPTS`
@@ -160,4 +172,3 @@ In `%LocalAppData%\Vincere.Operator\.env`:
 - `7991550` template discovery from NT template folders
 - `849fea5` IPC retry/timeout resilience
 - `ec9d320` stack period/apply/template UX improvements
-

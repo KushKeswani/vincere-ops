@@ -1,0 +1,7 @@
+*
+!api/
+!api/**
+!license-api/
+!license-api/**
+!package.json
+!vercel.json

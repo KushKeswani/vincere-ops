@@ -1,0 +1,13 @@
+{
+  "name": "vincere-license-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vercel API wrapper for Vincere Ninja Manager license verification.",
+  "type": "commonjs",
+  "scripts": {
+    "check:license-api": "node --check license-api/api/verify-license.js && node --check api/verify-license.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

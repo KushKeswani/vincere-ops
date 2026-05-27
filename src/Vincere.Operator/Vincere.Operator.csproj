@@ -6,7 +6,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon />
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <AssemblyTitle>Vincere Ninja Manager - Kush</AssemblyTitle>
+    <Product>Vincere Ninja Manager - Kush</Product>
+    <FileDescription>Vincere Ninja Manager - Kush</FileDescription>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
@@ -18,6 +21,29 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Vincere.Core\Vincere.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\scripts\Invoke-NinjaTraderUiStackSetup.ps1">
+      <Link>scripts\Invoke-NinjaTraderUiStackSetup.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\..\scripts\Start-NinjaTraderWithOptionalLogin.ps1">
+      <Link>scripts\Start-NinjaTraderWithOptionalLogin.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\..\scripts\Set-NinjaTraderStrategiesEnabled.ps1">
+      <Link>scripts\Set-NinjaTraderStrategiesEnabled.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

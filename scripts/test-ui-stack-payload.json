@@ -1,0 +1,17 @@
+{
+  "connectionName": "Lucid",
+  "account": "LFE0506703503010",
+  "licenseKey": "TEST-LICENSE-KEY",
+  "dryRun": true,
+  "applyPeriodFilter": "AllEnabled",
+  "strategies": [
+    {
+      "strategyType": "CDGN",
+      "instrument": "MNQ JUN26",
+      "template": "",
+      "instanceLabel": "Vincere UI Probe CDGN",
+      "account": "LFE0506703503010",
+      "tradingPeriod": "Period2"
+    }
+  ]
+}

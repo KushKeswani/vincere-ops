@@ -33,7 +33,7 @@ public static class DotEnvParser
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
         using var sw = new StreamWriter(path, false);
-        sw.WriteLine("# Vincere Operator — do not commit. Regenerated from Developer UI or manual edit.");
+        sw.WriteLine("# Vincere Operator — do not commit. Regenerated from setup or manual edit.");
         foreach (var kv in values.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(kv.Value))

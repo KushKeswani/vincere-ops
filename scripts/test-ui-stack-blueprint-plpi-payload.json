@@ -1,0 +1,17 @@
+{
+  "connectionName": "Apex; Lucid",
+  "account": "APEX1526440000023",
+  "licenseKey": "test-bypass",
+  "dryRun": true,
+  "applyPeriodFilter": "AllEnabled",
+  "strategies": [
+    {
+      "strategyType": "PLPI",
+      "instrument": "PL",
+      "template": "1 - PLPI (PL) - 5 Min Candle - Low Risk - v1 - Period 0",
+      "instanceLabel": "PLPI PL",
+      "account": "APEX1526440000023",
+      "tradingPeriod": "Period1"
+    }
+  ]
+}

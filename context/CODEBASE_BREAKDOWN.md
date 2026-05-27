@@ -16,6 +16,7 @@ Practical walkthrough of the repository for engineers and AI agents.
 ## `src/Vincere.Operator` (WPF UI)
 
 Main files:
+
 - `App.xaml.cs`
   - app startup
   - ensures DB exists through core extension
@@ -34,6 +35,7 @@ Main files:
   - lock gate for developer actions
 
 UI responsibilities:
+
 - display runtime state
 - collect operator inputs
 - call core services
@@ -42,6 +44,7 @@ UI responsibilities:
 ## `src/Vincere.Core` (Domain + Infra + Data + Services)
 
 ### Data
+
 - `Data/Entities.cs`
   - `AppStateEntity` scheduler checkpoints
   - `TradingAccountEntity`
@@ -52,6 +55,7 @@ UI responsibilities:
   - EF model + DB sets
 
 ### Infrastructure
+
 - `Infrastructure/AppPaths.cs`
   - local app paths
 - `Infrastructure/DotEnvParser.cs`
@@ -66,6 +70,7 @@ UI responsibilities:
   - discover NT paths under Documents/OneDrive style folders
 
 ### Services
+
 - `Services/NinjaTraderIpcBridge.cs`
   - named-pipe client
   - retries/timeout behavior
@@ -87,6 +92,7 @@ UI responsibilities:
   - report/digest support
 
 ### Composition
+
 - `ServiceCollectionExtensions.cs`
   - DI graph
   - DB ensure/create
@@ -109,6 +115,7 @@ UI responsibilities:
   - add-on install/compile usage
 
 Important:
+
 - this code is compiled by NinjaTrader (not the main `dotnet build`)
 - compatibility is .NET Framework/NinjaScript environment
 
@@ -130,11 +137,13 @@ Purpose: make VPS operator workflows one-command and repeatable.
 ## 5) Runtime Data Model (operator perspective)
 
 Core local artifacts in `%LocalAppData%\Vincere.Operator`:
+
 - `.env` (config)
 - `vincere.db` (accounts/stacks/perf/app state)
 - logs directory
 
 Main flow:
+
 1. User edits/imports stack rows
 2. Rows saved to SQLite
 3. Apply action builds payload (period/apply filtered)
@@ -162,9 +171,8 @@ Main flow:
 2. Read this file (`context/CODEBASE_BREAKDOWN.md`)
 3. Read `README.md` + `SETUP_WINDOWS.md`
 4. Read IPC boundary files:
-   - `src/Vincere.Ipc.Contract/IpcEnvelope.cs`
-   - `src/Vincere.Core/Services/NinjaTraderIpcBridge.cs`
-   - `nt8-addon/VincereOperatorIpcAddOn.cs`
+  - `src/Vincere.Ipc.Contract/IpcEnvelope.cs`
+  - `src/Vincere.Core/Services/NinjaTraderIpcBridge.cs`
+  - `nt8-addon/VincereOperatorIpcAddOn.cs`
 5. Run/build locally where possible
 6. Make smallest safe change first and validate with smoke script
-

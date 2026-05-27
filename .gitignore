@@ -27,6 +27,10 @@ logs/
 *.db
 *.db-shm
 *.db-wal
+even-terminal-*.log
+
+## Local reference dumps / installers
+VincereUpdater*/
 
 ## Rider / VS Code
 .idea/
