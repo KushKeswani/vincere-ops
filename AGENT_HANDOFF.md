@@ -74,6 +74,8 @@ When the new ready schedule is enabled, the older separate connection, stack-app
   - Verifies the Get Algos Ready schedule controls and explicit strategy-enable safety gate in the screenshot-backed readiness harness.
 - `scripts/Send-AgentCheckpointTelegram.py`
   - Adds a non-secret checkpoint sender for agent status updates; it reads Telegram token/chat values from environment variables or the Agent Phoenix ProjectX `.env`.
+- `scripts/Invoke-NinjaTraderUiStackSetup.ps1`
+  - Hardened instrument selection by finding the NinjaTrader instrument selector after scrolling/focusing the Properties panel, typing the root instrument, and using the current-contract fallback only when the futures suggestion is unavailable.
 - `src/Vincere.Core/Data/Entities.cs`
   - Added persistent marker for the last ready workflow day.
 - `src/Vincere.Core/Infrastructure/AppRuntimeConfig.cs`
@@ -104,10 +106,10 @@ dotnet build .\src\Vincere.Operator\Vincere.Operator.csproj -c Release --no-rest
 
 ### 2026-05-28 Verification Baseline
 
-- Commit deployed on VPS: `57d1e2d` (`Gate ready workflow strategy enable`).
+- Commit deployed on VPS: `1d22e2f` (`Audit stack apply batches`).
 - VPS repo: `C:\Users\Administrator\Desktop\vincere-ops`.
 - Installed app redeployed from the clean committed release build.
-- Deployment backup: `C:\Users\Administrator\Desktop\vincere-ops\backups\VincereOps-installed-20260528-175811`.
+- Deployment backup: `C:\Users\Administrator\Desktop\vincere-ops\backups\VincereOps-installed-20260528-181059`.
 - Target Windows build passed:
 
 ```powershell
@@ -117,7 +119,7 @@ dotnet build .\src\Vincere.Operator\Vincere.Operator.csproj -c Release --no-rest
 Result: `0 Warning(s), 0 Error(s)`.
 
 - Safe screenshot-backed harness report:
-  `C:\Users\Administrator\Desktop\vincere-ops\logs\production-readiness\20260528-175953\PRODUCTION_READINESS_REPORT.md`
+  `C:\Users\Administrator\Desktop\vincere-ops\logs\production-readiness\20260528-181142\PRODUCTION_READINESS_REPORT.md`
 - Harness summary: `PASS=42, FAIL=0, WARN=1, SKIP=10`.
 - Verified controls:
   - `Automatically get algos ready each trading day`.
@@ -129,11 +131,10 @@ Result: `0 Warning(s), 0 Error(s)`.
   - Enable what-if: would set `3 of 3` rows enabled.
   - Disable what-if: all `3` strategy rows were already disabled.
 - Running process state after deploy/test:
-  - `NinjaTrader`, PID `13916`, responding.
-  - `Vincere.Operator`, PID `15432`, responding.
+  - `NinjaTrader`, PID `13916`, responding in the earlier 2026-05-28 process check.
+  - `Vincere.Operator`, PID `15432`, responding in the earlier 2026-05-28 process check.
 - Temporary one-off scheduled test tasks were removed after the run.
-
-Note: the Add All batch audit hardening was added after this baseline report and still needs the next VPS release build plus a supervised Add All test before it can be considered verified.
+- The Add All batch audit hardening builds and is deployed, but still needs a supervised Add All test before it can be considered behaviorally verified.
 
 Deployment target:
 

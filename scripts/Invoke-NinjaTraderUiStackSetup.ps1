@@ -643,59 +643,67 @@ function Set-Account($Dialog, [string]$Account) {
     Set-ComboBoxValue $combo $Account "account"
 }
 
+function Find-InstrumentSelector($Dialog) {
+    $selector = Find-DescendantByAutomationId $Dialog "InstrumentSelector"
+    if ($null -ne $selector) { return $selector }
+
+    $properties = Find-DescendantByName $Dialog "Properties"
+    if (Test-ElementVisible $properties) {
+        try { $properties.SetFocus() } catch {}
+        Click-ElementCenter $properties "Properties panel"
+        Start-Sleep -Milliseconds 150
+        [System.Windows.Forms.SendKeys]::SendWait("^{HOME}")
+        Start-Sleep -Milliseconds 250
+        [System.Windows.Forms.SendKeys]::SendWait("{HOME}")
+        Start-Sleep -Milliseconds 250
+    } else {
+        Bring-ToForeground $Dialog
+        [System.Windows.Forms.SendKeys]::SendWait("^{HOME}")
+        Start-Sleep -Milliseconds 250
+    }
+
+    $selector = Find-DescendantByAutomationId $Dialog "InstrumentSelector"
+    if ($null -ne $selector) { return $selector }
+
+    $items = $Dialog.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants,
+        [System.Windows.Automation.Condition]::TrueCondition)
+    for ($i = 0; $i -lt $items.Count; $i++) {
+        $item = $items.Item($i)
+        $automationId = [string]$item.Current.AutomationId
+        $name = [string]$item.Current.Name
+        $className = [string]$item.Current.ClassName
+        if ($automationId -match "InstrumentSelector" -or
+            $className -match "InstrumentSelector" -or
+            $name -match "^Instrument$") {
+            return $item
+        }
+    }
+
+    return $null
+}
+
 function Set-Instrument($Dialog, [string]$Instrument) {
     if ([string]::IsNullOrWhiteSpace($Instrument)) { return }
-    $selector = Find-DescendantByAutomationId $Dialog "InstrumentSelector"
+    $selector = Find-InstrumentSelector $Dialog
     if ($null -eq $selector) { throw "instrument selector not found." }
 
     $instrumentRoot = Get-InstrumentRoot $Instrument
     if ([string]::IsNullOrWhiteSpace($instrumentRoot)) { throw "instrument root could not be resolved from '$Instrument'." }
-    $currentContract = Resolve-CurrentContractName $instrumentRoot
 
     Try-ScrollIntoView $selector
     Start-Sleep -Milliseconds 400
-    $selector = Find-DescendantByAutomationId $Dialog "InstrumentSelector"
+    $selector = Find-InstrumentSelector $Dialog
+    if ($null -eq $selector) { throw "instrument selector not found after scroll." }
     $selectorTextBox = Find-DescendantByAutomationId $selector "textBox"
     if ($null -eq $selectorTextBox) { $selectorTextBox = $selector }
-
-    Set-ElementValue $selectorTextBox $currentContract "instrument selector"
-    Start-Sleep -Milliseconds 150
-    $focusedInstrument = $false
-    try {
-        $selectorTextBox.SetFocus()
-        $focusedInstrument = $true
-    } catch {}
-    if (-not $focusedInstrument -and (Test-ElementVisible $selectorTextBox)) {
-        Click-ElementCenter $selectorTextBox "instrument selector text box"
-        $focusedInstrument = $true
-    }
-    if (-not $focusedInstrument) {
-        try {
-            $selector.SetFocus()
-            $focusedInstrument = $true
-        } catch {}
-    }
-    if (-not $focusedInstrument -and (Test-ElementVisible $selector)) {
-        Click-ElementCenter $selector "instrument selector"
-    }
-    [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
-    Start-Sleep -Milliseconds 700
-    $results.Add("selected explicit current contract '$currentContract' for '$instrumentRoot' instrument editor") | Out-Null
-    return
-
-    $selector.SetFocus()
-    Start-Sleep -Milliseconds 150
-    [System.Windows.Forms.SendKeys]::SendWait("^a")
-    Start-Sleep -Milliseconds 100
-    [System.Windows.Forms.SendKeys]::SendWait($instrumentRoot)
+    Set-ElementValue $selectorTextBox $instrumentRoot "instrument selector"
     Start-Sleep -Milliseconds 900
 
     $futuresSuggestion = Find-InstrumentFuturesSuggestion $Dialog $selector $instrumentRoot
     if ($null -eq $futuresSuggestion) {
         $currentContract = Resolve-CurrentContractName $instrumentRoot
-        [System.Windows.Forms.SendKeys]::SendWait("^a")
-        Start-Sleep -Milliseconds 100
-        [System.Windows.Forms.SendKeys]::SendWait($currentContract)
+        Set-ElementValue $selectorTextBox $currentContract "instrument selector fallback"
         Start-Sleep -Milliseconds 300
         [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
         Start-Sleep -Milliseconds 700
