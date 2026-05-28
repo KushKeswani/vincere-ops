@@ -235,13 +235,14 @@ Ready:
 - Strategies were verified disabled after cleanup.
 - The Get Algos Ready schedule UI and runtime configuration are implemented.
 - Get Algos Ready now leaves strategies disabled by default unless `READY_ALGOS_ENABLE_STRATEGIES=true`.
+- Add All now stops on the first failed account and writes a JSON batch audit under `logs/stack-apply-batches/` so support can see which accounts were attempted.
 
 Blocked:
 
 - Add All automation is not production-ready yet.
 - NinjaTrader UI automation failed to select instruments for APEX accounts.
 - The LFE account failed because the template load window did not open.
-- Add All can leave partial strategy rows behind, so unattended live enabling should remain disabled until the UI automation failures are fixed and retested.
+- Add All can still leave strategy rows from the failed account itself, so unattended live enabling should remain disabled until row verification and rollback/cleanup are implemented and retested.
 
 ## Safety Notes
 
@@ -256,7 +257,7 @@ Blocked:
 
 1. Fix NinjaTrader instrument selector detection in the Add All UI automation.
 2. Fix or harden template load handling for the LFE account.
-3. Add cleanup logic for partial strategy rows created during failed Add All runs, if NinjaTrader permits safe removal through UI automation.
+3. Add row verification and cleanup/rollback logic for partial strategy rows created during failed Add All runs, if NinjaTrader permits safe removal through UI automation.
 4. Re-run the safe readiness harness.
 5. Re-run the Add All test only after the above automation fixes.
 6. Keep live strategy enabling disabled until Add All completes cleanly and the user explicitly approves a live enable test.
