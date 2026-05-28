@@ -5,6 +5,32 @@ Repo: vincere-ops
 VPS workspace: `C:\Users\Administrator\Desktop\vincere-ops`
 Baseline verified commit: `1885362` or newer
 
+## Agent Handoff Policy
+
+Every agent must treat this file as the persistent project memory.
+
+At the start of every session:
+
+1. Read `AGENT_HANDOFF.md` before editing code.
+2. Read only the linked docs and files relevant to the current task.
+3. Check the current repo state with `git status --short`.
+4. Do not revert user, worker, or prior-agent changes unless explicitly asked.
+5. Prefer focused changes over broad refactors.
+
+During work, update documentation whenever the work changes any of the following:
+
+- Architecture.
+- Runtime behavior.
+- Startup, deployment, or operational commands.
+- Known limitations, validations, or known failure modes.
+- API contracts.
+- Environment variables.
+- Credentials flow or external integrations.
+- Generated reports, benchmarks, dashboards, or evidence artifacts.
+- Business, legal, compliance, or operational assumptions.
+
+Code changes that alter behavior must update the relevant docs, or the agent must explicitly state why no documentation update was needed.
+
 ## Summary
 
 This handoff covers the latest Vincere Ninja Manager production-readiness pass, including the approved Add All automation test, the safety checks around NinjaTrader orders and positions, and the new scheduled "Get Algos Ready" workflow requested for client morning preparation.
