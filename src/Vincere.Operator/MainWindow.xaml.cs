@@ -96,6 +96,7 @@ public partial class MainWindow : Window
             $"Pipe name: {_config.IpcPipeName}  |  {_config.IpcRetryAttempts} attempts × {_config.IpcConnectTimeoutMs} ms + {_config.IpcRetryDelayMs} ms pause\n" +
             $"DRY_RUN: {_config.DryRun} (set false in .env for real automation)\n" +
             $"PROP_CONNECTION_NAME: {(_config.PropConnectionName ?? "(unset)")}\n" +
+            $"Get algos ready: {_config.ReadyAlgosScheduleEnabled} @ {_config.ReadyAlgosTime:HH:mm}\n" +
             $"Stack apply: {_config.AutoApplyStacks} @ {_config.StackApplyTime:HH:mm}; account cycling: {_config.AccountCyclingEnabled} every {_config.AccountCyclingIntervalDays} day(s)\n" +
             $"NT scheduled reset: {_config.NinjaTraderScheduledResetEnabled} every {_config.NinjaTraderResetIntervalDays} day(s)\n" +
             $"NT health auto-reconnect: {_config.NtHealthAutoReconnect} ({_config.NtHealthReconnectCooldownMinutes} min cooldown, {_config.NtHealthPollSeconds}s poll)\n" +
@@ -117,6 +118,9 @@ public partial class MainWindow : Window
         StackAccountCombo.ItemsSource = _accounts;
         await SelectDefaultStackAccountAsync();
         BotStateText.Text = "Stopped";
+
+        if (_config.ReadyAlgosScheduleEnabled)
+            ArmManager($"Manager armed for Get Algos Ready @ {_config.ReadyAlgosTime:HH:mm} Eastern.", false);
     }
 
     private void LoadAutomationSettingsIntoDashboard()
@@ -132,6 +136,11 @@ public partial class MainWindow : Window
         NinjaTraderPasswordBox.Password = "";
         NinjaTraderScheduledResetCheck.IsChecked = _config.NinjaTraderScheduledResetEnabled;
         NinjaTraderResetDaysBox.Text = _config.NinjaTraderResetIntervalDays.ToString(CultureInfo.InvariantCulture);
+        ReadyAlgosScheduleCheck.IsChecked = _config.ReadyAlgosScheduleEnabled;
+        ReadyAlgosTimeBox.Text = _config.ReadyAlgosTime.ToString("HH:mm", CultureInfo.InvariantCulture);
+        ReadyAlgosStatusText.Text = _config.ReadyAlgosScheduleEnabled
+            ? $"Get Algos Ready scheduled for {_config.ReadyAlgosTime:HH:mm} Eastern."
+            : "Get Algos Ready schedule is off.";
         SettingsLicenseKeyBox.Text = _config.LicenseKey ?? "";
         SettingsLicenseStatusText.Text = _config.LicenseVerified
             ? $"License verified: {_config.LicenseStatus ?? "verified"}"
@@ -161,6 +170,9 @@ public partial class MainWindow : Window
         if (!TryReadNinjaTraderResetIntervalDays(out var resetDays))
             return false;
 
+        if (!TryReadReadyAlgosTime(out var readyAlgosTime))
+            return false;
+
         var settings = _sp.GetRequiredService<AppSettingsProvider>();
         var merged = new Dictionary<string, string>(settings.Merged, StringComparer.OrdinalIgnoreCase)
         {
@@ -176,7 +188,19 @@ public partial class MainWindow : Window
             [AppRuntimeConfig.KeyNinjaTraderScheduledResetEnabled] =
                 (NinjaTraderScheduledResetCheck.IsChecked == true).ToString(),
             [AppRuntimeConfig.KeyNinjaTraderResetIntervalDays] =
-                resetDays.ToString(CultureInfo.InvariantCulture)
+                resetDays.ToString(CultureInfo.InvariantCulture),
+            [AppRuntimeConfig.KeyReadyAlgosScheduleEnabled] =
+                (ReadyAlgosScheduleCheck.IsChecked == true).ToString(),
+            [AppRuntimeConfig.KeyReadyAlgosTime] =
+                readyAlgosTime.ToString("HH:mm", CultureInfo.InvariantCulture),
+            [AppRuntimeConfig.KeyConnectionRefreshTime] =
+                readyAlgosTime.ToString("HH:mm", CultureInfo.InvariantCulture),
+            [AppRuntimeConfig.KeyStackApplyTime] =
+                readyAlgosTime.ToString("HH:mm", CultureInfo.InvariantCulture),
+            [AppRuntimeConfig.KeyEnableAllTime] =
+                readyAlgosTime.ToString("HH:mm", CultureInfo.InvariantCulture),
+            [AppRuntimeConfig.KeyAutoApplyStacks] = "true",
+            [AppRuntimeConfig.KeyUseUiStrategyToggle] = "true"
         };
 
         if (!string.IsNullOrWhiteSpace(NinjaTraderPasswordBox.Password))
@@ -192,8 +216,62 @@ public partial class MainWindow : Window
         }
 
         settings.UpdateAndSaveEnvFile(merged);
+        if (ReadyAlgosScheduleCheck.IsChecked == true)
+        {
+            try
+            {
+                RegisterDailyStartupTasks(readyAlgosTime);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Settings were saved, but the Windows startup schedule could not be updated: " + ex.Message,
+                    "Get Algos Ready schedule",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
         LoadAutomationSettingsIntoDashboard();
         return true;
+    }
+
+    private static void RegisterDailyStartupTasks(TimeOnly readyAlgosTime)
+    {
+        var script = FindPackagedScript("Register-VincereDailyTasks.ps1");
+        if (string.IsNullOrWhiteSpace(script))
+            throw new FileNotFoundException("Register-VincereDailyTasks.ps1 was not found.");
+
+        var ninjaTime = readyAlgosTime.AddMinutes(-10).ToString("HH:mm", CultureInfo.InvariantCulture);
+        var operatorTime = readyAlgosTime.AddMinutes(-5).ToString("HH:mm", CultureInfo.InvariantCulture);
+        var psi = new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            Arguments =
+                $"-NoProfile -ExecutionPolicy Bypass -File \"{script}\" -NinjaTime \"{ninjaTime}\" -OperatorTime \"{operatorTime}\"",
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+
+        using var process = Process.Start(psi) ?? throw new InvalidOperationException("PowerShell failed to start.");
+        var stdout = process.StandardOutput.ReadToEnd();
+        var stderr = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(stderr) ? stdout : stderr);
+    }
+
+    private static string? FindPackagedScript(string name)
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "scripts", name),
+            Path.Combine(AppContext.BaseDirectory, name),
+            Path.Combine(@"C:\Users\Administrator\Desktop\vincere-ops\scripts", name)
+        };
+
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     private async void VerifyLicense_Click(object sender, RoutedEventArgs e)
@@ -305,6 +383,20 @@ public partial class MainWindow : Window
             MessageBoxButton.OK,
             MessageBoxImage.Warning);
         NinjaTraderResetDaysBox.Focus();
+        return false;
+    }
+
+    private bool TryReadReadyAlgosTime(out TimeOnly readyTime)
+    {
+        if (TimeOnly.TryParse(ReadyAlgosTimeBox.Text.Trim(), CultureInfo.InvariantCulture, out readyTime))
+            return true;
+
+        MessageBox.Show(
+            "Get Algos Ready time must be HH:mm, for example 08:00.",
+            "Get Algos Ready schedule",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
+        ReadyAlgosTimeBox.Focus();
         return false;
     }
 
@@ -597,6 +689,11 @@ public partial class MainWindow : Window
 
     private void StartBot_Click(object sender, RoutedEventArgs e)
     {
+        ArmManager("Bot armed (Mon-Fri Eastern schedule)", true);
+    }
+
+    private void ArmManager(string status, bool notify)
+    {
         _orchestrator.Start();
         _logWatcher.Alert -= OnLogAlert;
         _logWatcher.Alert += OnLogAlert;
@@ -604,8 +701,12 @@ public partial class MainWindow : Window
         StartBotBtn.IsEnabled = false;
         StopBotBtn.IsEnabled = true;
         BotStateText.Text = "Running";
-        StatusText.Text = "Bot armed (Mon–Fri Eastern schedule)";
-        _ = _telegram.SendAsync("Vincere Ops: bot started.");
+        StatusText.Text = status;
+        ReadyAlgosStatusText.Text = _config.ReadyAlgosScheduleEnabled
+            ? $"Get Algos Ready scheduled for {_config.ReadyAlgosTime:HH:mm} Eastern."
+            : "Get Algos Ready schedule is off.";
+        if (notify)
+            _ = _telegram.SendAsync("Vincere Ops: bot started.");
     }
 
     private void StopBot_Click(object sender, RoutedEventArgs e)
@@ -618,6 +719,33 @@ public partial class MainWindow : Window
         BotStateText.Text = "Stopped";
         StatusText.Text = "Stopped";
         _ = _telegram.SendAsync("Vincere Ops: bot stopped.");
+    }
+
+    private async void GetAlgosReady_Click(object sender, RoutedEventArgs e)
+    {
+        var confirm = MessageBox.Show(
+            "Get algos ready now? This disconnects and reconnects selected prop firms, applies the active saved stack, then enables strategies.",
+            "Get Algos Ready",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes)
+            return;
+
+        StatusText.Text = "Getting algos ready...";
+        ReadyAlgosStatusText.Text = StatusText.Text;
+        try
+        {
+            var message = await _orchestrator.RunGetAlgosReadyNowAsync();
+            StatusText.Text = message;
+            ReadyAlgosStatusText.Text = message;
+            MessageBox.Show(message, "Get Algos Ready", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Get Algos Ready failed: " + ex.Message;
+            ReadyAlgosStatusText.Text = StatusText.Text;
+            MessageBox.Show(StatusText.Text, "Get Algos Ready", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private async void OnLogAlert(object? sender, NtHealthAlertEventArgs alert)

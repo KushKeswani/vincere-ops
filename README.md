@@ -114,6 +114,7 @@ Key variables (see example file for the full list):
 - `PROP_CONNECTION_NAME` — must match the **display name** in **NinjaTrader → Control Center → Connections**
 - `VINCERE_IPC_PIPE_NAME` — must match the add-on’s server name
 - `DRY_RUN` — `true` to avoid real NT side effects
+- `READY_ALGOS_SCHEDULE_ENABLED`, `READY_ALGOS_TIME` — enables the daily Get Algos Ready workflow. At the configured Eastern time, the manager disconnects and reconnects selected prop-firm connections, applies the active saved stack, then enables strategies.
 - `CONNECTION_REFRESH_TIME`, `ENABLE_ALL_STRATEGIES_TIME`, `EOD_CUTOFF_TIME` — `HH:mm` in **local wall** for the **Eastern** day (times are compared in **Eastern**; the app uses `America/New_York` / `Eastern Standard Time` as available on the host)
 
 **Developer panel** (in the app) unlocks after passcode — edits rewrite the **merged** dictionary back to `.env`.

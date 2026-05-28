@@ -293,6 +293,9 @@
 	                          IsEnabled="False">
 	                    <TextBlock Text="Stop Manager"/>
 	                  </Button>
+	                  <Button Style="{StaticResource ConsoleRailPrimaryButton}" Click="GetAlgosReady_Click">
+	                    <TextBlock Text="Get Algos Ready"/>
+	                  </Button>
 
 	                  <Border Height="1" Background="{StaticResource ColorSeparator}" Margin="0,12"/>
 
@@ -386,6 +389,12 @@
 	                               Foreground="{StaticResource ColorAccent}"
 	                               FontFamily="Consolas"
 	                               FontSize="12"/>
+	                    <TextBlock x:Name="ReadyAlgosStatusText"
+	                               TextWrapping="Wrap"
+	                               Foreground="{StaticResource ColorWarning}"
+	                               FontFamily="Consolas"
+	                               FontSize="12"
+	                               Margin="0,8,0,0"/>
 	                  </StackPanel>
 	                </ScrollViewer>
 	              </Border>
@@ -683,6 +692,7 @@
           </Grid.ColumnDefinitions>
 
           <Border Background="{StaticResource ColorPanel}" Padding="14" Margin="0,0,10,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
               <TextBlock Text="Prop Firm Setup"
                          FontSize="18"
@@ -763,6 +773,30 @@
                       Click="TestNinjaTraderLogin_Click"
                       Width="170"
                       Margin="0,0,0,10"/>
+              <Separator Background="{StaticResource ColorSeparator}" Margin="0,6,0,10"/>
+              <TextBlock Text="Get Algos Ready Schedule"
+                         FontWeight="SemiBold"
+                         Margin="0,0,0,6"/>
+              <CheckBox x:Name="ReadyAlgosScheduleCheck"
+                        Content="Automatically get algos ready each trading day"
+                        Margin="0,0,0,8"/>
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <TextBlock Text="Ready time"
+                           Foreground="{StaticResource ColorTextSecondary}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                <TextBox x:Name="ReadyAlgosTimeBox"
+                         Width="80"
+                         Margin="0,0,8,0"/>
+                <TextBlock Text="Eastern"
+                           Foreground="{StaticResource ColorTextSecondary}"
+                           VerticalAlignment="Center"/>
+              </StackPanel>
+              <TextBlock Text="At this time the manager disconnects and reconnects selected prop firms, applies the active saved stack, then enables strategies."
+                         Foreground="{StaticResource ColorTextSecondary}"
+                         TextWrapping="Wrap"
+                         FontSize="12"
+                         Margin="0,0,0,10"/>
               <TextBlock Text="Selected prop connection(s)" Foreground="{StaticResource ColorTextSecondary}"/>
               <TextBox x:Name="PropConnectionNameBox" Margin="0,3,0,8"/>
               <Button Content="Save Prop Firm Settings"
@@ -770,6 +804,7 @@
                       Click="SavePropFirmSettings_Click"
                       Margin="0,6,0,0"/>
             </StackPanel>
+            </ScrollViewer>
           </Border>
 
           <Grid Grid.Column="1">

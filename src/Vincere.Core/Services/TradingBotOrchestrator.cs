@@ -58,6 +58,19 @@ public sealed class TradingBotOrchestrator : IDisposable
         _armed = false;
     }
 
+    public async Task<string> RunGetAlgosReadyNowAsync(CancellationToken ct = default)
+    {
+        var easternNow = EasternTime.NowEastern;
+        var todayIso = DateOnly.FromDateTime(easternNow.DateTime).ToString("yyyy-MM-dd");
+
+        await using var db = await _dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var state = await db.AppState.FirstOrDefaultAsync(ct).ConfigureAwait(false);
+        if (state is null || !state.OnboardingCompleted)
+            return "Get algos ready skipped: setup is not completed.";
+
+        return await RunGetAlgosReadyAsync(db, state, todayIso, easternNow, ct).ConfigureAwait(false);
+    }
+
     private async void OnTick(object? _)
     {
         if (!_armed)
@@ -101,6 +114,7 @@ public sealed class TradingBotOrchestrator : IDisposable
         var eodAt = _config.EodCutoffTime;
         var closeAllAt = _config.CloseAllTime;
         var ntResetAt = refreshAt.AddMinutes(-15);
+        var readyAt = _config.ReadyAlgosTime;
 
         // Scheduled NT reset window [connection refresh - 15 min, + 10 min)
         if (ShouldRunNinjaTraderReset(state, todayIso, easternNow, timeNow, ntResetAt))
@@ -108,24 +122,35 @@ public sealed class TradingBotOrchestrator : IDisposable
             await RunNinjaTraderResetAsync(db, state, todayIso, ct).ConfigureAwait(false);
         }
 
-        // Connection refresh window [refreshAt, refreshAt + 10 min)
-        if (state.LastConnectionRefreshDayIso != todayIso &&
+        // One-click/day-ready workflow window [readyAt, readyAt + 45 min).
+        if (_config.ReadyAlgosScheduleEnabled &&
+            state.LastReadyAlgosDayIso != todayIso &&
+            timeNow >= readyAt && timeNow < readyAt.AddMinutes(45))
+        {
+            await RunGetAlgosReadyAsync(db, state, todayIso, easternNow, ct).ConfigureAwait(false);
+        }
+
+        // Legacy connection refresh window [refreshAt, refreshAt + 10 min)
+        if (!_config.ReadyAlgosScheduleEnabled &&
+            state.LastConnectionRefreshDayIso != todayIso &&
             timeNow >= refreshAt && timeNow < refreshAt.AddMinutes(10))
         {
             await RunRefreshAsync(db, state, todayIso, ct).ConfigureAwait(false);
         }
 
-        // Daily setup window [stackApplyAt, stackApplyAt + 25 min).
+        // Legacy daily setup window [stackApplyAt, stackApplyAt + 25 min).
         // This re-applies the current cycling period before enabling algos.
-        if (_config.AutoApplyStacks &&
+        if (!_config.ReadyAlgosScheduleEnabled &&
+            _config.AutoApplyStacks &&
             state.LastStackApplyDayIso != todayIso &&
             timeNow >= stackApplyAt && timeNow < stackApplyAt.AddMinutes(25))
         {
             await RunStackApplyAsync(db, state, todayIso, easternNow, ct).ConfigureAwait(false);
         }
 
-        // Enable all strategies window [enableAt, enableAt + 15 min)
-        if (state.LastEnableAllDayIso != todayIso &&
+        // Legacy enable all strategies window [enableAt, enableAt + 15 min)
+        if (!_config.ReadyAlgosScheduleEnabled &&
+            state.LastEnableAllDayIso != todayIso &&
             timeNow >= enableAt && timeNow < enableAt.AddMinutes(15))
         {
             await RunEnableAllAsync(db, state, todayIso, ct).ConfigureAwait(false);
@@ -196,6 +221,71 @@ public sealed class TradingBotOrchestrator : IDisposable
             .ConfigureAwait(false);
         state.LastConnectionRefreshDayIso = todayIso;
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
+    }
+
+    private async Task<string> RunGetAlgosReadyAsync(
+        VincereDbContext db,
+        AppStateEntity state,
+        string todayIso,
+        DateTimeOffset easternNow,
+        CancellationToken ct)
+    {
+        var connectionCycle = await RunDisconnectReconnectAsync(ct).ConfigureAwait(false);
+        if (!connectionCycle.Ok)
+        {
+            var skipped = $"Get algos ready skipped enable: {connectionCycle.Message}";
+            await _telegram.SendAsync(skipped, ct).ConfigureAwait(false);
+            return skipped;
+        }
+
+        state.LastConnectionRefreshDayIso = todayIso;
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+        if (_config.AutoApplyStacks)
+            await RunStackApplyAsync(db, state, todayIso, easternNow, ct).ConfigureAwait(false);
+
+        await RunEnableAllAsync(db, state, todayIso, ct).ConfigureAwait(false);
+
+        state.LastReadyAlgosDayIso = todayIso;
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+        var message = $"Get algos ready @ {_config.ReadyAlgosTime:HH:mm}: {connectionCycle.Message}";
+        await _telegram.SendAsync(message, ct).ConfigureAwait(false);
+        return message;
+    }
+
+    private async Task<(bool Ok, string Message)> RunDisconnectReconnectAsync(CancellationToken ct)
+    {
+        var connections = SplitConnectionNames(_config.PropConnectionName);
+        if (connections.Count == 0)
+            return (false, "PROP_CONNECTION_NAME is unset.");
+
+        var bridgeResults = new List<string>();
+        foreach (var conn in connections)
+        {
+            var payload = JsonSerializer.SerializeToElement(new { connectionName = conn });
+            var disconnect = await _nt.SendAsync(
+                    new IpcRequest { Command = IpcCommands.DisconnectConnection, Payload = payload },
+                    ct)
+                .ConfigureAwait(false);
+            bridgeResults.Add($"{conn} disconnect: {(disconnect?.Ok == true ? "OK" : disconnect?.Message ?? "fail")}");
+        }
+
+        await Task.Delay(TimeSpan.FromSeconds(_config.DryRun ? 0 : 5), ct).ConfigureAwait(false);
+
+        var allConnected = true;
+        foreach (var conn in connections)
+        {
+            var payload = JsonSerializer.SerializeToElement(new { connectionName = conn });
+            var connect = await _nt.SendAsync(
+                    new IpcRequest { Command = IpcCommands.ConnectConnection, Payload = payload },
+                    ct)
+                .ConfigureAwait(false);
+            allConnected &= connect?.Ok == true;
+            bridgeResults.Add($"{conn} connect: {(connect?.Ok == true ? "OK" : connect?.Message ?? "fail")}");
+        }
+
+        return (allConnected, string.Join(" | ", bridgeResults));
     }
 
     private bool ShouldRunNinjaTraderReset(

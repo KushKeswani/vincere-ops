@@ -97,6 +97,16 @@ public static class VincereSchemaPatcher
 #pragma warning restore EF1002
             }
 
+            if (!await ColumnExistsAsync(db, appStateTable, "LastReadyAlgosDayIso", ct).ConfigureAwait(false))
+            {
+#pragma warning disable EF1002
+                await db.Database.ExecuteSqlRawAsync(
+                        $"ALTER TABLE \"{EscapeIdent(appStateTable)}\" ADD COLUMN LastReadyAlgosDayIso TEXT NULL",
+                        ct)
+                    .ConfigureAwait(false);
+#pragma warning restore EF1002
+            }
+
             await DeduplicateAccountsAsync(db, ct).ConfigureAwait(false);
         }
         finally

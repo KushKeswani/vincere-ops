@@ -35,6 +35,9 @@ public sealed class AppStateEntity
     /// <summary>Eastern calendar yyyy-MM-dd — scheduled NinjaTrader reset already fired.</summary>
     public string? LastNinjaTraderResetIso { get; set; }
 
+    /// <summary>Eastern calendar yyyy-MM-dd - get algos ready workflow already fired.</summary>
+    public string? LastReadyAlgosDayIso { get; set; }
+
     /// <summary>Eastern Friday yyyy-MM-dd — weekly digest fired.</summary>
     public string? LastWeeklyReportFridayIso { get; set; }
 
