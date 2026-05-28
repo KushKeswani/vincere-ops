@@ -1963,13 +1963,14 @@ public partial class MainWindow : Window
     private async Task ApplyAttachTargetsAsync(List<AttachTarget> targets, string title)
     {
         var filter = SelectedApplyPeriodFilter;
+        var batchId = DateTimeOffset.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
         var preview = string.Join(Environment.NewLine,
             targets.Take(12).Select(t => $"- {t.DisplayName} ({t.RowCount} checked row(s))"));
         if (targets.Count > 12)
             preview += $"{Environment.NewLine}- ... {targets.Count - 12} more";
 
         var confirm = MessageBox.Show(
-            $"Add checked stack rows to NinjaTrader for these account(s)?{Environment.NewLine}{Environment.NewLine}{preview}",
+            $"Add checked stack rows to NinjaTrader for these account(s)?{Environment.NewLine}{Environment.NewLine}{preview}{Environment.NewLine}{Environment.NewLine}If an account fails, the batch stops immediately and writes an audit file.",
             title,
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
@@ -1980,19 +1981,77 @@ public partial class MainWindow : Window
         BlueprintImportStatusText.Text = StatusText.Text;
 
         var results = new List<string>();
+        var auditRows = new List<object>();
         foreach (var target in targets)
         {
             var (ok, msg) = await _stackApply.ExecuteAsync(target.Id, _config.DryRun, filter, default);
+            var oneLine = TrimOneLine(msg, 280);
             results.Add($"{target.DisplayName}: {(ok ? "OK" : "FAIL")} {TrimOneLine(msg, 140)}");
+            auditRows.Add(new
+            {
+                target.Id,
+                target.DisplayName,
+                target.RowCount,
+                ok,
+                message = oneLine,
+                completedAt = DateTimeOffset.Now
+            });
+            if (!ok)
+                break;
         }
 
         var resultText = string.Join(Environment.NewLine, results);
-        BlueprintImportStatusText.Text = resultText;
-        StatusText.Text = $"Add complete for {targets.Count} account(s).";
-        MessageBox.Show(resultText, title, MessageBoxButton.OK,
-            results.Any(r => r.Contains(": FAIL", StringComparison.OrdinalIgnoreCase))
+        var failed = results.Any(r => r.Contains(": FAIL", StringComparison.OrdinalIgnoreCase));
+        var auditPath = await WriteAttachBatchAuditAsync(batchId, title, filter, targets, auditRows, failed);
+        var suffix = string.IsNullOrWhiteSpace(auditPath)
+            ? ""
+            : $"{Environment.NewLine}{Environment.NewLine}Audit: {auditPath}";
+        BlueprintImportStatusText.Text = resultText + suffix;
+        StatusText.Text = failed
+            ? $"Add stopped after failure ({results.Count}/{targets.Count} account(s) attempted)."
+            : $"Add complete for {targets.Count} account(s).";
+        MessageBox.Show(resultText + suffix, title, MessageBoxButton.OK,
+            failed
                 ? MessageBoxImage.Warning
                 : MessageBoxImage.Information);
+    }
+
+    private async Task<string> WriteAttachBatchAuditAsync(
+        string batchId,
+        string title,
+        StackApplyPeriodFilter filter,
+        IReadOnlyList<AttachTarget> targets,
+        IReadOnlyList<object> results,
+        bool failed)
+    {
+        try
+        {
+            var dir = Path.Combine(_config.DataDirectory, "logs", "stack-apply-batches");
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, $"stack-apply-batch-{batchId}.json");
+            var payload = new
+            {
+                batchId,
+                title,
+                dryRun = _config.DryRun,
+                periodFilter = filter.ToString(),
+                startedAccountCount = targets.Count,
+                attemptedAccountCount = results.Count,
+                stoppedOnFailure = failed,
+                targets = targets.Select(t => new { t.Id, t.DisplayName, t.RowCount }),
+                results
+            };
+            await File.WriteAllTextAsync(path, JsonSerializer.Serialize(payload, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
+            return path;
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Add completed, but the batch audit could not be written: " + ex.Message;
+            return "";
+        }
     }
 
     private static string TrimOneLine(string? value, int maxLength)

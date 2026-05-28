@@ -88,6 +88,7 @@ When the new ready schedule is enabled, the older separate connection, stack-app
   - Added Get Algos Ready button, schedule controls, and the explicit enable-strategies toggle.
 - `src/Vincere.Operator/MainWindow.xaml.cs`
   - Wired the button, settings persistence, schedule registration, and manual run behavior.
+  - Added Add All batch audit logging and stop-on-first-failure behavior so partial setup failures are captured instead of continuing silently across all accounts.
 - `src/Vincere.Operator/Vincere.Operator.csproj`
   - Included the Windows startup and task registration scripts in the packaged output.
 
@@ -100,6 +101,39 @@ Successful build command:
 ```powershell
 dotnet build .\src\Vincere.Operator\Vincere.Operator.csproj -c Release --no-restore
 ```
+
+### 2026-05-28 Verification Baseline
+
+- Commit deployed on VPS: `57d1e2d` (`Gate ready workflow strategy enable`).
+- VPS repo: `C:\Users\Administrator\Desktop\vincere-ops`.
+- Installed app redeployed from the clean committed release build.
+- Deployment backup: `C:\Users\Administrator\Desktop\vincere-ops\backups\VincereOps-installed-20260528-175811`.
+- Target Windows build passed:
+
+```powershell
+dotnet build .\src\Vincere.Operator\Vincere.Operator.csproj -c Release --no-restore -v minimal
+```
+
+Result: `0 Warning(s), 0 Error(s)`.
+
+- Safe screenshot-backed harness report:
+  `C:\Users\Administrator\Desktop\vincere-ops\logs\production-readiness\20260528-175953\PRODUCTION_READINESS_REPORT.md`
+- Harness summary: `PASS=42, FAIL=0, WARN=1, SKIP=10`.
+- Verified controls:
+  - `Automatically get algos ready each trading day`.
+  - `Enable strategies after Get Algos Ready`.
+  - Safety copy warning to leave strategy enabling off until Add All is verified.
+- NinjaTrader verification:
+  - Strategies grid visible to UI Automation.
+  - UIA data item count: `3`.
+  - Enable what-if: would set `3 of 3` rows enabled.
+  - Disable what-if: all `3` strategy rows were already disabled.
+- Running process state after deploy/test:
+  - `NinjaTrader`, PID `13916`, responding.
+  - `Vincere.Operator`, PID `15432`, responding.
+- Temporary one-off scheduled test tasks were removed after the run.
+
+Note: the Add All batch audit hardening was added after this baseline report and still needs the next VPS release build plus a supervised Add All test before it can be considered verified.
 
 Deployment target:
 
