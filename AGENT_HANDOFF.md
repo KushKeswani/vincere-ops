@@ -107,10 +107,10 @@ dotnet build .\src\Vincere.Operator\Vincere.Operator.csproj -c Release --no-rest
 
 ### 2026-05-28 Verification Baseline
 
-- Commit deployed on VPS: `86eca86` or newer.
+- Commit deployed on VPS: `fcc93ab` (`Update handoff for instrument selector hardening`).
 - VPS repo: `C:\Users\Administrator\Desktop\vincere-ops`.
 - Installed app redeployed from the clean committed release build.
-- Deployment backup: `C:\Users\Administrator\Desktop\vincere-ops\backups\VincereOps-installed-20260528-181059`.
+- Latest deployment backup: `C:\Users\Administrator\Desktop\vincere-ops\backups\VincereOps-installed-20260528-182050`.
 - Target Windows build passed:
 
 ```powershell
@@ -136,6 +136,7 @@ Result: `0 Warning(s), 0 Error(s)`.
   - `Vincere.Operator`, PID `15432`, responding in the earlier 2026-05-28 process check.
 - Temporary one-off scheduled test tasks were removed after the run.
 - The Add All batch audit hardening builds and is deployed, but still needs a supervised Add All test before it can be considered behaviorally verified.
+- The instrument-selector script passed a PowerShell parser check after the final VPS pull and was redeployed into the installed app folder.
 
 Deployment target:
 
