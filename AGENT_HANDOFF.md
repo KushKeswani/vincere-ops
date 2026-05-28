@@ -75,7 +75,8 @@ When the new ready schedule is enabled, the older separate connection, stack-app
 - `scripts/Send-AgentCheckpointTelegram.py`
   - Adds a non-secret checkpoint sender for agent status updates; it reads Telegram token/chat values from environment variables or the Agent Phoenix ProjectX `.env`.
 - `scripts/Invoke-NinjaTraderUiStackSetup.ps1`
-  - Hardened instrument selection by finding the NinjaTrader instrument selector after scrolling/focusing the Properties panel, typing the root instrument, and using the current-contract fallback only when the futures suggestion is unavailable.
+  - Hardened instrument selector lookup by scrolling/focusing the Strategy dialog Properties panel before searching.
+  - Restored the intended instrument flow: type the root symbol, click the NinjaTrader `Futures` suggestion when visible, and only fall back to an explicit current contract if no suggestion appears.
 - `src/Vincere.Core/Data/Entities.cs`
   - Added persistent marker for the last ready workflow day.
 - `src/Vincere.Core/Infrastructure/AppRuntimeConfig.cs`
@@ -106,7 +107,7 @@ dotnet build .\src\Vincere.Operator\Vincere.Operator.csproj -c Release --no-rest
 
 ### 2026-05-28 Verification Baseline
 
-- Commit deployed on VPS: `1d22e2f` (`Audit stack apply batches`).
+- Commit deployed on VPS: `86eca86` or newer.
 - VPS repo: `C:\Users\Administrator\Desktop\vincere-ops`.
 - Installed app redeployed from the clean committed release build.
 - Deployment backup: `C:\Users\Administrator\Desktop\vincere-ops\backups\VincereOps-installed-20260528-181059`.
@@ -237,11 +238,12 @@ Ready:
 - The Get Algos Ready schedule UI and runtime configuration are implemented.
 - Get Algos Ready now leaves strategies disabled by default unless `READY_ALGOS_ENABLE_STRATEGIES=true`.
 - Add All now stops on the first failed account and writes a JSON batch audit under `logs/stack-apply-batches/` so support can see which accounts were attempted.
+- The setup script now prefers NinjaTrader's visible `Futures` instrument suggestion instead of forcing an explicit contract first.
 
 Blocked:
 
 - Add All automation is not production-ready yet.
-- NinjaTrader UI automation failed to select instruments for APEX accounts.
+- NinjaTrader UI automation needs a supervised Add All retest to confirm the instrument-selector hardening fixes the APEX account failures.
 - The LFE account failed because the template load window did not open.
 - Add All can still leave strategy rows from the failed account itself, so unattended live enabling should remain disabled until row verification and rollback/cleanup are implemented and retested.
 
