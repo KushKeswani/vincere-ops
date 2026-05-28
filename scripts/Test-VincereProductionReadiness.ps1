@@ -487,7 +487,10 @@ try {
     if (Select-Tab $root "Settings") {
         Assert-Control $root "Settings" "Prop Firm Setup"
         Assert-Control $root "Settings" "Scan NinjaTrader"
+        Assert-Control $root "Settings" "Automatically get algos ready each trading day"
+        Assert-Control $root "Settings" "Enable strategies after Get Algos Ready" "Production safety gate should be visible so strategy enable is explicit and opt-in."
         Assert-Control $root "Settings" "Save All Settings"
+        Assert-Text $root "Settings" "Get Algos Ready safety copy" "Leave this off until Add All has been verified cleanly" "Settings should warn that strategy enable stays off until Add All is verified cleanly." "settings-ready-algos-safety"
         Invoke-Control $root "Settings" "Scan NinjaTrader" "Scan should discover connections and accounts when NinjaTrader is open." "Safe" 8
         Assert-Text $root "Settings" "Scan result text" "Found [0-9]+ connection\(s\) and [0-9]+ account\(s\)" "Scan should report discovered connection/account counts." "settings-scan-result"
     }
@@ -623,6 +626,7 @@ finally {
     $lines.Add("- Confirm full live Add All does not create duplicates after starting from a clean NinjaTrader Strategies grid.") | Out-Null
     $lines.Add("- Confirm prop firm connection state in the broker UI, because UI Automation can click buttons but cannot independently validate brokerage state.") | Out-Null
     $lines.Add("- Confirm no live orders are placed during setup and that all strategies remain disabled until the intended enable step.") | Out-Null
+    $lines.Add("- Keep ``READY_ALGOS_ENABLE_STRATEGIES=false`` until Add All has been verified cleanly for the client, then test the opt-in enable path under supervision.") | Out-Null
     $lines.Add("- Confirm Whop/license behavior with real production keys and backend secrets.") | Out-Null
     $lines.Add("- Watch at least one scheduled morning sequence in real time: launch, connect, apply/verify, enable, and health monitoring.") | Out-Null
 

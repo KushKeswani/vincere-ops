@@ -43,6 +43,7 @@ Live strategies were not intentionally enabled. During the Add All test, one Nin
 - Added settings for a daily ready workflow:
   - `READY_ALGOS_SCHEDULE_ENABLED`
   - `READY_ALGOS_TIME`, defaulting to `08:00` Eastern.
+  - `READY_ALGOS_ENABLE_STRATEGIES`, defaulting to `false` so readiness can prepare NinjaTrader without live enabling until Add All is verified cleanly.
 - Updated the Settings panel to include the ready schedule controls and allow scrolling.
 - Added scheduler behavior that runs the ready workflow once per trading day inside the configured time window.
 - Added startup behavior so the manager can auto-arm itself when the ready schedule is enabled.
@@ -57,18 +58,22 @@ The Get Algos Ready flow is intended to prepare accounts for the trading day:
 2. Wait briefly for the disconnect state to settle.
 3. Reconnect configured prop firm connections.
 4. Apply the active saved strategy stack.
-5. Enable the strategies only when the workflow is allowed to do so.
+5. Enable the strategies only when `READY_ALGOS_ENABLE_STRATEGIES=true`; otherwise leave strategies disabled after preparation.
 
 When the new ready schedule is enabled, the older separate connection, stack-apply, and enable windows are skipped to avoid duplicate automation runs.
 
 ## Files Changed
 
 - `.env.example`
-  - Added ready schedule keys.
+  - Added ready schedule keys and an explicit strategy-enable safety gate.
 - `.gitignore`
   - Added `backups/` so generated deployment backups are not committed.
 - `README.md`
   - Documented the Get Algos Ready workflow and schedule.
+- `scripts/Test-VincereProductionReadiness.ps1`
+  - Verifies the Get Algos Ready schedule controls and explicit strategy-enable safety gate in the screenshot-backed readiness harness.
+- `scripts/Send-AgentCheckpointTelegram.py`
+  - Adds a non-secret checkpoint sender for agent status updates; it reads Telegram token/chat values from environment variables or the Agent Phoenix ProjectX `.env`.
 - `src/Vincere.Core/Data/Entities.cs`
   - Added persistent marker for the last ready workflow day.
 - `src/Vincere.Core/Infrastructure/AppRuntimeConfig.cs`
@@ -80,7 +85,7 @@ When the new ready schedule is enabled, the older separate connection, stack-app
   - Added daily scheduler handling.
   - Added prop-firm disconnect/reconnect and strategy-stack preparation sequence.
 - `src/Vincere.Operator/MainWindow.xaml`
-  - Added Get Algos Ready button and schedule controls.
+  - Added Get Algos Ready button, schedule controls, and the explicit enable-strategies toggle.
 - `src/Vincere.Operator/MainWindow.xaml.cs`
   - Wired the button, settings persistence, schedule registration, and manual run behavior.
 - `src/Vincere.Operator/Vincere.Operator.csproj`
@@ -195,6 +200,7 @@ Ready:
 - Strategies were visible in NinjaTrader.
 - Strategies were verified disabled after cleanup.
 - The Get Algos Ready schedule UI and runtime configuration are implemented.
+- Get Algos Ready now leaves strategies disabled by default unless `READY_ALGOS_ENABLE_STRATEGIES=true`.
 
 Blocked:
 
@@ -206,6 +212,7 @@ Blocked:
 ## Safety Notes
 
 - Do not enable live strategies without explicit user approval.
+- Keep `READY_ALGOS_ENABLE_STRATEGIES=false` until Add All completes cleanly and a human approves live enable behavior for the client.
 - Use the active RDP desktop for NinjaTrader UI automation.
 - Do not rely on headless SSH for NinjaTrader UI clicks.
 - Confirm `OrdersGrid=0` and `PositionsGrid=0` before and after every readiness or Add All test.

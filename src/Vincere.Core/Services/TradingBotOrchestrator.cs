@@ -244,12 +244,23 @@ public sealed class TradingBotOrchestrator : IDisposable
         if (_config.AutoApplyStacks)
             await RunStackApplyAsync(db, state, todayIso, easternNow, ct).ConfigureAwait(false);
 
-        await RunEnableAllAsync(db, state, todayIso, ct).ConfigureAwait(false);
+        if (_config.ReadyAlgosEnableStrategies)
+        {
+            await RunEnableAllAsync(db, state, todayIso, ct).ConfigureAwait(false);
+        }
+        else
+        {
+            await _telegram.SendAsync("Get algos ready: strategies were not enabled because READY_ALGOS_ENABLE_STRATEGIES=false.", ct)
+                .ConfigureAwait(false);
+        }
 
         state.LastReadyAlgosDayIso = todayIso;
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
 
-        var message = $"Get algos ready @ {_config.ReadyAlgosTime:HH:mm}: {connectionCycle.Message}";
+        var enableMode = _config.ReadyAlgosEnableStrategies
+            ? "strategies enabled"
+            : "strategies left disabled";
+        var message = $"Get algos ready @ {_config.ReadyAlgosTime:HH:mm}: {connectionCycle.Message}; {enableMode}.";
         await _telegram.SendAsync(message, ct).ConfigureAwait(false);
         return message;
     }

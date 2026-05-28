@@ -137,9 +137,10 @@ public partial class MainWindow : Window
         NinjaTraderScheduledResetCheck.IsChecked = _config.NinjaTraderScheduledResetEnabled;
         NinjaTraderResetDaysBox.Text = _config.NinjaTraderResetIntervalDays.ToString(CultureInfo.InvariantCulture);
         ReadyAlgosScheduleCheck.IsChecked = _config.ReadyAlgosScheduleEnabled;
+        ReadyAlgosEnableStrategiesCheck.IsChecked = _config.ReadyAlgosEnableStrategies;
         ReadyAlgosTimeBox.Text = _config.ReadyAlgosTime.ToString("HH:mm", CultureInfo.InvariantCulture);
         ReadyAlgosStatusText.Text = _config.ReadyAlgosScheduleEnabled
-            ? $"Get Algos Ready scheduled for {_config.ReadyAlgosTime:HH:mm} Eastern."
+            ? $"Get Algos Ready scheduled for {_config.ReadyAlgosTime:HH:mm} Eastern; strategies {(_config.ReadyAlgosEnableStrategies ? "will enable" : "stay disabled")}."
             : "Get Algos Ready schedule is off.";
         SettingsLicenseKeyBox.Text = _config.LicenseKey ?? "";
         SettingsLicenseStatusText.Text = _config.LicenseVerified
@@ -193,6 +194,8 @@ public partial class MainWindow : Window
                 (ReadyAlgosScheduleCheck.IsChecked == true).ToString(),
             [AppRuntimeConfig.KeyReadyAlgosTime] =
                 readyAlgosTime.ToString("HH:mm", CultureInfo.InvariantCulture),
+            [AppRuntimeConfig.KeyReadyAlgosEnableStrategies] =
+                (ReadyAlgosEnableStrategiesCheck.IsChecked == true).ToString(),
             [AppRuntimeConfig.KeyConnectionRefreshTime] =
                 readyAlgosTime.ToString("HH:mm", CultureInfo.InvariantCulture),
             [AppRuntimeConfig.KeyStackApplyTime] =
@@ -703,7 +706,7 @@ public partial class MainWindow : Window
         BotStateText.Text = "Running";
         StatusText.Text = status;
         ReadyAlgosStatusText.Text = _config.ReadyAlgosScheduleEnabled
-            ? $"Get Algos Ready scheduled for {_config.ReadyAlgosTime:HH:mm} Eastern."
+            ? $"Get Algos Ready scheduled for {_config.ReadyAlgosTime:HH:mm} Eastern; strategies {(_config.ReadyAlgosEnableStrategies ? "will enable" : "stay disabled")}."
             : "Get Algos Ready schedule is off.";
         if (notify)
             _ = _telegram.SendAsync("Vincere Ops: bot started.");
@@ -724,7 +727,9 @@ public partial class MainWindow : Window
     private async void GetAlgosReady_Click(object sender, RoutedEventArgs e)
     {
         var confirm = MessageBox.Show(
-            "Get algos ready now? This disconnects and reconnects selected prop firms, applies the active saved stack, then enables strategies.",
+            _config.ReadyAlgosEnableStrategies
+                ? "Get algos ready now? This disconnects and reconnects selected prop firms, applies the active saved stack, then enables strategies."
+                : "Get algos ready now? This disconnects and reconnects selected prop firms and applies the active saved stack. Strategies will stay disabled.",
             "Get Algos Ready",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);

@@ -19,6 +19,7 @@ public sealed class AppRuntimeConfig
     public const string KeyEnableAllTime = "ENABLE_ALL_STRATEGIES_TIME";
     public const string KeyReadyAlgosScheduleEnabled = "READY_ALGOS_SCHEDULE_ENABLED";
     public const string KeyReadyAlgosTime = "READY_ALGOS_TIME";
+    public const string KeyReadyAlgosEnableStrategies = "READY_ALGOS_ENABLE_STRATEGIES";
     public const string KeyUseUiStrategyToggle = "VINCERE_USE_UI_STRATEGY_TOGGLE";
     public const string KeyAccountCyclingEnabled = "ACCOUNT_CYCLING_ENABLED";
     public const string KeyAccountCyclingStartDate = "ACCOUNT_CYCLING_START_DATE";
@@ -74,6 +75,7 @@ public sealed class AppRuntimeConfig
     public TimeOnly EnableAllStrategiesTime => ParseTime(_provider.Get(KeyEnableAllTime), new TimeOnly(8, 25));
     public bool ReadyAlgosScheduleEnabled => _provider.TryGetBool(KeyReadyAlgosScheduleEnabled, false);
     public TimeOnly ReadyAlgosTime => ParseTime(_provider.Get(KeyReadyAlgosTime), new TimeOnly(8, 0));
+    public bool ReadyAlgosEnableStrategies => _provider.TryGetBool(KeyReadyAlgosEnableStrategies, false);
     public bool UseUiStrategyToggle => _provider.TryGetBool(KeyUseUiStrategyToggle, true);
     public bool AccountCyclingEnabled => _provider.TryGetBool(KeyAccountCyclingEnabled, true);
     public DateOnly? AccountCyclingStartDate => DateOnly.TryParse(_provider.Get(KeyAccountCyclingStartDate), out var d) ? d : null;

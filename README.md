@@ -114,8 +114,16 @@ Key variables (see example file for the full list):
 - `PROP_CONNECTION_NAME` — must match the **display name** in **NinjaTrader → Control Center → Connections**
 - `VINCERE_IPC_PIPE_NAME` — must match the add-on’s server name
 - `DRY_RUN` — `true` to avoid real NT side effects
-- `READY_ALGOS_SCHEDULE_ENABLED`, `READY_ALGOS_TIME` — enables the daily Get Algos Ready workflow. At the configured Eastern time, the manager disconnects and reconnects selected prop-firm connections, applies the active saved stack, then enables strategies.
+- `READY_ALGOS_SCHEDULE_ENABLED`, `READY_ALGOS_TIME`, `READY_ALGOS_ENABLE_STRATEGIES` — enables the daily Get Algos Ready workflow. At the configured Eastern time, the manager disconnects and reconnects selected prop-firm connections and applies the active saved stack. Strategy enabling is opt-in and should stay off until Add All has been verified cleanly for the client account set.
 - `CONNECTION_REFRESH_TIME`, `ENABLE_ALL_STRATEGIES_TIME`, `EOD_CUTOFF_TIME` — `HH:mm` in **local wall** for the **Eastern** day (times are compared in **Eastern**; the app uses `America/New_York` / `Eastern Standard Time` as available on the host)
+
+Agent checkpoint messages can be sent without committing Telegram secrets:
+
+```bash
+python3 scripts/Send-AgentCheckpointTelegram.py "Vincere checkpoint: build passed"
+```
+
+The script reads `PROJECTX_TELEGRAM_BOT_TOKEN` / `PROJECTX_TELEGRAM_CHAT_ID` or the local Agent Phoenix ProjectX `.env` if present.
 
 **Developer panel** (in the app) unlocks after passcode — edits rewrite the **merged** dictionary back to `.env`.
 

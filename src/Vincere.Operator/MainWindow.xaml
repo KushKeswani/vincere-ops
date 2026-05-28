@@ -792,7 +792,15 @@
                            Foreground="{StaticResource ColorTextSecondary}"
                            VerticalAlignment="Center"/>
               </StackPanel>
-              <TextBlock Text="At this time the manager disconnects and reconnects selected prop firms, applies the active saved stack, then enables strategies."
+              <TextBlock Text="At this time the manager disconnects and reconnects selected prop firms, applies the active saved stack, and can optionally enable strategies."
+                         Foreground="{StaticResource ColorTextSecondary}"
+                         TextWrapping="Wrap"
+                         FontSize="12"
+                         Margin="0,0,0,8"/>
+              <CheckBox x:Name="ReadyAlgosEnableStrategiesCheck"
+                        Content="Enable strategies after Get Algos Ready"
+                        Margin="0,0,0,4"/>
+              <TextBlock Text="Leave this off until Add All has been verified cleanly for the client. When off, the workflow prepares NinjaTrader and leaves strategies disabled."
                          Foreground="{StaticResource ColorTextSecondary}"
                          TextWrapping="Wrap"
                          FontSize="12"
