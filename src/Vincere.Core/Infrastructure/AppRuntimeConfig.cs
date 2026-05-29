@@ -49,6 +49,8 @@ public sealed class AppRuntimeConfig
     public const string KeyLicenseVerifiedAt = "VINCERE_LICENSE_VERIFIED_AT";
     public const string KeyLicenseApiUrl = "VINCERE_LICENSE_API_URL";
     public const string KeyLicenseTestMode = "VINCERE_LICENSE_TEST_MODE";
+    public const string KeyLicenseUiEnabled = "VINCERE_LICENSE_UI_ENABLED";
+    public const string KeyLicenseRequired = "VINCERE_LICENSE_REQUIRED";
     public const string KeyNinjaTraderAutoLoginEnabled = "NT_AUTO_LOGIN_ENABLED";
     public const string KeyNinjaTraderLoginUsername = "NT_LOGIN_USERNAME";
     public const string KeyNinjaTraderLoginPasswordProtected = "NT_LOGIN_PASSWORD_DPAPI";
@@ -158,6 +160,8 @@ public sealed class AppRuntimeConfig
     public DateTimeOffset? LicenseVerifiedAt => DateTimeOffset.TryParse(_provider.Get(KeyLicenseVerifiedAt), out var ts) ? ts : null;
     public string? LicenseApiUrl => _provider.Get(KeyLicenseApiUrl);
     public bool LicenseTestMode => _provider.TryGetBool(KeyLicenseTestMode, false);
+    public bool LicenseUiEnabled => _provider.TryGetBool(KeyLicenseUiEnabled, false);
+    public bool LicenseRequired => _provider.TryGetBool(KeyLicenseRequired, false);
     public bool NinjaTraderAutoLoginEnabled => _provider.TryGetBool(KeyNinjaTraderAutoLoginEnabled, false);
     public string? NinjaTraderLoginUsername => _provider.Get(KeyNinjaTraderLoginUsername);
     public string? NinjaTraderLoginPasswordProtected => _provider.Get(KeyNinjaTraderLoginPasswordProtected);

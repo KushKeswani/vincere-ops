@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Vincere.Core;
 using Vincere.Core.Data;
+using Vincere.Core.Infrastructure;
 using Vincere.Core.Services;
 
 namespace Vincere.Operator;
@@ -38,8 +39,9 @@ public partial class App : Application
             await using (var db = await dbf.CreateDbContextAsync())
             {
                 var st = await db.AppState.AsNoTracking().FirstAsync();
+                var config = Services.GetRequiredService<AppRuntimeConfig>();
                 var license = Services.GetRequiredService<LicenseVerificationService>();
-                if (!st.OnboardingCompleted || !license.HasLocalVerifiedLicense())
+                if (!st.OnboardingCompleted || (config.LicenseRequired && !license.HasLocalVerifiedLicense()))
                 {
                     TraceStartup("Opening onboarding");
                     var onb = new OnboardingWindow(Services);

@@ -229,6 +229,20 @@ function Assert-Control {
     return $false
 }
 
+function Assert-ControlNotVisible {
+    param($Root, [string]$Area, [string]$Name, [string]$Expected)
+    $shot = Take-Screenshot ("hidden-" + $Name)
+    $items = $Root.FindAll([System.Windows.Automation.TreeScope]::Descendants, (New-NameCondition $Name))
+    for ($i = 0; $i -lt $items.Count; $i++) {
+        if (Test-Visible $items.Item($i)) {
+            Add-Result $Area "Hidden control: $Name" $Expected "FAIL" "Found visible control." $shot
+            return $false
+        }
+    }
+    Add-Result $Area "Hidden control: $Name" $Expected "PASS" "No visible matching control." $shot
+    return $true
+}
+
 function Invoke-Control {
     param(
         $Root,
@@ -473,6 +487,7 @@ try {
         Assert-Control $root "Dashboard" "Connect All"
         Assert-Control $root "Dashboard" "Disconnect All"
         Assert-Control $root "Dashboard" "View Logs"
+        Assert-ControlNotVisible $root "Dashboard" "License: --" "License/WAP status should stay hidden by default."
 
         Invoke-Control $root "Dashboard" "Start Manager" "Manager should arm scheduled automation." "Manager" 1
         Invoke-Control $root "Dashboard" "Stop Manager" "Manager should stop scheduled automation." "Manager" 1
@@ -490,6 +505,8 @@ try {
         Assert-Control $root "Settings" "Automatically get algos ready each trading day"
         Assert-Control $root "Settings" "Enable strategies after Get Algos Ready" "Production safety gate should be visible so strategy enable is explicit and opt-in."
         Assert-Control $root "Settings" "Save All Settings"
+        Assert-ControlNotVisible $root "Settings" "Vincere / Whop license key" "License/WAP setup should stay hidden by default."
+        Assert-ControlNotVisible $root "Settings" "Test License Key" "License/WAP test button should stay hidden by default."
         Assert-Text $root "Settings" "Get Algos Ready safety copy" "Leave this off until Add All has been verified cleanly" "Settings should warn that strategy enable stays off until Add All is verified cleanly." "settings-ready-algos-safety"
         Invoke-Control $root "Settings" "Scan NinjaTrader" "Scan should discover connections and accounts when NinjaTrader is open." "Safe" 8
         Assert-Text $root "Settings" "Scan result text" "Found [0-9]+ connection\(s\) and [0-9]+ account\(s\)" "Scan should report discovered connection/account counts." "settings-scan-result"
@@ -627,7 +644,7 @@ finally {
     $lines.Add("- Confirm prop firm connection state in the broker UI, because UI Automation can click buttons but cannot independently validate brokerage state.") | Out-Null
     $lines.Add("- Confirm no live orders are placed during setup and that all strategies remain disabled until the intended enable step.") | Out-Null
     $lines.Add("- Keep ``READY_ALGOS_ENABLE_STRATEGIES=false`` until Add All has been verified cleanly for the client, then test the opt-in enable path under supervision.") | Out-Null
-    $lines.Add("- Confirm Whop/license behavior with real production keys and backend secrets.") | Out-Null
+    $lines.Add("- If the license gate is re-enabled later, confirm the production backend and real keys in a separate supervised pass.") | Out-Null
     $lines.Add("- Watch at least one scheduled morning sequence in real time: launch, connect, apply/verify, enable, and health monitoring.") | Out-Null
 
     Set-Content -Path $reportPath -Value $lines -Encoding UTF8

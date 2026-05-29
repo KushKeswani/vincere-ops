@@ -68,7 +68,7 @@ public sealed class StackApplyService
             return (false,
                 "No strategies to apply: enable Apply for rows, set Period if using filters, or change Apply to NT.");
 
-        if (string.IsNullOrWhiteSpace(_config.LicenseKey) || !_config.LicenseVerified)
+        if (_config.LicenseRequired && (string.IsNullOrWhiteSpace(_config.LicenseKey) || !_config.LicenseVerified))
             return (false, "A verified Vincere / Whop license key is required before applying strategies.");
 
         var strategies = list.Select(s => new
@@ -88,7 +88,7 @@ public sealed class StackApplyService
         {
             connectionName = _config.PropConnectionName,
             account = acct.RawAccountNumber,
-            licenseKey = _config.LicenseKey,
+            licenseKey = _config.LicenseKey ?? "",
             dryRun,
             applyPeriodFilter = periodFilter.ToString(),
             strategies

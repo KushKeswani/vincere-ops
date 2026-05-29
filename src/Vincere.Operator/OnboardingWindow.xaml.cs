@@ -21,8 +21,20 @@ public partial class OnboardingWindow : Window
     {
         _sp = sp;
         InitializeComponent();
+        ApplyLicenseUiVisibility();
         DiscoveredPropConnectionsList.ItemsSource = _discoveredPropConnections;
         DiscoveredAccountsList.ItemsSource = _discoveredAccounts;
+    }
+
+    private void ApplyLicenseUiVisibility()
+    {
+        var config = _sp.GetRequiredService<AppRuntimeConfig>();
+        var visible = (config.LicenseUiEnabled || config.LicenseRequired)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        LicenseHeaderText.Visibility = visible;
+        LicenseRailItem.Visibility = visible;
+        LicenseGatePanel.Visibility = visible;
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
@@ -64,18 +76,23 @@ public partial class OnboardingWindow : Window
             return;
         }
 
+        var config = _sp.GetRequiredService<AppRuntimeConfig>();
         var licenseKey = LicenseKeyBox.Text.Trim();
-        var verifier = _sp.GetRequiredService<LicenseVerificationService>();
-        var verification = await verifier.VerifyAsync(licenseKey);
-        if (!verification.Ok)
+        var verification = new LicenseVerificationResult(true, "License verification is disabled.", "not-required");
+        if (config.LicenseRequired)
         {
-            MessageBox.Show(verification.Message, "License verification", MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-            return;
+            var verifier = _sp.GetRequiredService<LicenseVerificationService>();
+            verification = await verifier.VerifyAsync(licenseKey);
+            if (!verification.Ok)
+            {
+                MessageBox.Show(verification.Message, "License verification", MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(licenseKey) &&
+                string.Equals(verification.Status, "test-bypass", StringComparison.OrdinalIgnoreCase))
+                licenseKey = "TEST-LICENSE-BYPASS";
         }
-        if (string.IsNullOrWhiteSpace(licenseKey) &&
-            string.Equals(verification.Status, "test-bypass", StringComparison.OrdinalIgnoreCase))
-            licenseKey = "TEST-LICENSE-BYPASS";
 
         var dbf = _sp.GetRequiredService<IDbContextFactory<VincereDbContext>>();
         await using var db = await dbf.CreateDbContextAsync();
@@ -115,10 +132,13 @@ public partial class OnboardingWindow : Window
         if (!string.IsNullOrWhiteSpace(NinjaTraderPasswordBox.Password))
             merged[AppRuntimeConfig.KeyNinjaTraderLoginPasswordProtected] =
                 WindowsProtectedSecret.Protect(NinjaTraderPasswordBox.Password);
-        merged[AppRuntimeConfig.KeyLicenseKey] = licenseKey;
-        merged[AppRuntimeConfig.KeyLicenseVerified] = "true";
-        merged[AppRuntimeConfig.KeyLicenseStatus] = verification.Status ?? "verified";
-        merged[AppRuntimeConfig.KeyLicenseVerifiedAt] = DateTimeOffset.UtcNow.ToString("O");
+        if (config.LicenseRequired || config.LicenseUiEnabled)
+        {
+            merged[AppRuntimeConfig.KeyLicenseKey] = licenseKey;
+            merged[AppRuntimeConfig.KeyLicenseVerified] = verification.Ok.ToString();
+            merged[AppRuntimeConfig.KeyLicenseStatus] = verification.Status ?? "verified";
+            merged[AppRuntimeConfig.KeyLicenseVerifiedAt] = DateTimeOffset.UtcNow.ToString("O");
+        }
         settings.UpdateAndSaveEnvFile(merged);
 
         await db.SaveChangesAsync();

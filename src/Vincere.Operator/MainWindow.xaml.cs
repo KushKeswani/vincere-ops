@@ -89,9 +89,14 @@ public partial class MainWindow : Window
         DryRunText.Text = _config.DryRun
             ? "DRY_RUN is enabled — NinjaTrader commands are simulated where possible."
             : "";
-        LicenseText.Text = _config.LicenseVerified
-            ? $"License: {_config.LicenseStatus ?? "verified"}"
-            : "License: missing";
+        var showLicenseUi = _config.LicenseUiEnabled || _config.LicenseRequired;
+        LicenseText.Visibility = showLicenseUi ? Visibility.Visible : Visibility.Collapsed;
+        if (showLicenseUi)
+        {
+            LicenseText.Text = _config.LicenseVerified
+                ? $"License: {_config.LicenseStatus ?? "verified"}"
+                : "License: missing";
+        }
         IpcHintText.Text =
             $"Pipe name: {_config.IpcPipeName}  |  {_config.IpcRetryAttempts} attempts × {_config.IpcConnectTimeoutMs} ms + {_config.IpcRetryDelayMs} ms pause\n" +
             $"DRY_RUN: {_config.DryRun} (set false in .env for real automation)\n" +
@@ -142,10 +147,15 @@ public partial class MainWindow : Window
         ReadyAlgosStatusText.Text = _config.ReadyAlgosScheduleEnabled
             ? $"Get Algos Ready scheduled for {_config.ReadyAlgosTime:HH:mm} Eastern; strategies {(_config.ReadyAlgosEnableStrategies ? "will enable" : "stay disabled")}."
             : "Get Algos Ready schedule is off.";
-        SettingsLicenseKeyBox.Text = _config.LicenseKey ?? "";
-        SettingsLicenseStatusText.Text = _config.LicenseVerified
-            ? $"License verified: {_config.LicenseStatus ?? "verified"}"
-            : "License not verified.";
+        var showLicenseUi = _config.LicenseUiEnabled || _config.LicenseRequired;
+        SettingsLicensePanel.Visibility = showLicenseUi ? Visibility.Visible : Visibility.Collapsed;
+        if (showLicenseUi)
+        {
+            SettingsLicenseKeyBox.Text = _config.LicenseKey ?? "";
+            SettingsLicenseStatusText.Text = _config.LicenseVerified
+                ? $"License verified: {_config.LicenseStatus ?? "verified"}"
+                : "License not verified.";
+        }
     }
 
     private void SaveAutomationSettings_Click(object sender, RoutedEventArgs e)
@@ -210,7 +220,8 @@ public partial class MainWindow : Window
             merged[AppRuntimeConfig.KeyNinjaTraderLoginPasswordProtected] =
                 WindowsProtectedSecret.Protect(NinjaTraderPasswordBox.Password);
 
-        if (!string.Equals(SettingsLicenseKeyBox.Text.Trim(), _config.LicenseKey, StringComparison.Ordinal))
+        if ((_config.LicenseUiEnabled || _config.LicenseRequired) &&
+            !string.Equals(SettingsLicenseKeyBox.Text.Trim(), _config.LicenseKey, StringComparison.Ordinal))
         {
             merged[AppRuntimeConfig.KeyLicenseKey] = SettingsLicenseKeyBox.Text.Trim();
             merged[AppRuntimeConfig.KeyLicenseVerified] = "false";
@@ -299,7 +310,8 @@ public partial class MainWindow : Window
         };
         settings.UpdateAndSaveEnvFile(merged);
         LoadAutomationSettingsIntoDashboard();
-        LicenseText.Text = $"License: {result.Status ?? "verified"}";
+        if (_config.LicenseUiEnabled || _config.LicenseRequired)
+            LicenseText.Text = $"License: {result.Status ?? "verified"}";
         StatusText.Text = "License verified.";
     }
 

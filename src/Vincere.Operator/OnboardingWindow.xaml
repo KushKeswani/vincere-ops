@@ -134,7 +134,9 @@
           </StackPanel>
         </StackPanel>
         <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-          <TextBlock Text="License: required"
+          <TextBlock x:Name="LicenseHeaderText"
+                     Text="License: required"
+                     Visibility="Collapsed"
                      Foreground="{StaticResource ColorTextSecondary}"
                      Margin="0,0,24,0"/>
           <TextBlock Text="Setup Wizard"
@@ -168,7 +170,9 @@
                 <TextBlock Text="Client profile" FontSize="11" Foreground="#EAF6FF"/>
               </StackPanel>
             </Border>
-            <Border Style="{StaticResource RailItem}">
+            <Border x:Name="LicenseRailItem"
+                    Style="{StaticResource RailItem}"
+                    Visibility="Collapsed">
               <StackPanel>
                 <TextBlock Text="2  License"/>
                 <TextBlock Text="Whop verification" FontSize="11" Foreground="{StaticResource ColorTextSecondary}"/>
@@ -176,43 +180,43 @@
             </Border>
             <Border Style="{StaticResource RailItem}">
               <StackPanel>
-                <TextBlock Text="3  NT Settings"/>
+                <TextBlock Text="2  NT Settings"/>
                 <TextBlock Text="Platform details" FontSize="11" Foreground="{StaticResource ColorTextSecondary}"/>
               </StackPanel>
             </Border>
             <Border Style="{StaticResource RailItem}">
               <StackPanel>
-                <TextBlock Text="4  Prepare NT"/>
+                <TextBlock Text="3  Prepare NT"/>
                 <TextBlock Text="Templates and algos" FontSize="11" Foreground="{StaticResource ColorTextSecondary}"/>
               </StackPanel>
             </Border>
             <Border Style="{StaticResource RailItem}">
               <StackPanel>
-                <TextBlock Text="5  Connections"/>
+                <TextBlock Text="4  Connections"/>
                 <TextBlock Text="Prop firm accounts" FontSize="11" Foreground="{StaticResource ColorTextSecondary}"/>
               </StackPanel>
             </Border>
             <Border Style="{StaticResource RailItem}">
               <StackPanel>
-                <TextBlock Text="6  Schedule"/>
+                <TextBlock Text="5  Schedule"/>
                 <TextBlock Text="Close-all default" FontSize="11" Foreground="{StaticResource ColorTextSecondary}"/>
               </StackPanel>
             </Border>
             <Border Style="{StaticResource RailItem}">
               <StackPanel>
-                <TextBlock Text="7  Cycling"/>
+                <TextBlock Text="6  Cycling"/>
                 <TextBlock Text="Account cycling" FontSize="11" Foreground="{StaticResource ColorTextSecondary}"/>
               </StackPanel>
             </Border>
             <Border Style="{StaticResource RailItem}">
               <StackPanel>
-                <TextBlock Text="8  Installing"/>
+                <TextBlock Text="7  Installing"/>
                 <TextBlock Text="Apply setup" FontSize="11" Foreground="{StaticResource ColorTextSecondary}"/>
               </StackPanel>
             </Border>
             <Border Style="{StaticResource RailItem}">
               <StackPanel>
-                <TextBlock Text="9  Complete"/>
+                <TextBlock Text="8  Complete"/>
                 <TextBlock Text="Open dashboard" FontSize="11" Foreground="{StaticResource ColorTextSecondary}"/>
               </StackPanel>
             </Border>
@@ -330,7 +334,9 @@
 	              </StackPanel>
 	            </Border>
 
-            <Border Style="{StaticResource SectionPanel}">
+            <Border x:Name="LicenseGatePanel"
+                    Style="{StaticResource SectionPanel}"
+                    Visibility="Collapsed">
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>

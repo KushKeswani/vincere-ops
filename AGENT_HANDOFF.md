@@ -33,7 +33,7 @@ Code changes that alter behavior must update the relevant docs, or the agent mus
 
 ## Summary
 
-This handoff covers the latest Vincere Ninja Manager production-readiness pass, including the approved Add All automation test, the safety checks around NinjaTrader orders and positions, and the new scheduled "Get Algos Ready" workflow requested for client morning preparation.
+This handoff covers the latest Vincere Ninja Manager production-readiness pass, including the approved Add All automation test, the safety checks around NinjaTrader orders and positions, the scheduled "Get Algos Ready" workflow requested for client morning preparation, and the parked WAP/Whop license gate.
 
 Live strategies were not intentionally enabled. During the Add All test, one NinjaTrader strategy row became enabled as a side effect of the UI workflow, and it was immediately disabled through the active RDP desktop automation.
 
@@ -49,6 +49,10 @@ Live strategies were not intentionally enabled. During the Add All test, one Nin
 - Added startup behavior so the manager can auto-arm itself when the ready schedule is enabled.
 - Updated save behavior so the ready schedule also configures the legacy automation windows consistently.
 - Added deployment packaging entries for Windows helper scripts used to start NinjaTrader and Vincere Operator before the scheduled ready time.
+- Parked the WAP/Whop license-key flow by default:
+  - `VINCERE_LICENSE_UI_ENABLED=false` hides the license status, test button, reset link, and setup wizard license step.
+  - `VINCERE_LICENSE_REQUIRED=false` makes onboarding and stack apply non-blocking without a verified key.
+  - The backend verification service and Vercel/API config path remain in the code for later re-enablement.
 
 ## Ready Workflow Behavior
 
@@ -66,12 +70,14 @@ When the new ready schedule is enabled, the older separate connection, stack-app
 
 - `.env.example`
   - Added ready schedule keys and an explicit strategy-enable safety gate.
+  - Added license gate flags so WAP/Whop verification is hidden and non-blocking by default.
 - `.gitignore`
   - Added `backups/` so generated deployment backups are not committed.
 - `README.md`
   - Documented the Get Algos Ready workflow and schedule.
 - `scripts/Test-VincereProductionReadiness.ps1`
   - Verifies the Get Algos Ready schedule controls and explicit strategy-enable safety gate in the screenshot-backed readiness harness.
+  - Verifies the default dashboard/settings UI does not visibly expose the WAP/Whop license-key controls.
 - `scripts/Send-AgentCheckpointTelegram.py`
   - Adds a non-secret checkpoint sender for agent status updates; it reads Telegram token/chat values from environment variables or the Agent Phoenix ProjectX `.env`.
 - `scripts/Invoke-NinjaTraderUiStackSetup.ps1`
@@ -81,6 +87,9 @@ When the new ready schedule is enabled, the older separate connection, stack-app
   - Added persistent marker for the last ready workflow day.
 - `src/Vincere.Core/Infrastructure/AppRuntimeConfig.cs`
   - Added ready schedule runtime config keys.
+  - Added `VINCERE_LICENSE_UI_ENABLED` and `VINCERE_LICENSE_REQUIRED`.
+- `src/Vincere.Core/Services/StackApplyService.cs`
+  - License verification blocks stack apply only when `VINCERE_LICENSE_REQUIRED=true`.
 - `src/Vincere.Core/Infrastructure/VincereSchemaPatcher.cs`
   - Added schema patching for the ready workflow day marker.
 - `src/Vincere.Core/Services/TradingBotOrchestrator.cs`
@@ -89,9 +98,15 @@ When the new ready schedule is enabled, the older separate connection, stack-app
   - Added prop-firm disconnect/reconnect and strategy-stack preparation sequence.
 - `src/Vincere.Operator/MainWindow.xaml`
   - Added Get Algos Ready button, schedule controls, and the explicit enable-strategies toggle.
+  - Hid the dashboard/settings license controls unless the license gate is explicitly enabled.
 - `src/Vincere.Operator/MainWindow.xaml.cs`
   - Wired the button, settings persistence, schedule registration, and manual run behavior.
   - Added Add All batch audit logging and stop-on-first-failure behavior so partial setup failures are captured instead of continuing silently across all accounts.
+  - Keeps the license-test handlers available only behind the hidden/re-enabled UI path.
+- `src/Vincere.Operator/OnboardingWindow.xaml`
+  - Hid the setup wizard license step and license gate panel by default.
+- `src/Vincere.Operator/OnboardingWindow.xaml.cs`
+  - Skips license verification unless `VINCERE_LICENSE_REQUIRED=true`.
 - `src/Vincere.Operator/Vincere.Operator.csproj`
   - Included the Windows startup and task registration scripts in the packaged output.
 
