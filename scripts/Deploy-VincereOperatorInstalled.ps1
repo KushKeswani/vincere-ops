@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $install = "C:\Users\Administrator\AppData\Local\Programs\VincereOps"
-$repo = "C:\Users\Administrator\Desktop\vincere-ops"
+$repo = Split-Path -Parent $PSScriptRoot
 $build = Join-Path $repo "src\Vincere.Operator\bin\Release\net10.0-windows"
 $backupRoot = Join-Path $repo "backups"
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
