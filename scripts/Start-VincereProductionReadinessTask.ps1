@@ -12,7 +12,7 @@
 param(
     [string]$TaskName = "VincereProdReadinessSafe",
     [string]$HarnessPath = "$PSScriptRoot\Test-VincereProductionReadiness.ps1",
-    [string]$AppPath = "C:\Users\Administrator\Desktop\vincere-ops\src\Vincere.Operator\bin\Release\net10.0-windows\Vincere.Operator.exe",
+    [string]$AppPath = "$env:LOCALAPPDATA\Programs\VincereOps\Vincere.Operator.exe",
     [string]$LauncherPath = "$env:ProgramData\VincereProdReadinessTask.ps1",
     [string]$BlueprintPath = "",
     [switch]$IncludeManagerStartStop,
