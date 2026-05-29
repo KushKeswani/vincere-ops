@@ -2,8 +2,8 @@
 
 Date: 2026-05-28
 Repo: vincere-ops
-VPS workspace: `C:\Users\Administrator\Desktop\vincere-ops`
-Baseline verified commit: `1885362` or newer
+VPS workspace: `C:\Users\Administrator\Documents\Projects\Vincere\vincere-ops`
+Baseline verified commit: `878a9a5` or newer
 
 ## Agent Handoff Policy
 
@@ -109,6 +109,10 @@ When the new ready schedule is enabled, the older separate connection, stack-app
   - Skips license verification unless `VINCERE_LICENSE_REQUIRED=true`.
 - `src/Vincere.Operator/Vincere.Operator.csproj`
   - Included the Windows startup and task registration scripts in the packaged output.
+- `scripts/Deploy-VincereOperatorInstalled.ps1`
+  - Resolves the repo root from the script location instead of the old Desktop path.
+- `scripts/Start-VincereProductionReadinessTask.ps1`
+  - Uses the installed app path by default so the interactive QA task validates the deployed executable.
 
 ## Build And Deployment
 
@@ -122,10 +126,10 @@ dotnet build .\src\Vincere.Operator\Vincere.Operator.csproj -c Release --no-rest
 
 ### 2026-05-28 Verification Baseline
 
-- Commit deployed on VPS: `fcc93ab` (`Update handoff for instrument selector hardening`).
-- VPS repo: `C:\Users\Administrator\Desktop\vincere-ops`.
+- Commit deployed on VPS: `878a9a5` (`Use installed app in readiness task`).
+- VPS repo: `C:\Users\Administrator\Documents\Projects\Vincere\vincere-ops`.
 - Installed app redeployed from the clean committed release build.
-- Latest deployment backup: `C:\Users\Administrator\Desktop\vincere-ops\backups\VincereOps-installed-20260528-182050`.
+- Latest deployment backup: `C:\Users\Administrator\Documents\Projects\Vincere\vincere-ops\backups\VincereOps-installed-20260528-205127`.
 - Target Windows build passed:
 
 ```powershell
@@ -135,20 +139,21 @@ dotnet build .\src\Vincere.Operator\Vincere.Operator.csproj -c Release --no-rest
 Result: `0 Warning(s), 0 Error(s)`.
 
 - Safe screenshot-backed harness report:
-  `C:\Users\Administrator\Desktop\vincere-ops\logs\production-readiness\20260528-181142\PRODUCTION_READINESS_REPORT.md`
-- Harness summary: `PASS=42, FAIL=0, WARN=1, SKIP=10`.
+  `C:\Users\Administrator\Documents\Projects\Vincere\vincere-ops\logs\production-readiness\20260528-205726\PRODUCTION_READINESS_REPORT.md`
+- Harness summary: `PASS=45, FAIL=0, WARN=1, SKIP=10`.
 - Verified controls:
   - `Automatically get algos ready each trading day`.
   - `Enable strategies after Get Algos Ready`.
   - Safety copy warning to leave strategy enabling off until Add All is verified.
+  - WAP/Whop license status and license-key/test controls are hidden by default.
 - NinjaTrader verification:
   - Strategies grid visible to UI Automation.
-  - UIA data item count: `3`.
-  - Enable what-if: would set `3 of 3` rows enabled.
-  - Disable what-if: all `3` strategy rows were already disabled.
+  - UIA data item count: `6`.
+  - Enable what-if: would set `6 of 6` rows enabled.
+  - Disable what-if: all `6` strategy rows were already disabled.
 - Running process state after deploy/test:
-  - `NinjaTrader`, PID `13916`, responding in the earlier 2026-05-28 process check.
-  - `Vincere.Operator`, PID `15432`, responding in the earlier 2026-05-28 process check.
+  - `NinjaTrader`, PID `12396`, responding in the 2026-05-28 process check after the readiness run.
+  - `Vincere.Operator`, PID `10928`, responding in the 2026-05-28 process check after the readiness run.
 - Temporary one-off scheduled test tasks were removed after the run.
 - The Add All batch audit hardening builds and is deployed, but still needs a supervised Add All test before it can be considered behaviorally verified.
 - The instrument-selector script passed a PowerShell parser check after the final VPS pull and was redeployed into the installed app folder.
@@ -162,7 +167,7 @@ C:\Users\Administrator\AppData\Local\Programs\VincereOps
 Deployment backup generated locally:
 
 ```text
-C:\Users\Administrator\Desktop\vincere-ops\backups\VincereOps-installed-20260527-165425
+C:\Users\Administrator\Documents\Projects\Vincere\vincere-ops\backups\VincereOps-installed-20260528-205127
 ```
 
 The backup is intentionally ignored by git because it is generated deployment output, not source.
