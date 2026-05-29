@@ -686,7 +686,7 @@ public partial class MainWindow : Window
     }
 
     private async Task<List<TradingAccountEntity>> RefreshAccountsFromNinjaTraderUiAsync(
-        NinjaTraderUiScanResult? scanResult = null,
+        global::Vincere.Operator.NinjaTraderUiScanResult? scanResult = null,
         TimeSpan? timeout = null)
     {
         scanResult ??= await NinjaTraderUiDiscovery.ScanAsync(timeout ?? TimeSpan.FromSeconds(12));
