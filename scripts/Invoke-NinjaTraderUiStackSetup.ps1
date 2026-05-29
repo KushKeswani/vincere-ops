@@ -56,6 +56,33 @@ function Find-VisibleDescendantByName($Root, [string]$Name) {
     return $null
 }
 
+function Find-NewStrategyMenuItem {
+    $desktop = [System.Windows.Automation.AutomationElement]::RootElement
+    $items = $desktop.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants,
+        [System.Windows.Automation.Condition]::TrueCondition)
+
+    $fallback = $null
+    for ($i = 0; $i -lt $items.Count; $i++) {
+        $item = $items.Item($i)
+        $name = [string]$item.Current.Name
+        if ([string]::IsNullOrWhiteSpace($name)) { continue }
+
+        $normalized = Normalize-Name $name
+        if ($normalized -ne "NEWSTRATEGY") { continue }
+        if (-not (Test-ElementVisible $item)) { continue }
+
+        if ($item.Current.ControlType -eq [System.Windows.Automation.ControlType]::MenuItem) {
+            return $item
+        }
+        if ($null -eq $fallback) {
+            $fallback = $item
+        }
+    }
+
+    return $fallback
+}
+
 function Invoke-Element($Element, [string]$Label) {
     if ($null -eq $Element) { throw "$Label not found." }
     $pattern = $null
@@ -508,10 +535,23 @@ function Open-ControlCenterNewStrategyDialog($ControlCenter) {
     Click-ElementCenter $grid "Control Center Strategies grid" "right"
     Start-Sleep -Milliseconds 500
 
-    $desktop = [System.Windows.Automation.AutomationElement]::RootElement
-    $newItem = $desktop.FindFirst(
-        [System.Windows.Automation.TreeScope]::Descendants,
-        (New-PropertyCondition ([System.Windows.Automation.AutomationElement]::NameProperty) "New Strategy..."))
+    $newItem = Find-NewStrategyMenuItem
+    if ($null -eq $newItem) {
+        try {
+            $grid.SetFocus()
+            [System.Windows.Forms.SendKeys]::SendWait("+{F10}")
+            Start-Sleep -Milliseconds 500
+            $newItem = Find-NewStrategyMenuItem
+        } catch {}
+    }
+    if ($null -eq $newItem) {
+        try {
+            $grid.SetFocus()
+            [System.Windows.Forms.SendKeys]::SendWait("{APPS}")
+            Start-Sleep -Milliseconds 500
+            $newItem = Find-NewStrategyMenuItem
+        } catch {}
+    }
     Invoke-Element $newItem "New Strategy menu item"
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)

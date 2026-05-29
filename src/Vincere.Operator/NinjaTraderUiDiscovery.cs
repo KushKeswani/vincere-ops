@@ -200,7 +200,7 @@ public static class NinjaTraderUiDiscovery
 
         try
         {
-            readLocalFiles = ScanLocalNinjaTraderFiles(connections, accounts);
+            readLocalFiles = ScanLocalNinjaTraderFiles(connections);
 
             var desktop = AutomationElement.RootElement;
             foreach (var process in Process.GetProcessesByName("NinjaTrader"))
@@ -211,15 +211,15 @@ public static class NinjaTraderUiDiscovery
                     continue;
 
                 sawControlCenter = true;
-                ScanElement(controlCenter, connections, accounts, ref sawControlCenterXml, maxDepth: 7);
+                ScanElement(controlCenter, connections, accounts, ref sawControlCenterXml, includeAccounts: false, maxDepth: 7);
 
                 if (TrySelectTab(controlCenter, "AccountsGridTabItem"))
                 {
                     selectedAccountsTab = true;
                     Thread.Sleep(150);
-                    ScanElement(controlCenter, connections, accounts, ref sawControlCenterXml, maxDepth: 7);
+                    ScanElement(controlCenter, connections, accounts, ref sawControlCenterXml, includeAccounts: true, maxDepth: 7);
                     if (accounts.Count == 0)
-                        ScanScrollableElements(controlCenter, connections, accounts, ref sawControlCenterXml);
+                        ScanScrollableElements(controlCenter, connections, accounts, ref sawControlCenterXml, includeAccounts: true);
                 }
 
                 if (TryOpenConnectionsMenu(controlCenter))
@@ -228,7 +228,7 @@ public static class NinjaTraderUiDiscovery
                     Thread.Sleep(150);
                     var popups = desktop.FindAll(TreeScope.Children, processCondition);
                     for (var j = 0; j < popups.Count; j++)
-                        ScanElement(popups[j], connections, accounts, ref sawControlCenterXml, maxDepth: 4);
+                        ScanElement(popups[j], connections, accounts, ref sawControlCenterXml, includeAccounts: false, maxDepth: 4);
                 }
 
                 break;
@@ -250,7 +250,7 @@ public static class NinjaTraderUiDiscovery
         if (openedConnectionsMenu)
             detail += " Opened Connections menu before scanning connection names.";
         if (readLocalFiles)
-            detail += " Read local NinjaTrader config/log files.";
+            detail += " Read local NinjaTrader config/log files for connection hints only.";
         if (accounts.Count == 0)
             detail += " Control Center did not expose account rows.";
         detail += $" Scan took {sw.Elapsed.TotalSeconds:0.0}s.";
@@ -258,18 +258,17 @@ public static class NinjaTraderUiDiscovery
         return new NinjaTraderUiScanResult(connections.ToList(), accounts.ToList(), detail);
     }
 
-    private static bool ScanLocalNinjaTraderFiles(ISet<string> connections, ISet<string> accounts)
+    private static bool ScanLocalNinjaTraderFiles(ISet<string> connections)
     {
         var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "NinjaTrader 8");
         if (!Directory.Exists(root))
             return false;
 
         var beforeConnections = connections.Count;
-        var beforeAccounts = accounts.Count;
         ScanConfigXml(Path.Combine(root, "Config.xml"), connections);
-        ScanRecentTextFiles(Path.Combine(root, "log"), connections, accounts);
-        ScanRecentTextFiles(Path.Combine(root, "trace"), connections, accounts);
-        return connections.Count != beforeConnections || accounts.Count != beforeAccounts;
+        ScanRecentTextFiles(Path.Combine(root, "log"), connections);
+        ScanRecentTextFiles(Path.Combine(root, "trace"), connections);
+        return connections.Count != beforeConnections;
     }
 
     private static void ScanConfigXml(string path, ISet<string> connections)
@@ -293,7 +292,7 @@ public static class NinjaTraderUiDiscovery
         }
     }
 
-    private static void ScanRecentTextFiles(string directory, ISet<string> connections, ISet<string> accounts)
+    private static void ScanRecentTextFiles(string directory, ISet<string> connections)
     {
         if (!Directory.Exists(directory))
             return;
@@ -314,16 +313,17 @@ public static class NinjaTraderUiDiscovery
         }
 
         foreach (var file in files)
-            ScanTextFile(file.FullName, connections, accounts);
+            ScanTextFile(file.FullName, connections);
     }
 
-    private static void ScanTextFile(string path, ISet<string> connections, ISet<string> accounts)
+    private static void ScanTextFile(string path, ISet<string> connections)
     {
         try
         {
+            var ignoredAccounts = new SortedSet<string>();
             foreach (var line in File.ReadLines(path).TakeLast(700))
             {
-                TryScanText(line, connections, accounts, ref UnsafeIgnoreXmlFlag.Value);
+                TryScanText(line, connections, ignoredAccounts, ref UnsafeIgnoreXmlFlag.Value, includeAccounts: false);
                 ExtractConnectionMentions(line, connections);
             }
         }
@@ -557,7 +557,8 @@ public static class NinjaTraderUiDiscovery
         AutomationElement root,
         ISet<string> connections,
         ISet<string> accounts,
-        ref bool sawControlCenterXml)
+        ref bool sawControlCenterXml,
+        bool includeAccounts)
     {
         AutomationElementCollection elements;
         try
@@ -596,7 +597,7 @@ public static class NinjaTraderUiDiscovery
                 {
                     var previousAccountCount = accounts.Count;
                     var previousConnectionCount = connections.Count;
-                    ScanElement(root, connections, accounts, ref sawControlCenterXml, maxDepth: 6);
+                    ScanElement(root, connections, accounts, ref sawControlCenterXml, includeAccounts, maxDepth: 6);
                     var current = scroll.Current.VerticalScrollPercent;
                     if (!double.IsNaN(previous) && Math.Abs(current - previous) < 0.01)
                         break;
@@ -619,14 +620,15 @@ public static class NinjaTraderUiDiscovery
         ISet<string> connections,
         ISet<string> accounts,
         ref bool sawControlCenterXml,
+        bool includeAccounts,
         int depth = 0,
         int maxDepth = 10)
     {
         if (depth > maxDepth)
             return;
 
-        TryScanText(GetName(element), connections, accounts, ref sawControlCenterXml);
-        TryScanText(GetValue(element), connections, accounts, ref sawControlCenterXml);
+        TryScanText(GetName(element), connections, accounts, ref sawControlCenterXml, includeAccounts);
+        TryScanText(GetValue(element), connections, accounts, ref sawControlCenterXml, includeAccounts);
 
         AutomationElementCollection children;
         try
@@ -639,14 +641,15 @@ public static class NinjaTraderUiDiscovery
         }
 
         for (var i = 0; i < children.Count; i++)
-            ScanElement(children[i], connections, accounts, ref sawControlCenterXml, depth + 1, maxDepth);
+            ScanElement(children[i], connections, accounts, ref sawControlCenterXml, includeAccounts, depth + 1, maxDepth);
     }
 
     private static void TryScanText(
         string value,
         ISet<string> connections,
         ISet<string> accounts,
-        ref bool sawControlCenterXml)
+        ref bool sawControlCenterXml,
+        bool includeAccounts)
     {
         if (string.IsNullOrWhiteSpace(value))
             return;
@@ -657,8 +660,11 @@ public static class NinjaTraderUiDiscovery
             TryReadControlCenterXml(value, connections);
         }
 
-        foreach (Match match in AccountPattern.Matches(value))
-            accounts.Add(match.Value.Trim());
+        if (includeAccounts)
+        {
+            foreach (Match match in AccountPattern.Matches(value))
+                accounts.Add(match.Value.Trim());
+        }
 
         AddConnectionCandidate(value, connections);
     }

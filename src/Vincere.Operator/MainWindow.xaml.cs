@@ -685,6 +685,68 @@ public partial class MainWindow : Window
             AccountList.SelectedItem = _accounts[0];
     }
 
+    private async Task<List<TradingAccountEntity>> RefreshAccountsFromNinjaTraderUiAsync(
+        NinjaTraderUiScanResult? scanResult = null,
+        TimeSpan? timeout = null)
+    {
+        scanResult ??= await NinjaTraderUiDiscovery.ScanAsync(timeout ?? TimeSpan.FromSeconds(12));
+
+        var currentAccounts = scanResult.Accounts
+            .Select(CleanAccountName)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .GroupBy(NormalizeAccountKey)
+            .Select(g => g.First())
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (currentAccounts.Count == 0)
+            return new List<TradingAccountEntity>();
+
+        var dbf = _sp.GetRequiredService<IDbContextFactory<VincereDbContext>>();
+        await using var db = await dbf.CreateDbContextAsync();
+        var existing = await db.Accounts.ToListAsync();
+        var existingByKey = existing
+            .Select(a => new { Account = a, Key = NormalizeAccountKey(a.RawAccountNumber) })
+            .Where(x => !string.IsNullOrWhiteSpace(x.Key))
+            .GroupBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Account, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var account in currentAccounts)
+        {
+            var key = NormalizeAccountKey(account);
+            if (string.IsNullOrWhiteSpace(key))
+                continue;
+
+            if (existingByKey.TryGetValue(key, out var existingAccount))
+            {
+                existingAccount.RawAccountNumber = account;
+                existingAccount.DisplayName = account;
+                continue;
+            }
+
+            var entity = new TradingAccountEntity
+            {
+                Id = Guid.NewGuid(),
+                RawAccountNumber = account,
+                DisplayName = account
+            };
+            db.Accounts.Add(entity);
+            existingByKey[key] = entity;
+        }
+
+        await db.SaveChangesAsync();
+
+        var currentKeys = currentAccounts
+            .Select(NormalizeAccountKey)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return (await db.Accounts.AsNoTracking().OrderBy(a => a.DisplayName).ToListAsync())
+            .Where(a => currentKeys.Contains(NormalizeAccountKey(a.RawAccountNumber)))
+            .GroupBy(a => NormalizeAccountKey(a.RawAccountNumber))
+            .Select(g => g.First())
+            .ToList();
+    }
+
     private async Task SelectDefaultStackAccountAsync()
     {
         if (_accounts.Count == 0 || StackAccountCombo.SelectedItem is TradingAccountEntity)
@@ -927,9 +989,13 @@ public partial class MainWindow : Window
         foreach (var item in accounts)
             _availableNtAccounts.Add(item);
 
+        var syncedAccounts = await RefreshAccountsFromNinjaTraderUiAsync(uiScan);
+        if (syncedAccounts.Count > 0)
+            await ReloadAccountsAsync();
+
         SelectExistingConnections();
         SettingsScanStatusText.Text =
-            $"Found {_availablePropConnections.Count} connection(s) and {_availableNtAccounts.Count} account(s) using UI automation. {string.Join(" ", details)}";
+            $"Found {_availablePropConnections.Count} connection(s) and {_availableNtAccounts.Count} account(s) using UI automation. Synced {syncedAccounts.Count} current account(s). {string.Join(" ", details)}";
         StatusText.Text = SettingsScanStatusText.Text;
     }
 
@@ -1854,8 +1920,22 @@ public partial class MainWindow : Window
         _lastExcelRows = rows.Select(PrepareBlueprintRow).ToList();
         _excelMap.Clear();
 
-        await using var db = await _sp.GetRequiredService<IDbContextFactory<VincereDbContext>>().CreateDbContextAsync();
-        var accs = await db.Accounts.AsNoTracking().ToListAsync();
+        BlueprintImportStatusText.Text = "Refreshing current NinjaTrader accounts from the Control Center UI...";
+        var accs = await RefreshAccountsFromNinjaTraderUiAsync(timeout: TimeSpan.FromSeconds(12));
+        if (accs.Count == 0)
+        {
+            StatusText.Text = "Blueprint parsed, but NinjaTrader UI did not expose any current accounts.";
+            BlueprintImportStatusText.Text =
+                "No current NinjaTrader accounts were found from the Control Center UI. Open NinjaTrader, show the Control Center Accounts tab, then choose the blueprint again.";
+            MessageBox.Show(
+                "No current NinjaTrader accounts were found from the Control Center UI. The manager will not use saved or log-derived accounts for blueprint setup.",
+                "Blueprint Import",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        await ReloadAccountsAsync();
 
         foreach (var raw in rows.Select(r => r.RawAccountHint).Distinct(StringComparer.OrdinalIgnoreCase))
         {
@@ -1864,16 +1944,19 @@ public partial class MainWindow : Window
             foreach (var a in accs)
                 row.AccountChoices.Add(a);
 
+            var rawKey = NormalizeAccountKey(raw);
             var match = accs.FirstOrDefault(a =>
-                string.Equals(a.RawAccountNumber, raw, StringComparison.OrdinalIgnoreCase));
+                string.Equals(NormalizeAccountKey(a.RawAccountNumber), rawKey, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(NormalizeAccountKey(a.DisplayName), rawKey, StringComparison.OrdinalIgnoreCase));
             row.SelectedAccountId = match?.Id;
 
             _excelMap.Add(row);
         }
 
-        StatusText.Text = $"Parsed {_lastExcelRows.Count} row(s) from spreadsheet with Period/template defaults applied.";
+        StatusText.Text =
+            $"Parsed {_lastExcelRows.Count} row(s) from spreadsheet; account choices refreshed from NinjaTrader UI.";
         BlueprintImportStatusText.Text =
-            $"Parsed {_lastExcelRows.Count} algo row(s). Map each blueprint account to the NinjaTrader account, then save setup.";
+            $"Parsed {_lastExcelRows.Count} algo row(s). Map each blueprint account to one of the {accs.Count} current NinjaTrader UI account(s), then save setup.";
     }
 
     private async void ImportExcel_Click(object sender, RoutedEventArgs e)
