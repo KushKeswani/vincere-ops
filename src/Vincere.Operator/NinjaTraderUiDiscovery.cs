@@ -8,6 +8,23 @@ namespace Vincere.Operator;
 
 public sealed record NinjaTraderUiScanResult(List<string> Connections, List<string> Accounts, string Detail);
 public sealed record NinjaTraderStrategyToggleResult(bool Ok, int VisibleCheckboxes, int Changed, string Message);
+public sealed record NinjaTraderGridSafetySnapshot(
+    int OrdersGridCount,
+    int PositionsGridCount,
+    int StrategiesGridCount,
+    int VisibleStrategyEnabledCount,
+    int VisibleStrategyDisabledCount,
+    bool EnabledStateUncertain,
+    bool GridCountUncertain,
+    string ReadError)
+{
+    public bool BlocksAddAll =>
+        GridCountUncertain ||
+        EnabledStateUncertain ||
+        OrdersGridCount != 0 ||
+        PositionsGridCount != 0 ||
+        VisibleStrategyEnabledCount != 0;
+}
 
 public static class NinjaTraderUiDiscovery
 {
@@ -111,6 +128,42 @@ public static class NinjaTraderUiDiscovery
         }
     }
 
+    public static async Task<NinjaTraderGridSafetySnapshot> GetGridSafetySnapshotAsync(TimeSpan? timeout = null)
+    {
+        var tcs = new TaskCompletionSource<NinjaTraderGridSafetySnapshot>();
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                tcs.SetResult(GetGridSafetySnapshot());
+            }
+            catch (Exception ex)
+            {
+                tcs.SetResult(new NinjaTraderGridSafetySnapshot(
+                    -1, -1, -1, 0, 0, true, true,
+                    $"NinjaTrader grid safety snapshot failed: {ex.Message}"));
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "NinjaTrader grid safety snapshot"
+        };
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+
+        try
+        {
+            return await tcs.Task.WaitAsync(timeout ?? TimeSpan.FromSeconds(12));
+        }
+        catch (TimeoutException)
+        {
+            return new NinjaTraderGridSafetySnapshot(
+                -1, -1, -1, 0, 0, true, true,
+                "NinjaTrader grid safety snapshot timed out. Make sure the Control Center is open and visible.");
+        }
+    }
+
     private static NinjaTraderStrategyToggleResult SetAllStrategiesEnabled(bool enabled)
     {
         if (!IsNinjaTraderRunning())
@@ -185,6 +238,152 @@ public static class NinjaTraderUiDiscovery
             changed == 0
                 ? $"All {visible} visible strategy row(s) were already {action}."
                 : $"{action[..1].ToUpperInvariant() + action[1..]} {changed} of {visible} visible strategy row(s).");
+    }
+
+    private static NinjaTraderGridSafetySnapshot GetGridSafetySnapshot()
+    {
+        if (!IsNinjaTraderRunning())
+        {
+            return new NinjaTraderGridSafetySnapshot(
+                -1, -1, -1, 0, 0, true, true, "NinjaTrader is not running.");
+        }
+
+        var desktop = AutomationElement.RootElement;
+        AutomationElement? controlCenter = null;
+        foreach (var process in Process.GetProcessesByName("NinjaTrader"))
+        {
+            var processCondition = new PropertyCondition(AutomationElement.ProcessIdProperty, process.Id);
+            controlCenter = FindControlCenter(desktop, processCondition);
+            if (controlCenter is not null)
+                break;
+        }
+
+        if (controlCenter is null)
+        {
+            return new NinjaTraderGridSafetySnapshot(
+                -1, -1, -1, 0, 0, true, true, "NinjaTrader Control Center was not found.");
+        }
+
+        TryBringWindowToFront(controlCenter);
+        var readErrors = new List<string>();
+        var orders = ReadGridItemCount(controlCenter, "OrdersGridTabItem", "OrdersGrid", readErrors);
+        var positions = ReadGridItemCount(controlCenter, "PositionsGridTabItem", "PositionsGrid", readErrors);
+        var strategies = ReadStrategyGridState(controlCenter, readErrors);
+        var gridUncertain = orders < 0 || positions < 0 || strategies.Count < 0;
+        var enabledUncertain = strategies.EnabledStateUncertain;
+
+        return new NinjaTraderGridSafetySnapshot(
+            orders,
+            positions,
+            strategies.Count,
+            strategies.EnabledCount,
+            strategies.DisabledCount,
+            enabledUncertain,
+            gridUncertain,
+            string.Join("; ", readErrors));
+    }
+
+    private static int ReadGridItemCount(
+        AutomationElement controlCenter,
+        string tabAutomationId,
+        string gridAutomationId,
+        ICollection<string> readErrors)
+    {
+        if (!TrySelectTab(controlCenter, tabAutomationId))
+        {
+            readErrors.Add($"{gridAutomationId} tab was not found.");
+            return -1;
+        }
+
+        Thread.Sleep(200);
+        var grid = controlCenter.FindFirst(TreeScope.Descendants,
+            new PropertyCondition(AutomationElement.AutomationIdProperty, gridAutomationId));
+        if (grid is null)
+        {
+            readErrors.Add($"{gridAutomationId} was not found.");
+            return -1;
+        }
+
+        try
+        {
+            var rows = grid.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.DataItem));
+            return rows.Cast<AutomationElement>().Count(IsVisible);
+        }
+        catch (Exception ex)
+        {
+            readErrors.Add($"{gridAutomationId} count failed: {ex.Message}");
+            return -1;
+        }
+    }
+
+    private static (int Count, int EnabledCount, int DisabledCount, bool EnabledStateUncertain) ReadStrategyGridState(
+        AutomationElement controlCenter,
+        ICollection<string> readErrors)
+    {
+        if (!TrySelectTab(controlCenter, "StrategiesGridTabItem"))
+        {
+            readErrors.Add("StrategiesGrid tab was not found.");
+            return (-1, 0, 0, true);
+        }
+
+        Thread.Sleep(300);
+        var grid = controlCenter.FindFirst(TreeScope.Descendants,
+            new PropertyCondition(AutomationElement.AutomationIdProperty, "StrategiesGrid"));
+        if (grid is null)
+        {
+            readErrors.Add("StrategiesGrid was not found.");
+            return (-1, 0, 0, true);
+        }
+
+        var count = -1;
+        var enabled = 0;
+        var disabled = 0;
+        var uncertain = false;
+
+        try
+        {
+            var rows = grid.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.DataItem));
+            count = rows.Cast<AutomationElement>().Count(IsVisible);
+        }
+        catch (Exception ex)
+        {
+            readErrors.Add($"StrategiesGrid count failed: {ex.Message}");
+        }
+
+        try
+        {
+            var checkboxes = grid.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.CheckBox));
+            for (var i = 0; i < checkboxes.Count; i++)
+            {
+                var checkbox = checkboxes[i];
+                if (!IsVisibleEnabled(checkbox))
+                    continue;
+
+                if (!checkbox.TryGetCurrentPattern(TogglePattern.Pattern, out var pattern) ||
+                    pattern is not TogglePattern toggle)
+                {
+                    uncertain = true;
+                    continue;
+                }
+
+                if (toggle.Current.ToggleState == ToggleState.On)
+                    enabled++;
+                else if (toggle.Current.ToggleState == ToggleState.Off)
+                    disabled++;
+                else
+                    uncertain = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            readErrors.Add($"StrategiesGrid enabled-state read failed: {ex.Message}");
+            uncertain = true;
+        }
+
+        return (count, enabled, disabled, uncertain);
     }
 
     private static NinjaTraderUiScanResult Scan()
@@ -515,6 +714,18 @@ public static class NinjaTraderUiDiscovery
         try
         {
             return element.Current.IsEnabled && !element.Current.BoundingRectangle.IsEmpty;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsVisible(AutomationElement element)
+    {
+        try
+        {
+            return !element.Current.BoundingRectangle.IsEmpty;
         }
         catch
         {

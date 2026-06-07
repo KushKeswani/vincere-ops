@@ -12,6 +12,48 @@ Add-Type -AssemblyName System.Windows.Forms
 
 $payload = Get-Content -Raw -Path $StackJsonPath | ConvertFrom-Json
 $results = New-Object 'System.Collections.Generic.List[string]'
+$diagnosticRunId = "$(Get-Date -Format 'yyyyMMdd-HHmmss')-$(([guid]::NewGuid().ToString('N')).Substring(0,8))"
+$diagnosticRoot = Join-Path $env:TEMP (Join-Path "vincere-add-all-diagnostics" $diagnosticRunId)
+$diagnosticPaths = New-Object 'System.Collections.Generic.List[string]'
+$currentDiagnosticContext = $null
+
+function Normalize-DiagnosticName([string]$Value) {
+    if ([string]::IsNullOrWhiteSpace($Value)) { return "unknown" }
+    $clean = [regex]::Replace($Value.Trim(), "[^A-Za-z0-9_-]+", "-").Trim("-")
+    if ([string]::IsNullOrWhiteSpace($clean)) { return "unknown" }
+    if ($clean.Length -gt 80) { return $clean.Substring(0, 80) }
+    return $clean
+}
+
+function New-DiagnosticPath([string]$Phase, [string]$Extension = "txt") {
+    $ctx = if ($null -ne $script:currentDiagnosticContext) { $script:currentDiagnosticContext } else { @{} }
+    $attempt = if ($ctx.ContainsKey("attempt_index")) { [int]$ctx["attempt_index"] } else { 0 }
+    $account = Normalize-DiagnosticName ([string]$ctx["account_id"])
+    $strategy = Normalize-DiagnosticName ([string]$ctx["strategy_type"])
+    $phaseName = Normalize-DiagnosticName $Phase
+    New-Item -ItemType Directory -Force -Path $script:diagnosticRoot | Out-Null
+    $path = Join-Path $script:diagnosticRoot ("{0:000}-{1}-{2}-{3}.{4}" -f $attempt, $account, $strategy, $phaseName, $Extension)
+    $script:diagnosticPaths.Add($path) | Out-Null
+    return $path
+}
+
+function Add-DiagnosticEvent([string]$Phase, [string]$Message) {
+    try {
+        $path = New-DiagnosticPath $Phase "log"
+        $line = "{0} | {1}" -f (Get-Date -Format o), (($Message -replace "\r?\n", " ").Trim())
+        if ($line.Length -gt 500) { $line = $line.Substring(0, 500) }
+        Add-Content -Path $path -Value $line -Encoding UTF8
+    } catch {}
+}
+
+function Write-DiagnosticSummary {
+    if ($script:diagnosticPaths.Count -gt 0) {
+        $paths = ($script:diagnosticPaths | Select-Object -Unique) -join "; "
+        $results.Add("diagnostic_run_id=$script:diagnosticRunId") | Out-Null
+        $results.Add("diagnostic_root=$script:diagnosticRoot") | Out-Null
+        $results.Add("diagnostic_paths=$paths") | Out-Null
+    }
+}
 
 if (-not ("Native.WinUi" -as [type])) {
     $winSig = @'
@@ -684,12 +726,18 @@ function Set-Account($Dialog, [string]$Account) {
 }
 
 function Find-InstrumentSelector($Dialog) {
+    Add-DiagnosticEvent "instrument-selector" "selector_initial_by_automation_id: searching"
     $selector = Find-DescendantByAutomationId $Dialog "InstrumentSelector"
-    if ($null -ne $selector) { return $selector }
+    if ($null -ne $selector) {
+        Add-DiagnosticEvent "instrument-selector" "selector_initial_by_automation_id: found"
+        return $selector
+    }
 
     $properties = Find-DescendantByName $Dialog "Properties"
+    Add-DiagnosticEvent "instrument-selector" ("properties_panel_visible: {0}" -f (Test-ElementVisible $properties))
     if (Test-ElementVisible $properties) {
         try { $properties.SetFocus() } catch {}
+        Add-DiagnosticEvent "instrument-selector" "properties_panel_focused"
         Click-ElementCenter $properties "Properties panel"
         Start-Sleep -Milliseconds 150
         [System.Windows.Forms.SendKeys]::SendWait("^{HOME}")
@@ -703,7 +751,11 @@ function Find-InstrumentSelector($Dialog) {
     }
 
     $selector = Find-DescendantByAutomationId $Dialog "InstrumentSelector"
-    if ($null -ne $selector) { return $selector }
+    if ($null -ne $selector) {
+        Add-DiagnosticEvent "instrument-selector" "selector_after_properties_focus: found"
+        return $selector
+    }
+    Add-DiagnosticEvent "instrument-selector" "selector_after_properties_focus: missing; trying name/class fallback"
 
     $items = $Dialog.FindAll(
         [System.Windows.Automation.TreeScope]::Descendants,
@@ -716,43 +768,68 @@ function Find-InstrumentSelector($Dialog) {
         if ($automationId -match "InstrumentSelector" -or
             $className -match "InstrumentSelector" -or
             $name -match "^Instrument$") {
+            Add-DiagnosticEvent "instrument-selector" ("selector_by_name_or_class_fallback: found aid='{0}' name='{1}' class='{2}'" -f $automationId, $name, $className)
             return $item
         }
     }
 
+    Add-DiagnosticEvent "instrument-selector" "selector_by_name_or_class_fallback: missing"
     return $null
 }
 
 function Set-Instrument($Dialog, [string]$Instrument) {
     if ([string]::IsNullOrWhiteSpace($Instrument)) { return }
+    Add-DiagnosticEvent "instrument-selector" "requested_instrument: $Instrument"
     $selector = Find-InstrumentSelector $Dialog
-    if ($null -eq $selector) { throw "instrument selector not found." }
+    if ($null -eq $selector) {
+        $dialogPath = New-DiagnosticPath "instrument-selector-dialog"
+        Write-ElementDebugTree $Dialog $dialogPath 6
+        $properties = Find-DescendantByName $Dialog "Properties"
+        if ($null -ne $properties) {
+            $propertiesPath = New-DiagnosticPath "instrument-selector-properties"
+            Write-ElementDebugTree $properties $propertiesPath 6
+        }
+        throw "instrument selector not found. diagnostics: $script:diagnosticRoot"
+    }
 
     $instrumentRoot = Get-InstrumentRoot $Instrument
     if ([string]::IsNullOrWhiteSpace($instrumentRoot)) { throw "instrument root could not be resolved from '$Instrument'." }
+    Add-DiagnosticEvent "instrument-selector" "instrument_root: $instrumentRoot"
 
     Try-ScrollIntoView $selector
+    Add-DiagnosticEvent "instrument-selector" "selector_found_before_scroll: true"
     Start-Sleep -Milliseconds 400
     $selector = Find-InstrumentSelector $Dialog
-    if ($null -eq $selector) { throw "instrument selector not found after scroll." }
+    if ($null -eq $selector) {
+        $dialogPath = New-DiagnosticPath "instrument-selector-after-scroll-dialog"
+        Write-ElementDebugTree $Dialog $dialogPath 6
+        throw "instrument selector not found after scroll. diagnostics: $script:diagnosticRoot"
+    }
+    Add-DiagnosticEvent "instrument-selector" "selector_found_after_scroll: true"
     $selectorTextBox = Find-DescendantByAutomationId $selector "textBox"
     if ($null -eq $selectorTextBox) { $selectorTextBox = $selector }
+    Add-DiagnosticEvent "instrument-selector" ("selector_textbox_found: {0}" -f ($null -ne $selectorTextBox))
     Set-ElementValue $selectorTextBox $instrumentRoot "instrument selector"
+    Add-DiagnosticEvent "instrument-selector" "root_typed: $instrumentRoot"
     Start-Sleep -Milliseconds 900
 
     $futuresSuggestion = Find-InstrumentFuturesSuggestion $Dialog $selector $instrumentRoot
+    Add-DiagnosticEvent "instrument-selector" ("futures_suggestion_found: {0}" -f ($null -ne $futuresSuggestion))
     if ($null -eq $futuresSuggestion) {
         $currentContract = Resolve-CurrentContractName $instrumentRoot
+        Add-DiagnosticEvent "instrument-selector" "fallback_contract: $currentContract"
         Set-ElementValue $selectorTextBox $currentContract "instrument selector fallback"
         Start-Sleep -Milliseconds 300
         [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
         Start-Sleep -Milliseconds 700
+        Add-DiagnosticEvent "instrument-selector" "fallback_contract_entered: true"
         $results.Add("selected explicit current contract '$currentContract' for '$instrumentRoot' instrument fallback") | Out-Null
         return
     }
 
     Click-ElementCenter $futuresSuggestion "instrument futures suggestion $instrumentRoot"
     Start-Sleep -Milliseconds 700
+    Add-DiagnosticEvent "instrument-selector" "futures_suggestion_selected: true"
     $results.Add("selected current futures contract from '$instrumentRoot' instrument suggestion") | Out-Null
 }
 
@@ -796,6 +873,49 @@ function Write-ElementDebugTree($Element, [string]$Path, [int]$MaxDepth = 8) {
         Add-ElementLine $Element 0
         Set-Content -Path $Path -Value $lines -Encoding UTF8
     } catch {}
+}
+
+function Write-TopLevelWindowDiagnostics([string]$Phase) {
+    try {
+        $path = New-DiagnosticPath $Phase
+        $desktop = [System.Windows.Automation.AutomationElement]::RootElement
+        $lines = New-Object 'System.Collections.Generic.List[string]'
+        $lines.Add("Top-level window snapshot $(Get-Date -Format s)") | Out-Null
+        foreach ($root in (Get-NinjaTraderRoots)) {
+            $current = $root.Current
+            $rect = $current.BoundingRectangle
+            $rectText = if ($rect.IsEmpty) { "empty" } else { "{0},{1},{2},{3}" -f [int]$rect.X,[int]$rect.Y,[int]$rect.Width,[int]$rect.Height }
+            $lines.Add(("name='{0}' | aid='{1}' | class='{2}' | process={3} | type={4} | rect={5}" -f
+                (($current.Name -replace "\r?\n", " ").Trim()),
+                $current.AutomationId,
+                $current.ClassName,
+                $current.ProcessId,
+                $current.ControlType.ProgrammaticName,
+                $rectText)) | Out-Null
+        }
+        Set-Content -Path $path -Value $lines -Encoding UTF8
+        return $path
+    } catch {
+        return ""
+    }
+}
+
+function Wait-TemplateWindow([int]$Seconds) {
+    $desktop = [System.Windows.Automation.AutomationElement]::RootElement
+    $deadline = (Get-Date).AddSeconds($Seconds)
+    do {
+        $windows = $desktop.FindAll(
+            [System.Windows.Automation.TreeScope]::Descendants,
+            (New-PropertyCondition ([System.Windows.Automation.AutomationElement]::ControlTypeProperty) ([System.Windows.Automation.ControlType]::Window)))
+        for ($i = 0; $i -lt $windows.Count; $i++) {
+            $window = $windows.Item($i)
+            if ($window.Current.Name -match "Load.*strategy template|strategy template|Open|Load") {
+                return $window
+            }
+        }
+        Start-Sleep -Milliseconds 250
+    } while ((Get-Date) -lt $deadline)
+    return $null
 }
 
 function Show-TemplateSlideout($Dialog) {
@@ -888,22 +1008,35 @@ function Resolve-DefaultTemplatePath([string]$StrategyType, [string]$TradingPeri
 }
 
 function Load-Template($Dialog, [string]$StrategyType, [string]$TemplateName, [string]$TradingPeriod) {
+    Add-DiagnosticEvent "template-load" "requested_template_name: $TemplateName"
     $path = Resolve-TemplatePath $StrategyType $TemplateName
+    $usedDefaultTemplate = $false
     if ([string]::IsNullOrWhiteSpace($path)) {
         $path = Resolve-DefaultTemplatePath $StrategyType $TradingPeriod
         if (-not [string]::IsNullOrWhiteSpace($path)) {
+            $usedDefaultTemplate = $true
             $results.Add("defaulted template to $([IO.Path]::GetFileNameWithoutExtension($path))") | Out-Null
         }
     }
+    Add-DiagnosticEvent "template-load" "resolved_template_path: $path"
+    Add-DiagnosticEvent "template-load" "used_default_template: $usedDefaultTemplate"
+    Add-DiagnosticEvent "template-load" ("template_path_exists: {0}" -f (-not [string]::IsNullOrWhiteSpace($path) -and (Test-Path $path)))
     if ([string]::IsNullOrWhiteSpace($path)) {
         $results.Add("template not found for $StrategyType / $TemplateName; defaults used") | Out-Null
         return
     }
 
     $templateSlideout = Show-TemplateSlideout $Dialog
-    if ($null -eq $templateSlideout) { throw "Strategy template slideout not found." }
+    Add-DiagnosticEvent "template-load" ("slideout_found: {0}" -f ($null -ne $templateSlideout))
+    Add-DiagnosticEvent "template-load" ("slideout_visible: {0}" -f (Test-ElementVisible $templateSlideout))
+    if ($null -eq $templateSlideout) {
+        $dialogPath = New-DiagnosticPath "template-slideout-missing-dialog"
+        Write-ElementDebugTree $Dialog $dialogPath 6
+        throw "Strategy template slideout not found. diagnostics: $script:diagnosticRoot"
+    }
     $templateHeader = Find-DescendantByAutomationId $templateSlideout "HeaderSite"
     if ($null -eq $templateHeader) { $templateHeader = Find-DescendantByName $templateSlideout "template" }
+    Add-DiagnosticEvent "template-load" ("template_header_found: {0}" -f ($null -ne $templateHeader))
     $load = $null
     for ($attempt = 0; $attempt -lt 4; $attempt++) {
         $templateSlideout = Show-TemplateSlideout $Dialog
@@ -923,36 +1056,51 @@ function Load-Template($Dialog, [string]$StrategyType, [string]$TemplateName, [s
         }
         Start-Sleep -Milliseconds 450
     }
+    Add-DiagnosticEvent "template-load" ("load_control_found: {0}" -f ($null -ne $load))
+    Add-DiagnosticEvent "template-load" ("load_control_visible: {0}" -f (Test-ElementVisible $load))
     if ($null -eq $load) {
-        $debugPath = Join-Path $env:TEMP "vincere-template-slideout-debug.txt"
+        $debugPath = New-DiagnosticPath "template-slideout-debug"
         Write-ElementDebugTree $templateSlideout $debugPath
-        throw "Template load button not found. Debug: $debugPath"
+        throw "Template load button not found. diagnostics: $script:diagnosticRoot"
     }
     if (-not (Test-ElementVisible $load)) {
         $results.Add("template load button is offscreen; invoking through UI Automation") | Out-Null
     }
 
+    Add-DiagnosticEvent "template-load" "load_invocation_method: invoke_or_click"
     Invoke-OrClickElement $load "template load button"
     Start-Sleep -Milliseconds 700
 
-    $desktop = [System.Windows.Automation.AutomationElement]::RootElement
-    $templateWindow = $null
-    $deadline = (Get-Date).AddSeconds(8)
-    do {
-        $windows = $desktop.FindAll(
-            [System.Windows.Automation.TreeScope]::Descendants,
-            (New-PropertyCondition ([System.Windows.Automation.AutomationElement]::ControlTypeProperty) ([System.Windows.Automation.ControlType]::Window)))
-        for ($i = 0; $i -lt $windows.Count; $i++) {
-            $window = $windows.Item($i)
-            if ($window.Current.Name -match "Load.*strategy template|strategy template|Open|Load") {
-                $templateWindow = $window
-                break
-            }
-        }
-        if ($null -ne $templateWindow) { break }
+    Add-DiagnosticEvent "template-load" "template_window_wait_started: attempt 1"
+    $templateWindow = Wait-TemplateWindow 8
+    Add-DiagnosticEvent "template-load" ("template_window_found: {0}" -f ($null -ne $templateWindow))
+    if ($null -eq $templateWindow) {
+        Write-TopLevelWindowDiagnostics "template-window-missing-attempt-1" | Out-Null
+        Add-DiagnosticEvent "template-load" "missing window after first load invocation; retrying once"
+        Bring-ToForeground $Dialog
         Start-Sleep -Milliseconds 250
-    } while ((Get-Date) -lt $deadline)
-    if ($null -eq $templateWindow) { throw "Template load window did not open." }
+        $templateSlideout = Show-TemplateSlideout $Dialog
+        if ($null -eq $templateSlideout) {
+            Write-TopLevelWindowDiagnostics "template-window-missing-no-slideout-retry" | Out-Null
+            throw "Template load window did not open and slideout was not reacquired for retry. diagnostics: $script:diagnosticRoot"
+        }
+        $load = Find-VisibleDescendantByName $templateSlideout "load"
+        if ($null -eq $load) {
+            $debugPath = New-DiagnosticPath "template-retry-load-missing"
+            Write-ElementDebugTree $templateSlideout $debugPath
+            throw "Template load window did not open and load button was not reacquired for retry. diagnostics: $script:diagnosticRoot"
+        }
+        Add-DiagnosticEvent "template-load" "load_invocation_method: retry invoke_or_click"
+        Invoke-OrClickElement $load "template load button retry"
+        Start-Sleep -Milliseconds 700
+        Add-DiagnosticEvent "template-load" "template_window_wait_started: attempt 2"
+        $templateWindow = Wait-TemplateWindow 8
+        Add-DiagnosticEvent "template-load" ("template_window_found_after_retry: {0}" -f ($null -ne $templateWindow))
+        if ($null -eq $templateWindow) {
+            Write-TopLevelWindowDiagnostics "template-window-missing-attempt-2" | Out-Null
+            throw "Template load window did not open after one retry. diagnostics: $script:diagnosticRoot"
+        }
+    }
 
     $templateBaseName = [IO.Path]::GetFileNameWithoutExtension($path)
     if ($templateWindow.Current.Name -match "Open") {
@@ -1102,6 +1250,13 @@ foreach ($strategy in $strategies) {
     try {
         $strategyType = [string]$strategy.strategyType
         $strategyAccount = Resolve-SetupAccount ([string]$strategy.account) ([string]$payload.account)
+        $script:currentDiagnosticContext = @{
+            attempt_index = ($results.Count + 1)
+            account_id = $strategyAccount
+            account_display_name = $strategyAccount
+            strategy_type = $strategyType
+            phase = "setup"
+        }
         if ($strategyAccount -ne [string]$strategy.account) {
             $results.Add("resolved setup account '$($strategy.account)' to '$strategyAccount'") | Out-Null
         }
@@ -1127,8 +1282,11 @@ foreach ($strategy in $strategies) {
     }
     catch {
         try { Cancel-StrategiesDialog $dialog } catch {}
+        Write-DiagnosticSummary
+        $results | ForEach-Object { Write-Host $_ }
         throw
     }
 }
 
+Write-DiagnosticSummary
 $results | ForEach-Object { Write-Host $_ }

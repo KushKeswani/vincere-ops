@@ -2075,29 +2075,100 @@ public partial class MainWindow : Window
         StatusText.Text = $"Adding setup to NinjaTrader for {targets.Count} account(s)...";
         BlueprintImportStatusText.Text = StatusText.Text;
 
+        var diagnosticRunId = batchId;
+        var diagnosticRoot = Path.Combine(_config.DataDirectory, "logs", "add-all-diagnostics", diagnosticRunId);
         var results = new List<string>();
         var auditRows = new List<object>();
+        var manualCleanupRequired = false;
+        var partialRowsLeft = false;
+        var safetyCompletion = "passed";
         foreach (var target in targets)
         {
+            var preGridState = await NinjaTraderUiDiscovery.GetGridSafetySnapshotAsync(TimeSpan.FromSeconds(12));
+            if (preGridState.BlocksAddAll)
+            {
+                var blockedMessage = "Add All blocked before account attempt: " + BuildGridSafetyBlockReason(preGridState);
+                results.Add($"{target.DisplayName}: FAIL {TrimOneLine(blockedMessage, 140)}");
+                auditRows.Add(new
+                {
+                    attempt_index = auditRows.Count + 1,
+                    target_account_id = target.Id,
+                    target_display_name = target.DisplayName,
+                    row_count_requested = target.RowCount,
+                    ok = false,
+                    message = blockedMessage,
+                    pre_grid_state = ToAuditGridState(preGridState),
+                    post_grid_state = ToAuditGridState(preGridState),
+                    expected_strategy_row_delta = target.RowCount,
+                    actual_strategy_row_delta = 0,
+                    partial_rows_left = false,
+                    manual_cleanup_required = false,
+                    diagnostic_paths = Array.Empty<string>(),
+                    fail_closed_reasons = new[] { "pre_grid_state_blocked" },
+                    completed_at = DateTimeOffset.Now
+                });
+                safetyCompletion = "blocked";
+                break;
+            }
+
             var (ok, msg) = await _stackApply.ExecuteAsync(target.Id, _config.DryRun, filter, default);
-            var oneLine = TrimOneLine(msg, 280);
-            results.Add($"{target.DisplayName}: {(ok ? "OK" : "FAIL")} {TrimOneLine(msg, 140)}");
+            var postGridState = await NinjaTraderUiDiscovery.GetGridSafetySnapshotAsync(TimeSpan.FromSeconds(12));
+            var actualStrategyRowDelta = postGridState.StrategiesGridCount >= 0 && preGridState.StrategiesGridCount >= 0
+                ? postGridState.StrategiesGridCount - preGridState.StrategiesGridCount
+                : 0;
+            var attemptPartialRowsLeft = !ok && actualStrategyRowDelta > 0;
+            var postGridUnsafe = postGridState.BlocksAddAll;
+            var attemptManualCleanupRequired = attemptPartialRowsLeft || postGridUnsafe;
+            partialRowsLeft |= attemptPartialRowsLeft;
+            manualCleanupRequired |= attemptManualCleanupRequired;
+            if (postGridState.GridCountUncertain || postGridState.EnabledStateUncertain)
+                safetyCompletion = "uncertain";
+            else if ((!ok || postGridUnsafe) && safetyCompletion != "uncertain")
+                safetyCompletion = "failed";
+
+            var attemptOk = ok && !postGridUnsafe;
+            var displayMessage = ok && postGridUnsafe
+                ? $"{TrimOneLine(msg, 100)}; fail-closed after post-grid safety check: {TrimOneLine(BuildGridSafetyBlockReason(postGridState), 140)}"
+                : msg;
+            var oneLine = TrimOneLine(displayMessage, 280);
+            results.Add($"{target.DisplayName}: {(attemptOk ? "OK" : "FAIL")} {TrimOneLine(displayMessage, 140)}");
             auditRows.Add(new
             {
-                target.Id,
-                target.DisplayName,
-                target.RowCount,
-                ok,
+                attempt_index = auditRows.Count + 1,
+                target_account_id = target.Id,
+                target_display_name = target.DisplayName,
+                row_count_requested = target.RowCount,
+                ok = attemptOk,
+                source_apply_ok = ok,
                 message = oneLine,
-                completedAt = DateTimeOffset.Now
+                pre_grid_state = ToAuditGridState(preGridState),
+                post_grid_state = ToAuditGridState(postGridState),
+                expected_strategy_row_delta = target.RowCount,
+                actual_strategy_row_delta = actualStrategyRowDelta,
+                partial_rows_left = attemptPartialRowsLeft,
+                manual_cleanup_required = attemptManualCleanupRequired,
+                diagnostic_paths = ExtractDiagnosticPaths(msg),
+                fail_closed_reasons = BuildFailClosedReasons(ok, preGridState, postGridState, attemptPartialRowsLeft),
+                completed_at = DateTimeOffset.Now
             });
-            if (!ok)
+            if (!attemptOk)
                 break;
         }
 
         var resultText = string.Join(Environment.NewLine, results);
         var failed = results.Any(r => r.Contains(": FAIL", StringComparison.OrdinalIgnoreCase));
-        var auditPath = await WriteAttachBatchAuditAsync(batchId, title, filter, targets, auditRows, failed);
+        var auditPath = await WriteAttachBatchAuditAsync(
+            batchId,
+            diagnosticRunId,
+            diagnosticRoot,
+            title,
+            filter,
+            targets,
+            auditRows,
+            failed,
+            manualCleanupRequired,
+            partialRowsLeft,
+            safetyCompletion);
         var suffix = string.IsNullOrWhiteSpace(auditPath)
             ? ""
             : $"{Environment.NewLine}{Environment.NewLine}Audit: {auditPath}";
@@ -2113,11 +2184,16 @@ public partial class MainWindow : Window
 
     private async Task<string> WriteAttachBatchAuditAsync(
         string batchId,
+        string diagnosticRunId,
+        string diagnosticRoot,
         string title,
         StackApplyPeriodFilter filter,
         IReadOnlyList<AttachTarget> targets,
         IReadOnlyList<object> results,
-        bool failed)
+        bool failed,
+        bool manualCleanupRequired,
+        bool partialRowsLeft,
+        string safetyCompletion)
     {
         try
         {
@@ -2126,7 +2202,14 @@ public partial class MainWindow : Window
             var path = Path.Combine(dir, $"stack-apply-batch-{batchId}.json");
             var payload = new
             {
+                schema_version = 2,
                 batchId,
+                diagnostic_run_id = diagnosticRunId,
+                diagnostic_root = diagnosticRoot,
+                ready_algos_enable_strategies_required_false = true,
+                manual_cleanup_required = manualCleanupRequired,
+                partial_rows_left = partialRowsLeft,
+                safety_completion = safetyCompletion,
                 title,
                 dryRun = _config.DryRun,
                 periodFilter = filter.ToString(),
@@ -2147,6 +2230,82 @@ public partial class MainWindow : Window
             StatusText.Text = "Add completed, but the batch audit could not be written: " + ex.Message;
             return "";
         }
+    }
+
+    private static object ToAuditGridState(NinjaTraderGridSafetySnapshot snapshot)
+    {
+        return new
+        {
+            orders_grid_count = snapshot.OrdersGridCount,
+            positions_grid_count = snapshot.PositionsGridCount,
+            strategies_grid_count = snapshot.StrategiesGridCount,
+            visible_strategy_enabled_count = snapshot.VisibleStrategyEnabledCount,
+            visible_strategy_disabled_count = snapshot.VisibleStrategyDisabledCount,
+            enabled_state_uncertain = snapshot.EnabledStateUncertain,
+            grid_count_uncertain = snapshot.GridCountUncertain,
+            read_error = snapshot.ReadError
+        };
+    }
+
+    private static string BuildGridSafetyBlockReason(NinjaTraderGridSafetySnapshot snapshot)
+    {
+        var reasons = new List<string>();
+        if (snapshot.GridCountUncertain)
+            reasons.Add("grid count uncertain");
+        if (snapshot.EnabledStateUncertain)
+            reasons.Add("strategy enabled-state uncertain");
+        if (snapshot.OrdersGridCount != 0)
+            reasons.Add($"orders grid count is {snapshot.OrdersGridCount}");
+        if (snapshot.PositionsGridCount != 0)
+            reasons.Add($"positions grid count is {snapshot.PositionsGridCount}");
+        if (snapshot.VisibleStrategyEnabledCount != 0)
+            reasons.Add($"{snapshot.VisibleStrategyEnabledCount} visible strategy row(s) enabled");
+        if (!string.IsNullOrWhiteSpace(snapshot.ReadError))
+            reasons.Add(snapshot.ReadError);
+        return string.Join("; ", reasons);
+    }
+
+    private static string[] BuildFailClosedReasons(
+        bool ok,
+        NinjaTraderGridSafetySnapshot preGridState,
+        NinjaTraderGridSafetySnapshot postGridState,
+        bool partialRowsLeft)
+    {
+        var reasons = new List<string>();
+        if (!ok)
+            reasons.Add("account_failed");
+        if (preGridState.BlocksAddAll)
+            reasons.Add("pre_grid_state_blocked");
+        if (postGridState.GridCountUncertain)
+            reasons.Add("post_grid_count_uncertain");
+        if (postGridState.EnabledStateUncertain)
+            reasons.Add("post_enabled_state_uncertain");
+        if (postGridState.OrdersGridCount != 0)
+            reasons.Add("post_orders_grid_not_zero");
+        if (postGridState.PositionsGridCount != 0)
+            reasons.Add("post_positions_grid_not_zero");
+        if (postGridState.VisibleStrategyEnabledCount != 0)
+            reasons.Add("post_visible_strategy_enabled");
+        if (partialRowsLeft)
+            reasons.Add("strategy_count_increased_after_failure");
+        return reasons.ToArray();
+    }
+
+    private static string[] ExtractDiagnosticPaths(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return Array.Empty<string>();
+
+        var matches = Regex.Matches(
+            message,
+            @"(?<path>[A-Za-z]:\\[^\r\n;]+(?:\.txt|\.log)?)",
+            RegexOptions.IgnoreCase);
+        return matches
+            .Select(m => m.Groups["path"].Value.Trim())
+            .Where(p => p.Contains("vincere-add-all-diagnostics", StringComparison.OrdinalIgnoreCase) ||
+                        p.Contains("add-all-diagnostics", StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     private static string TrimOneLine(string? value, int maxLength)
