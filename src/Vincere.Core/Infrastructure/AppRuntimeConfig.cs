@@ -17,6 +17,7 @@ public sealed class AppRuntimeConfig
     public const string KeyStackApplyTime = "STACK_APPLY_TIME";
     public const string KeyAutoApplyStacks = "AUTO_APPLY_STACKS";
     public const string KeyEnableAllTime = "ENABLE_ALL_STRATEGIES_TIME";
+    public const string KeyLegacyEnableAllEnabled = "LEGACY_ENABLE_ALL_ENABLED";
     public const string KeyReadyAlgosScheduleEnabled = "READY_ALGOS_SCHEDULE_ENABLED";
     public const string KeyReadyAlgosTime = "READY_ALGOS_TIME";
     public const string KeyReadyAlgosEnableStrategies = "READY_ALGOS_ENABLE_STRATEGIES";
@@ -41,6 +42,7 @@ public sealed class AppRuntimeConfig
     public const string KeyIpcRetryAttempts = "VINCERE_IPC_RETRY_ATTEMPTS";
     public const string KeyIpcRetryDelayMs = "VINCERE_IPC_RETRY_DELAY_MS";
     public const string KeyNtHealthAutoReconnect = "NT_HEALTH_AUTO_RECONNECT";
+    public const string KeyNtHealthMonitorAlways = "NT_HEALTH_MONITOR_ALWAYS";
     public const string KeyNtHealthReconnectCooldownMinutes = "NT_HEALTH_RECONNECT_COOLDOWN_MINUTES";
     public const string KeyNtHealthPollSeconds = "NT_HEALTH_POLL_SECONDS";
     public const string KeyLicenseKey = "VINCERE_LICENSE_KEY";
@@ -75,6 +77,7 @@ public sealed class AppRuntimeConfig
     public TimeOnly StackApplyTime => ParseTime(_provider.Get(KeyStackApplyTime), new TimeOnly(8, 23));
     public bool AutoApplyStacks => _provider.TryGetBool(KeyAutoApplyStacks, true);
     public TimeOnly EnableAllStrategiesTime => ParseTime(_provider.Get(KeyEnableAllTime), new TimeOnly(8, 25));
+    public bool LegacyEnableAllEnabled => _provider.TryGetBool(KeyLegacyEnableAllEnabled, false);
     public bool ReadyAlgosScheduleEnabled => _provider.TryGetBool(KeyReadyAlgosScheduleEnabled, false);
     public TimeOnly ReadyAlgosTime => ParseTime(_provider.Get(KeyReadyAlgosTime), new TimeOnly(8, 0));
     public bool ReadyAlgosEnableStrategies => _provider.TryGetBool(KeyReadyAlgosEnableStrategies, false);
@@ -154,6 +157,8 @@ public sealed class AppRuntimeConfig
 
     /// <summary>If true, NT log disconnect/chart-freeze symptoms trigger PROP_CONNECTION_NAME refresh.</summary>
     public bool NtHealthAutoReconnect => _provider.TryGetBool(KeyNtHealthAutoReconnect, true);
+    /// <summary>If true, NT health log monitoring starts when the app opens, without arming the trading scheduler.</summary>
+    public bool NtHealthMonitorAlways => _provider.TryGetBool(KeyNtHealthMonitorAlways, true);
     public string? LicenseKey => _provider.Get(KeyLicenseKey);
     public bool LicenseVerified => _provider.TryGetBool(KeyLicenseVerified, false);
     public string? LicenseStatus => _provider.Get(KeyLicenseStatus);

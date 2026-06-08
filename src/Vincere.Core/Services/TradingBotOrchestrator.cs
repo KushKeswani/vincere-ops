@@ -150,6 +150,7 @@ public sealed class TradingBotOrchestrator : IDisposable
 
         // Legacy enable all strategies window [enableAt, enableAt + 15 min)
         if (!_config.ReadyAlgosScheduleEnabled &&
+            _config.LegacyEnableAllEnabled &&
             state.LastEnableAllDayIso != todayIso &&
             timeNow >= enableAt && timeNow < enableAt.AddMinutes(15))
         {

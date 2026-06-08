@@ -104,7 +104,7 @@ public partial class MainWindow : Window
             $"Get algos ready: {_config.ReadyAlgosScheduleEnabled} @ {_config.ReadyAlgosTime:HH:mm}\n" +
             $"Stack apply: {_config.AutoApplyStacks} @ {_config.StackApplyTime:HH:mm}; account cycling: {_config.AccountCyclingEnabled} every {_config.AccountCyclingIntervalDays} day(s)\n" +
             $"NT scheduled reset: {_config.NinjaTraderScheduledResetEnabled} every {_config.NinjaTraderResetIntervalDays} day(s)\n" +
-            $"NT health auto-reconnect: {_config.NtHealthAutoReconnect} ({_config.NtHealthReconnectCooldownMinutes} min cooldown, {_config.NtHealthPollSeconds}s poll)\n" +
+            $"NT health monitor: {_config.NtHealthMonitorAlways}; auto-reconnect: {_config.NtHealthAutoReconnect} ({_config.NtHealthReconnectCooldownMinutes} min cooldown, {_config.NtHealthPollSeconds}s poll)\n" +
             "Setup and discovery use NinjaTrader UI automation. Bot control commands may still require the NT bridge until their UI paths are mapped.";
         LoadAutomationSettingsIntoDashboard();
 
@@ -123,6 +123,12 @@ public partial class MainWindow : Window
         StackAccountCombo.ItemsSource = _accounts;
         await SelectDefaultStackAccountAsync();
         BotStateText.Text = "Stopped";
+
+        if (_config.NtHealthMonitorAlways)
+        {
+            StartNtHealthMonitor();
+            StatusText.Text = "NT health monitor active; trading scheduler stopped.";
+        }
 
         if (_config.ReadyAlgosScheduleEnabled)
             ArmManager($"Manager armed for Get Algos Ready @ {_config.ReadyAlgosTime:HH:mm} Eastern.", false);
@@ -772,9 +778,7 @@ public partial class MainWindow : Window
     private void ArmManager(string status, bool notify)
     {
         _orchestrator.Start();
-        _logWatcher.Alert -= OnLogAlert;
-        _logWatcher.Alert += OnLogAlert;
-        _logWatcher.Start();
+        StartNtHealthMonitor();
         StartBotBtn.IsEnabled = false;
         StopBotBtn.IsEnabled = true;
         BotStateText.Text = "Running";
@@ -789,13 +793,34 @@ public partial class MainWindow : Window
     private void StopBot_Click(object sender, RoutedEventArgs e)
     {
         _orchestrator.Stop();
-        _logWatcher.Alert -= OnLogAlert;
-        _logWatcher.Stop();
+        if (_config.NtHealthMonitorAlways)
+        {
+            StartNtHealthMonitor();
+        }
+        else
+        {
+            StopNtHealthMonitor();
+        }
         StartBotBtn.IsEnabled = true;
         StopBotBtn.IsEnabled = false;
         BotStateText.Text = "Stopped";
-        StatusText.Text = "Stopped";
+        StatusText.Text = _config.NtHealthMonitorAlways
+            ? "Stopped; NT health monitor remains active."
+            : "Stopped";
         _ = _telegram.SendAsync("Vincere Ops: bot stopped.");
+    }
+
+    private void StartNtHealthMonitor()
+    {
+        _logWatcher.Alert -= OnLogAlert;
+        _logWatcher.Alert += OnLogAlert;
+        _logWatcher.Start();
+    }
+
+    private void StopNtHealthMonitor()
+    {
+        _logWatcher.Alert -= OnLogAlert;
+        _logWatcher.Stop();
     }
 
     private async void GetAlgosReady_Click(object sender, RoutedEventArgs e)
