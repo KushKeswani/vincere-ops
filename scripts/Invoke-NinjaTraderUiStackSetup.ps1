@@ -195,9 +195,15 @@ function Get-StrategyMatchKey([string]$Value) {
 }
 
 function Test-PropFirmStrategyName([string]$CandidateName, [string]$RequestedStrategy) {
+    if (-not (Test-RequestedPropFirmStrategy $RequestedStrategy)) { return $false }
     $candidate = Normalize-Name $CandidateName
     $requested = Get-StrategyMatchKey $RequestedStrategy
     return -not [string]::IsNullOrWhiteSpace($requested) -and $candidate.StartsWith($requested + "PF")
+}
+
+function Test-RequestedPropFirmStrategy([string]$RequestedStrategy) {
+    $normalized = Normalize-Name $RequestedStrategy
+    return -not [string]::IsNullOrWhiteSpace($normalized) -and $normalized.Contains("PF")
 }
 
 function Get-DefaultInstrumentForStrategy([string]$StrategyType) {
@@ -651,12 +657,13 @@ function Select-AvailableStrategy($Dialog, [string]$StrategyType) {
             continue
         }
 
-        if ($null -eq $baseExact -and ($normalized -eq $target -or $candidateKey -eq $targetKey)) {
+        $candidateIsPropFirm = -not [string]::IsNullOrWhiteSpace($targetKey) -and $normalized.StartsWith($targetKey + "PF")
+        if ($null -eq $baseExact -and -not $candidateIsPropFirm -and ($normalized -eq $target -or $candidateKey -eq $targetKey)) {
             $baseExact = $item
             continue
         }
 
-        if ($null -eq $basePrefix -and $target.Length -ge 3 -and
+        if ($null -eq $basePrefix -and -not $candidateIsPropFirm -and $target.Length -ge 3 -and
             ($normalized.StartsWith($target) -or
              (-not [string]::IsNullOrWhiteSpace($targetKey) -and $candidateKey.StartsWith($targetKey)))) {
             $basePrefix = $item

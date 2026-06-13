@@ -1069,6 +1069,186 @@ Diagnostics/safety update: added `No stale/leftover strategy rows beyond approve
 
 Blocker: this War Machine pass did not operate RDP/NinjaTrader and therefore did not confirm live `OrdersGrid`, `PositionsGrid`, stale-row status, or strategy disabled state. Those values must be confirmed during the Kush-approved supervised visible/unlocked RDP preflight and recorded in the template before any Add All retest plan advances. Add All remains unapproved until that evidence is recorded and Kush gives a separate explicit Add All approval.
 
+## 2026-06-08 War Machine Preflight Coordination Check
+
+Read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, and `C:\Users\Administrator\Documents\Projects\System Control\workspace-sync\state\kush-approval-20260608-vincere-aptrend.txt`; ran `git status --short --branch`. The handoff and template still clearly separate the Kush-approved supervised visible/unlocked RDP preflight from the still-unapproved Add All retest. `READY_ALGOS_ENABLE_STRATEGIES=false` remains mandatory, and live strategy enabling/trading remains forbidden without separate explicit approval.
+
+Single next operator action: Kush/Iron Man must perform the approved supervised visible/unlocked RDP preflight and fill `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, recording desktop visible/unlocked, NinjaTrader running, `READY_ALGOS_ENABLE_STRATEGIES=false`, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, target account set, baseline `StrategiesGrid`, and no stale/leftover rows. Stop if any value is nonzero, missing, unreadable, uncertain, or outside the approved baseline. Add All remains blocked until that evidence is recorded and Kush gives a separate explicit Add All approval.
+
+## 2026-06-08 War Machine Operator Action Check
+
+Read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, and the Kush approval record at `C:\Users\Administrator\Documents\Projects\System Control\workspace-sync\state\kush-approval-20260608-vincere-aptrend.txt`; ran `git status --short --branch`. Current status: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified.
+
+Template ready to fill: yes. The single next operator action remains: Kush/Iron Man performs the approved supervised visible/unlocked RDP preflight and fills the template. The preflight must record `READY_ALGOS_ENABLE_STRATEGIES=false`, desktop visible/unlocked, NinjaTrader running, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, target account set, baseline `StrategiesGrid`, and no stale/leftover rows. Add All remains unapproved until the preflight evidence is recorded and Kush gives a separate explicit Add All approval.
+
+## 2026-06-08 War Machine Preflight Waiting Note
+
+Read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, and `C:\Users\Administrator\Documents\Projects\System Control\workspace-sync\state\kush-approval-20260608-vincere-aptrend.txt`; ran `git status --short --branch`. The preflight evidence template is present and ready but still waiting to be filled with supervised RDP evidence.
+
+Exact current blocker: live RDP/NinjaTrader safety state has not yet been recorded in the template. Keep `READY_ALGOS_ENABLE_STRATEGIES=false`; Add All remains unapproved until the preflight records desktop visible/unlocked, NinjaTrader running, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, target account set, baseline `StrategiesGrid`, and no stale/leftover rows, and Kush then gives separate explicit Add All approval.
+
+Next allowed operator action: Kush/Iron Man may perform only the approved supervised visible/unlocked RDP preflight and fill the template. No readiness harness, Add All, strategy enable/disable, row cleanup/deletion, scheduled-task change, deploy, push, secrets/network call, external message, or production behavior change is approved by this note.
+
+## 2026-06-08 War Machine Supervisor Gate Freshness Check
+
+Read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, and `C:\Users\Administrator\Documents\Projects\System Control\workspace-sync\state\kush-approval-20260608-vincere-aptrend.txt`; ran `git status --short --branch`. Current status: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified.
+
+Gate changed: no. The current Add All gate remains clear and complete: Kush has approved only the supervised visible/unlocked RDP preflight before any Add All retest, and Add All still requires separate explicit Kush approval after the preflight evidence is recorded. Template needs changes: no. The template already captures `READY_ALGOS_ENABLE_STRATEGIES=false`, desktop visible/unlocked, NinjaTrader running, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, target account set, baseline `StrategiesGrid`, no stale/leftover rows, stop conditions, forbidden actions, and the separate Add All approval requirement.
+
+Exact blocker: live RDP/NinjaTrader safety state has not been recorded in the template. Single next operator action: Kush/Iron Man performs only the approved supervised visible/unlocked RDP preflight and fills `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`. No readiness harness, RDP/browser/NinjaTrader UI automation, Add All, strategy enable/disable, row cleanup/deletion, scheduled-task change, deploy, push, secrets/network call, Telegram/external message, or production behavior change was performed.
+
+## 2026-06-09 War Machine Operator Preflight Packet
+
+Read `AGENT_HANDOFF.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`; ran `git status --short --branch`. Created `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` as a concise human-session packet for the next supervised RDP preflight. It summarizes the current gate, exact fields to fill, stop/no-go conditions, artifacts to preserve, and the exact second approval question required before any Add All click/run.
+
+Gate changed: no. Add All remains unapproved until `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md` is filled with supervised preflight evidence and Kush separately approves the exact Add All run. No readiness harness, RDP/browser/NinjaTrader UI automation, Add All, strategy enable/disable, row cleanup/deletion, scheduled-task change, deploy, push, secrets/network call, Telegram/external message, or production behavior change was performed.
+
+## 2026-06-09 War Machine RDP Gate Cycle Note
+
+Read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, and Second Mind Vincere context at `C:\Users\Administrator\Documents\Projects\System Control\workspace-sync\Second Mind\projects\vincere.md`; ran `git status --short --branch`. Current status: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified and `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` untracked.
+
+Current Add All blocker: live supervised RDP/NinjaTrader safety evidence is still not recorded. Exact evidence still needed before any Add All retest: `READY_ALGOS_ENABLE_STRATEGIES=false`, desktop visible/unlocked, NinjaTrader running, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, and no stale/leftover rows beyond the approved baseline. Single next operator action: Kush/Iron Man performs only the approved supervised visible/unlocked RDP preflight and fills `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`. Add All remains blocked until that evidence is complete and Kush separately approves the exact Add All run.
+
+No readiness harness, RDP/browser/NinjaTrader UI automation, Add All, strategy enable/disable, row cleanup/deletion, scheduled-task change, process/task start/stop/restart, deploy, push, secrets use, Telegram/external message, or production behavior change was performed.
+
+## 2026-06-09 Iron Man Static Add All Audit
+
+Ran `git status --short --branch` first. Current status: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified and `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` untracked. Read `AGENT_HANDOFF.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`; inspected Add All implementation paths statically only. No readiness harness, RDP/browser/NinjaTrader UI automation, Add All, strategy enable/disable, row cleanup/deletion, task/process start/stop, deploy, push, secrets/network call, external message, production behavior change, or source edit was performed.
+
+Files/functions inspected:
+
+- `scripts\Invoke-NinjaTraderUiStackSetup.ps1`: diagnostic helpers `Normalize-DiagnosticName`, `New-DiagnosticPath`, `Add-DiagnosticEvent`, `Write-DiagnosticSummary`; instrument selector path `Find-InstrumentSelector`, `Set-Instrument`, `Find-InstrumentFuturesSuggestion`, `Try-ScrollIntoView`; LFE/template path `Show-TemplateSlideout`, `Load-Template`, `Write-TopLevelWindowDiagnostics`; per-strategy loop context around `Load-Template` and `Set-Instrument`.
+- `src\Vincere.Operator\MainWindow.xaml.cs`: Add All orchestration in `ApplyAttachTargetsAsync`, batch audit writer `WriteAttachBatchAuditAsync`, audit helpers `ToAuditGridState`, `BuildGridSafetyBlockReason`, `BuildFailClosedReasons`, and `ExtractDiagnosticPaths`.
+- `src\Vincere.Operator\NinjaTraderUiDiscovery.cs`: `GetGridSafetySnapshotAsync`, `GetGridSafetySnapshot`, `ReadGridItemCount`, and `ReadStrategyGridState`; `SetAllStrategiesEnabledAsync` was inspected only as an existing toggle path outside the Add All diagnostic path.
+- `src\Vincere.Core\Services\StackApplyService.cs`: `TryExecuteUiAutomationAsync` for PowerShell runner execution and temp payload cleanup.
+
+Static findings:
+
+- APEX selector diagnostics are present: selector lookup records automation-id search, Properties focus/scroll path, name/class fallback, typed instrument root, Futures suggestion selection, fallback current contract, and bounded UI tree diagnostics on selector failure.
+- LFE template-load handling is fail-closed and bounded: load diagnostics record template path/default state, slideout/load-control state, top-level window snapshots, one missing-window retry, and final failure if the template window remains missing.
+- Row-safety audit detection is present: Add All captures pre/post grid snapshots, blocks before an attempt on unsafe/uncertain grid state, marks post-attempt unsafe state as visible `FAIL`, preserves `source_apply_ok`, stops on `!attemptOk`, writes `pre_grid_state`, `post_grid_state`, `partial_rows_left`, `manual_cleanup_required`, `diagnostic_paths`, and `fail_closed_reasons`.
+- No automatic strategy-row deletion/cleanup was found in the Add All diagnostic path. Existing stack-row remove/delete UI and strategy enable/disable helpers remain elsewhere and still require separate explicit approval to use.
+
+Smallest proposed source patch plan, only after Kush approves code work:
+
+1. Add a diagnostic-only audit field tying any future Add All run to the completed preflight evidence template path and approved baseline `StrategiesGrid`.
+2. Add explicit audit fields for `no_stale_rows_beyond_approved_baseline` and `cleanup_performed=false`; continue to detect/flag partial rows only, with no automatic deletion.
+3. Add one or two extra selector/template diagnostic fields if needed after preflight review, such as selector control type/bounds/offscreen state and final template-window visible window list count. Do not change selection semantics unless supervised evidence identifies a concrete failure.
+
+Tests/harnesses to run later only after approval:
+
+- Static only after any source patch: PowerShell parser check for `scripts\Invoke-NinjaTraderUiStackSetup.ps1`, `dotnet build .\src\Vincere.Operator\Vincere.Operator.csproj -c Release --no-restore -v minimal`, `git diff --check`, and targeted `rg` searches for audit/fail-closed fields.
+- Supervised UI only after Kush approval: fill `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md` from a visible/unlocked RDP desktop.
+- Add All retest only after the preflight records `READY_ALGOS_ENABLE_STRATEGIES=false`, NinjaTrader running, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact target account set, baseline `StrategiesGrid`, and no stale/leftover rows, and Kush then gives a separate explicit Add All approval.
+
+Remaining blockers:
+
+- Live RDP/NinjaTrader safety evidence is still not recorded in the preflight template.
+- The diagnostic patch is static/build validated but not behaviorally proven against the live NinjaTrader Strategy dialog in this cycle.
+- Any automatic row cleanup/deletion, live enable-path test, or `READY_ALGOS_ENABLE_STRATEGIES=true` change remains unapproved.
+
+Single next safe operator/developer action:
+
+- Kush/Iron Man performs only the already approved supervised visible/unlocked RDP preflight and fills `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`. Stop on any uncertain/nonzero/unsafe value. Do not click Add All until the template evidence is complete and Kush separately approves the exact Add All run.
+
+## 2026-06-09 Iron Man Documentation Static Audit Cycle
+
+Ran `git status --short --branch` first. Current status: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified and `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` untracked. Read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, and searched only the Add All source paths for instrument selector, template-load, and partial-row/rollback safety. No source code, readiness harness, RDP/browser/NinjaTrader UI automation, scheduled task, process start/stop, Add All, strategy enable/disable, row cleanup/deletion, network/secret access, push, or production behavior change was performed.
+
+Files/functions reviewed: `scripts\Invoke-NinjaTraderUiStackSetup.ps1` (`Find-InstrumentSelector`, `Set-Instrument`, `Find-InstrumentFuturesSuggestion`, `Try-ScrollIntoView`, `Show-TemplateSlideout`, `Load-Template`, `Write-TopLevelWindowDiagnostics`); `src\Vincere.Operator\MainWindow.xaml.cs` (`ApplyAttachTargetsAsync`, `WriteAttachBatchAuditAsync`, `ToAuditGridState`, `BuildGridSafetyBlockReason`, `BuildFailClosedReasons`, `ExtractDiagnosticPaths`); `src\Vincere.Operator\NinjaTraderUiDiscovery.cs` (`GetGridSafetySnapshotAsync`, `GetGridSafetySnapshot`, `ReadGridItemCount`, `ReadStrategyGridState`, and existing `SetAllStrategiesEnabledAsync` only as a separate non-Add-All toggle path); `src\Vincere.Core\Services\StackApplyService.cs` (`TryExecuteUiAutomationAsync`).
+
+Smallest likely repair plan if later approved: add diagnostic-only audit linkage from any future Add All run to the completed preflight evidence path and approved baseline `StrategiesGrid`; add explicit audit fields for `no_stale_rows_beyond_approved_baseline` and `cleanup_performed=false`; preserve current fail-closed behavior and do not add automatic cleanup/deletion. Only add selector/template diagnostic details after supervised evidence identifies a concrete missing breadcrumb.
+
+Exact preflight/RDP evidence still required: fill `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md` from the approved visible/unlocked RDP preflight with `READY_ALGOS_ENABLE_STRATEGIES=false`, desktop visible/unlocked, NinjaTrader running, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, latest readiness report path, and git status before/after.
+
+Blocker changed: no. Add All remains blocked until the supervised preflight evidence is recorded and Kush separately approves the exact Add All run. Single next safe action remains the approved RDP preflight evidence capture; stop on any nonzero, missing, unreadable, uncertain, or outside-baseline value.
+
+## 2026-06-09 Iron Man RDP Preflight Evidence Pass
+
+Kush approved a Vincere RDP preflight evidence pass only. Read `AGENT_HANDOFF.md`, `README.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, and latest readiness report `logs\production-readiness\20260608-235901\PRODUCTION_READINESS_REPORT.md`; ran `git status --short --branch`.
+
+Evidence gathered:
+
+- Latest readiness report summary: `PASS=46, FAIL=0, WARN=1, SKIP=9`.
+- Latest readiness report says NinjaTrader was running as PID `5956`, Strategies grid was found with UIA data item count `6`, and disable-strategies what-if reported all `2` visible strategy rows already disabled.
+- Latest readiness report also says `Invoke: Add All to NinjaTrader` was invoked. This was pre-existing report evidence and was not run in this Iron Man pass.
+- Current process check found `NinjaTrader` PID `5956`, `Responding=True`.
+- Current read-only grid probe failed: `Control Center not found`.
+- Current read-only strategy-disabled `-WhatIf` check failed: `NinjaTrader Control Center was not found`.
+- Targeted `READY_ALGOS_ENABLE_STRATEGIES` check printed no secrets; `%LocalAppData%\Vincere.Operator\.env` was not found for that key, and User/Machine environment overrides were unset.
+
+Evidence document created: `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+
+Preflight result: incomplete/failed. `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, target account set, baseline `StrategiesGrid`, and stale-row status were not safely verified in the current UI session because Control Center was not found by the read-only probes.
+
+What remains blocked:
+
+- Do not click/run Add All.
+- Do not enable strategies or live trading.
+- Do not place/cancel orders.
+- Do not clean up/delete/reconcile strategy rows.
+- Do not proceed to any supervised Add All test until a preflight pass verifies `READY_ALGOS_ENABLE_STRATEGIES=false`, NinjaTrader Control Center visible, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, correct target account set, baseline `StrategiesGrid`, and no stale/leftover rows beyond approved baseline.
+
+What Kush needs next:
+
+- Provide/confirm a visible unlocked RDP session where NinjaTrader Control Center is visible to UI Automation, then approve another preflight evidence attempt only. Separate approval is still required before any Add All test.
+
+No Add All, strategy enable/disable, order placement/cancelation, row cleanup/deletion, readiness harness, scheduled-task change, deploy, push, network call, secret print, or production behavior change was performed in this pass.
+
+## 2026-06-09 Iron Man Supervised Add All Gate Check
+
+Kush reported supervised Vincere Add All testing is approved after clean preflight evidence. Before any Add All action, reread `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, and latest `logs\rdp-preflight` evidence.
+
+Latest `logs\rdp-preflight` artifacts checked:
+
+- `logs\rdp-preflight\20260608-104735\preflight.log`
+- `logs\rdp-preflight\20260608-104735\grid-counts.txt`
+- `logs\rdp-preflight\20260608-104735\grid-counts-console.txt`
+- `logs\rdp-preflight\20260608-104735\disabled-whatif.txt`
+- `logs\rdp-preflight\20260608-105939-modal-clean\modal-clean.log`
+- `logs\rdp-preflight\20260608-105939-modal-clean\roots-before.txt`
+- `logs\rdp-preflight\20260608-105939-modal-clean\roots-after.txt`
+
+Evidence result: historical RDP-preflight evidence records `READY_ALGOS_ENABLE_STRATEGIES=False`, NinjaTrader PID `5956` responding, `OrdersGrid=0`, `PositionsGrid=0`, `StrategiesGrid=6`, and `All 2 strategy row(s) were already disabled`. Modal-clean evidence recorded `Closed 0 NinjaTrader modal dialog(s)` and the after-root file shows the Control Center/Strategies grid visible to UI Automation.
+
+Stop result: Add All was not run. The current handoff/evidence state still contains unresolved proof gaps from the 2026-06-09 preflight evidence pass: current read-only probes could not find Control Center, current `OrdersGrid=0`/`PositionsGrid=0`/all-disabled strategy state were not verified in that session, and exact target account proof is not explicit in the latest `logs\rdp-preflight` files. Under Kush's stop conditions, account/UI ambiguity blocks proceeding even with clean historical grid-count evidence.
+
+What Kush needs next: provide or approve fresh visible/unlocked RDP preflight evidence immediately before the Add All test that explicitly records `READY_ALGOS_ENABLE_STRATEGIES=false`, NinjaTrader running, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact target account set, baseline `StrategiesGrid`, and no stale/leftover rows beyond the approved baseline. After that exact evidence is captured and reviewed, the limited supervised Add All approval can be used; stop again on any mismatch, nonzero order/position, enabled strategy, connection issue, modal, account ambiguity, or unreadable UI state.
+
+Confirmed not performed in this gate check: Add All, order placement/cancelation, strategy enable/disable, row cleanup/deletion, production config changes, scheduled-task changes, deploy, push, network calls, or secret printing.
+
+## 2026-06-09 Iron Man Add All Failure Triage
+
+Kush stopped supervised Add All continuation after screenshot evidence showed Add All stopped after failure `1/6`. Do not retry Add All and do not click additional action buttons.
+
+Read-only audit inspected: `C:\Users\Administrator\AppData\Local\Vincere.Operator\logs\stack-apply-batches\stack-apply-batch-20260609-111857.json`. Selected fields only were read; no secrets were printed. Current git status before this note: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified, `scripts\Invoke-NinjaTraderUiStackSetup.ps1` modified, and untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` plus `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+
+Failed-closed audit result:
+
+- `stoppedOnFailure=true`.
+- `startedAccountCount=6`; `attemptedAccountCount=1`.
+- `ready_algos_enable_strategies_required_false=true`.
+- Safety stayed clean: pre/post `OrdersGrid=0`, pre/post `PositionsGrid=0`, pre/post visible enabled strategy count `0`.
+- `partial_rows_left=false`; `manual_cleanup_required=false`.
+- First attempt failed with `expected_strategy_row_delta=3`, `actual_strategy_row_delta=0`, and `fail_closed_reasons=account_failed`.
+- Failure symptom: APEX account ending `0023` requested `DJDR`, but the Strategy dialog selected `DJDR-PF-1.1` while loading template `1 - DJDR (YM) - 10 Min - Low Risk - v1 - Period 0`.
+- Diagnostic artifact referenced by audit: `%TEMP%\vincere-add-all-diagnostics\20260609-112518-4e20705f`.
+
+Static triage:
+
+- `scripts\Invoke-NinjaTraderUiStackSetup.ps1` contains the strategy selector at `Select-AvailableStrategy`, with matching helpers `Get-StrategyMatchKey`, `Test-PropFirmStrategyName`, and `Test-RequestedPropFirmStrategy`.
+- Diagnostic artifact search showed both `DJDR-1.1` and `DJDR-PF-1.1` in the Strategy dialog tree for the failed attempt.
+- The working tree already contains an uncommitted selector guard that only prefers a PF strategy when the requested strategy itself contains `PF`, and excludes PF candidates from base exact/prefix matches. That is the right narrow repair direction for this failure.
+- Remaining hardening candidate: make the PF-candidate detector robust to NinjaTrader list item names with prefixes such as `0 - DJDR-PF-1.1`, not just names that normalize to strings starting exactly with `DJDRPF`. A plain `DJDR` request must select the base `DJDR-1.1` candidate and must not select `DJDR-PF-1.1`.
+
+Smallest patch needed, only after Kush approves code work:
+
+1. In `scripts\Invoke-NinjaTraderUiStackSetup.ps1`, harden `Select-AvailableStrategy` so PF variants are excluded for plain strategy requests even when the UIA item name has numeric/punctuation prefixes. Keep PF selection allowed only when the requested strategy explicitly includes PF.
+2. Add diagnostic result text when a PF candidate is skipped for a plain strategy request, including requested strategy, candidate display name, and selected display name.
+3. Add a static/parser validation pass and, if feasible without NinjaTrader, a small matcher-only test for `DJDR` vs `DJDR-PF-1.1` / `DJDR-1.1`. Do not run another Add All retest until Kush approves after the patch is reviewed.
+
+Next action: source patch/review only. No Add All retry, RDP clicking, strategy enable/disable, order action, row cleanup/deletion, production config change, deploy, push, network call, or secret printing is approved by this triage note.
+
 ## Safety Notes
 
 - Do not enable live strategies without explicit user approval.
@@ -1086,3 +1266,313 @@ Blocker: this War Machine pass did not operate RDP/NinjaTrader and therefore did
 4. Re-run the safe readiness harness.
 5. Re-run the Add All test only after the above automation fixes.
 6. Keep live strategy enabling disabled until Add All completes cleanly and the user explicitly approves a live enable test.
+## 2026-06-09 Jarvis Add All DJDR/PF Selection Patch
+
+Root cause from failed supervised Add All audit: requested base strategy DJDR selected available strategy DJDR-PF-1.1, while loading the base DJDR template. The batch failed closed after 1/6 accounts; audit evidence showed OrdersGrid=0, PositionsGrid=0, visible enabled strategy count 0, expected row delta 3, actual row delta 0, partial_rows_left=false, and manual_cleanup_required=false.
+
+Patch applied to scripts\Invoke-NinjaTraderUiStackSetup.ps1 and mirrored to src\Vincere.Operator\bin\Release\net10.0-windows\scripts\Invoke-NinjaTraderUiStackSetup.ps1: PF strategy candidates are now eligible only when the requested strategy name itself contains PF; base exact/prefix matching now excludes *-PF-* candidates. Parse validation passed for both copies. Focused matcher smoke test passed: DJDR rejects DJDR-PF-1.1; DJDR-PF accepts DJDR-PF-1.1.
+
+No NinjaTrader retry, Add All rerun, order action, strategy enable/disable, row cleanup/deletion, scheduled-task change, deploy, push, or live trading-state change was performed by this patch pass. Next required action: dismiss the failure popup if still visible, recheck/record OrdersGrid=0, PositionsGrid=0, and all strategy rows disabled. A new supervised Add All retry still requires explicit Kush approval after that safety recheck.
+
+## 2026-06-09 Iron Man Idle Add All Safety Handoff Refresh
+
+Read `AGENT_HANDOFF.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`; ran only `git status --short --branch`. Current status: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified, `scripts\Invoke-NinjaTraderUiStackSetup.ps1` modified, and untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` plus `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+
+Current approval gate: Add All UI action is not approved for this idle session. After the DJDR/PF failed-closed result and selector patch note, the next gate is Kush approval for a fresh supervised visible/unlocked RDP safety recheck only; any Add All retry requires separate explicit Kush approval after that recheck is clean.
+
+Exact evidence still needed before any Add All UI action: `READY_ALGOS_ENABLE_STRATEGIES=false`, NinjaTrader running with Control Center visible/unlocked, failure popup/modal state resolved or explicitly documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact target account set approved by Kush, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, git status before/after, and artifact paths/screenshots preserved.
+
+Single next operator action: perform only the Kush-approved supervised visible/unlocked RDP safety recheck and record the evidence in the preflight/evidence doc. Stop on any nonzero, enabled, unreadable, uncertain, account-mismatch, connection, modal, or stale-row condition.
+
+Blockers/forbidden actions: do not use RDP/browser/NinjaTrader UI from this idle session, do not run or retry Add All, do not enable/disable strategies, do not place/cancel orders, do not delete/cleanup/reconcile rows, do not start/stop/restart tasks or processes, do not edit source code, do not use secrets, do not send external messages, do not push/deploy, do not change production behavior, and do not touch paused projects.
+
+## 2026-06-09 Iron Man Static Non-UI Add All Safety Review
+
+Ran `git status --short --branch` first. Current status: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified, `scripts\Invoke-NinjaTraderUiStackSetup.ps1` modified, and untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` plus `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`. Read `AGENT_HANDOFF.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`; reviewed only static Add All safety state and the current selector diff. No RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, production behavior change, push, secrets, external message, scheduled-task/process action, artifact deletion/move/overwrite, or source edit was performed.
+
+Current blocker: after the DJDR/PF failed-closed Add All attempt, the selector patch is present in the working tree but still needs one non-UI proof before another supervised preflight/retest path advances. The diff currently gates PF preference on the requested strategy containing `PF` and excludes PF candidates from base exact/prefix matches, but the remaining static question is whether the matcher also rejects prefixed UIA names such as `0 - DJDR-PF-1.1` for a plain `DJDR` request in every script copy that the Operator can invoke.
+
+Evidence still needed before any Add All UI action: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked RDP, NinjaTrader Control Center visible, failure popup/modal resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, and fresh artifact paths/screenshots recorded. Add All still requires separate explicit Kush approval after that evidence is clean.
+
+One next safe non-UI step: run or add a local matcher-only static validation, without NinjaTrader, proving `DJDR` selects/requires base `DJDR-1.1` and rejects both `DJDR-PF-1.1` and prefixed `0 - DJDR-PF-1.1`; also confirm the same patched selector logic is present in the source script and any packaged script copy the Operator actually executes. If that proof fails, patch only the matcher and rerun parser/matcher checks before any supervised RDP work resumes.
+
+## 2026-06-09 Iron Man Add All Readiness Reconciliation
+
+Ran `git status --short --branch` first, preserved all local changes, then read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`; reviewed the current Add All script diff read-only. No RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, source edit, readiness harness, task/process action, push, secrets/network/Telegram, file delete/move, paused-project work, or production behavior change was performed.
+
+Current approval gate: no Add All retest is approved. The next live-adjacent gate is only a fresh Kush-approved supervised visible/unlocked RDP safety recheck. Add All requires a separate explicit Kush approval after that evidence is clean.
+
+Evidence still needed before any Add All retest: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop, NinjaTrader running with Control Center visible, failure popup/modal state resolved or explicitly documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, git status before/after, and artifact/screenshot paths preserved.
+
+Dirty/untracked file reconciliation:
+
+- `AGENT_HANDOFF.md` appears to contain accumulated safety handoff/status notes for this Add All readiness work.
+- `scripts\Invoke-NinjaTraderUiStackSetup.ps1` appears to contain the DJDR/PF selector safety patch that only allows PF strategy candidates when the requested strategy includes `PF` and excludes PF candidates from base matches.
+- `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` appears to be the operator-facing preflight packet with approval question, required fields, and stop/no-go conditions.
+- `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` appears to be the 2026-06-09 preflight/failure evidence record, including the failed-closed DJDR/PF Add All audit summary.
+
+Single safest next operator action: do not touch live UI from an idle/non-supervised session; first complete the non-UI matcher/static validation proving plain `DJDR` rejects `DJDR-PF-1.1` and prefixed `0 - DJDR-PF-1.1` in the script copy the Operator will execute. After that passes, ask Kush for a supervised visible/unlocked RDP safety recheck only, not an Add All retry.
+
+## 2026-06-09 Iron Man Add All Gate Reconciliation Cycle
+
+Ran `git status --short --branch` first, then read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`. Preserved all existing local changes. No RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, source edit, readiness harness/test, scheduled-task/process action, secrets/network/Telegram/customer-data access, push, or production behavior change was performed.
+
+Current dirty/untracked handoff files:
+
+- `AGENT_HANDOFF.md`: accumulated Vincere Add All safety handoff/status notes.
+- `scripts\Invoke-NinjaTraderUiStackSetup.ps1`: local DJDR/PF selector safety patch; keep pending review/static matcher proof.
+- `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`: untracked operator-facing supervised preflight packet.
+- `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`: untracked 2026-06-09 preflight/failure evidence record.
+
+RDP preflight evidence completeness: not complete for any Add All retry. The evidence file still records that Control Center/grid proof failed in the current pass, exact target account and baseline `StrategiesGrid` were not verified, and Add All remains blocked until a fresh supervised visible/unlocked RDP preflight records clean evidence.
+
+Exact next operator action: keep `READY_ALGOS_ENABLE_STRATEGIES=false`; after the non-UI DJDR/PF matcher proof is complete, ask Kush for a supervised visible/unlocked RDP preflight only and record `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact target account set, baseline `StrategiesGrid`, no stale/leftover rows, and artifact/screenshot paths. Do not request or perform Add All in that preflight.
+
+Exact blocker before any Add All retry: no fresh complete supervised preflight evidence proving safe NinjaTrader state after the failed-closed DJDR/PF run and after the selector patch. Add All retry requires separate explicit Kush approval only after the preflight evidence is clean.
+
+## 2026-06-09 Iron Man DJDR/PF Matcher Static Validation
+
+Ran `git status --short --branch` first, read `AGENT_HANDOFF.md`, inspected `scripts\Invoke-NinjaTraderUiStackSetup.ps1`, inspected Operator script candidate paths from `StackApplyService`, and ran a local matcher-only PowerShell validation. No RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, order action, row cleanup/deletion, scheduled-task/process action, deploy, push, secrets/network/Telegram/customer-data access, package install, or production behavior change was performed.
+
+Script-copy evidence:
+
+- Source script present: `scripts\Invoke-NinjaTraderUiStackSetup.ps1`.
+- Operator packaged script present: `src\Vincere.Operator\bin\Release\net10.0-windows\scripts\Invoke-NinjaTraderUiStackSetup.ps1`.
+- Operator packaged root script missing: `src\Vincere.Operator\bin\Release\net10.0-windows\Invoke-NinjaTraderUiStackSetup.ps1`.
+- Desktop fallback script missing: `C:\Users\Administrator\Desktop\vincere-ops\scripts\Invoke-NinjaTraderUiStackSetup.ps1`.
+- Source and packaged Release script both contain `Test-RequestedPropFirmStrategy`, the PF-request guard in `Test-PropFirmStrategyName`, and base match exclusion via `candidateIsPropFirm`.
+
+Matcher validation result: pass. The local non-UI matcher simulation of current selector logic proved:
+
+- plain `DJDR` chooses `DJDR-1.1` over `DJDR-PF-1.1`;
+- plain `DJDR` rejects `DJDR-PF-1.1` when no base candidate exists;
+- plain `DJDR` rejects prefixed `0 - DJDR-PF-1.1` when no base candidate exists;
+- plain `DJDR` chooses `DJDR-1.1` when prefixed `0 - DJDR-PF-1.1` is also present;
+- explicit `DJDR-PF` can still select `DJDR-PF-1.1`.
+
+No matcher source patch was needed in this cycle. Exact blocker before any Add All retry remains live-safety evidence, not matcher proof: there is still no fresh complete supervised visible/unlocked RDP preflight after the failed-closed DJDR/PF run and selector patch, proving `READY_ALGOS_ENABLE_STRATEGIES=false`, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact target account set, baseline `StrategiesGrid`, no stale/leftover rows, and captured artifact paths.
+
+Next operator action: keep `READY_ALGOS_ENABLE_STRATEGIES=false`; ask Kush for a supervised visible/unlocked RDP preflight only, record the clean safety evidence, and do not request or perform Add All until Kush separately approves the exact retry after that evidence is reviewed.
+
+## 2026-06-09 Iron Man RDP Preflight Approval Request
+
+Ran `git status --short --branch` first, then read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`. Preserved all existing local changes. No RDP/browser/NinjaTrader UI, Add All, readiness harness, strategy enable/disable, order action, row cleanup/deletion, scheduled-task/process action, deploy, push, secrets/network call, Telegram/external message, package install, or production behavior change was performed.
+
+Current DJDR/PF matcher proof: complete for non-UI validation. The current selector logic in the source and packaged Operator script rejects `DJDR-PF-1.1` and prefixed `0 - DJDR-PF-1.1` for plain `DJDR`, selects `DJDR-1.1` when present, and still permits explicit `DJDR-PF` to select `DJDR-PF-1.1`.
+
+Autonomous non-UI work remaining before the next gate: none identified for the DJDR/PF selector issue. The remaining blocker is live-state evidence only: no fresh complete supervised visible/unlocked RDP preflight exists after the failed-closed DJDR/PF run and selector patch.
+
+Exact Kush/operator approval request for the next step:
+
+```text
+Kush, do you approve a supervised visible/unlocked RDP preflight only, with no Add All click/run and READY_ALGOS_ENABLE_STRATEGIES kept false, to verify NinjaTrader Control Center is visible, any failure popup/modal is resolved or documented, OrdersGrid=0, PositionsGrid=0, all visible strategy rows disabled, exact target account set, baseline StrategiesGrid, no stale/leftover rows beyond the approved baseline, and artifact/screenshot paths recorded?
+```
+
+If approved, the operator action is only to record that preflight evidence. Do not request or perform Add All until the preflight is clean and Kush separately approves the exact retry.
+
+## 2026-06-10 War Machine Gate Refresh
+
+Ran `git status --short --branch` first, then read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`. Current status: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified, `scripts\Invoke-NinjaTraderUiStackSetup.ps1` modified, and untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` plus `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+
+DJDR/PF matcher proof is complete for non-UI validation: plain `DJDR` rejects `DJDR-PF-1.1` and prefixed `0 - DJDR-PF-1.1`, selects `DJDR-1.1` when present, and explicit `DJDR-PF` can still select the PF variant. Autonomous non-UI work remaining before the next gate: none identified. Exact next Kush/operator action: ask/approve and perform only a supervised visible/unlocked RDP preflight with no Add All click/run, keeping `READY_ALGOS_ENABLE_STRATEGIES=false`, then record Control Center visibility, failure popup/modal state, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact target account set, baseline `StrategiesGrid`, no stale/leftover rows, and artifact/screenshot paths.
+
+Exact blocker before any Add All retry: no fresh complete supervised RDP preflight evidence exists after the failed-closed DJDR/PF run and selector patch. Add All remains blocked until that evidence is clean and Kush separately approves the exact retry. No RDP/browser/NinjaTrader UI, Add All, readiness harness, strategy enable/disable, order action, row cleanup/deletion, scheduled-task/process action, deploy, push, secrets/network/Telegram/customer-data access, paused-project work, or production behavior change was performed.
+
+## 2026-06-10 War Machine Static Add All Safety Pass
+
+Ran `git status --short --branch`, read `AGENT_HANDOFF.md`, and statically reviewed the Add All/instrument-selector/template-load paths in `scripts\Invoke-NinjaTraderUiStackSetup.ps1`, `src\Vincere.Operator\MainWindow.xaml.cs`, `src\Vincere.Operator\NinjaTraderUiDiscovery.cs`, and `src\Vincere.Core\Services\StackApplyService.cs`. No RDP/browser/NinjaTrader UI, Add All, readiness harness, strategy enable/disable, order action, row cleanup/deletion, scheduled-task/process action, deploy, push, secrets/network/Telegram/customer-data access, or production behavior change was performed.
+
+Static findings: no new static code finding was found beyond the already documented failed-closed DJDR/PF selector issue and historical APEX/LFE/partial-row risks. The current source includes diagnostic breadcrumbs and debug-tree capture around `Find-InstrumentSelector`/`Set-Instrument`, so the historical APEX `instrument selector not found` failures now need supervised RDP evidence rather than another static-only guess. `Load-Template` now records resolved template path/state, captures top-level window diagnostics, and retries the template load action once before failing closed, so the historical LFE missing-window failure has a bounded diagnostic/retry path. Add All orchestration now records pre/post grid safety state, expected vs actual strategy row delta, `partial_rows_left`, `manual_cleanup_required`, diagnostic paths, and fail-closed reasons; it detects partial rows but intentionally does not delete or reconcile rows automatically.
+
+Smallest repair plan if code work is still needed: no new code change is recommended from this static pass before live-adjacent evidence. Preserve/review the existing DJDR/PF selector patch and use the current diagnostics during the next supervised preflight/retest path. If APEX selector or LFE template-load failures recur under supervised RDP, use the captured diagnostic artifacts to make a narrow follow-up patch in `Invoke-NinjaTraderUiStackSetup.ps1`; if partial rows recur, keep automatic deletion out of scope and rely on audit proof plus supervised manual reconciliation unless Kush separately approves row-cleanup implementation.
+
+Exact remaining Kush/operator RDP evidence before any Add All retest: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop, NinjaTrader running with Control Center visible, any failure popup/modal resolved or explicitly documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond the approved baseline, git status before/after, and artifact/screenshot paths. Add All remains blocked until that evidence is clean and Kush gives separate explicit approval for the exact Add All retry.
+
+## 2026-06-10 War Machine Documentation Consistency Pass
+
+Ran `git status --short --branch`, read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`, and the Second Mind Vincere note at `C:\Users\Administrator\Documents\Projects\System Control\workspace-sync\Second Mind\projects\vincere.md`. Current status remains `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified, `scripts\Invoke-NinjaTraderUiStackSetup.ps1` modified, and untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` plus `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+
+Current blocker: no fresh complete supervised visible/unlocked RDP preflight evidence exists after the failed-closed DJDR/PF run and selector patch. Exact Kush/operator preflight evidence still needed: `READY_ALGOS_ENABLE_STRATEGIES=false`, Control Center visible/unlocked, any failure popup/modal resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond the approved baseline, and artifact/screenshot paths with git status before/after.
+
+Existing preflight packet/template status: sufficient. `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md` already capture the gate, fields, stop/no-go conditions, artifacts, and separate Add All approval question. Next single safe operator action: Kush/Iron Man performs only the supervised RDP preflight and records the evidence. No further idle/static agent action is useful until Kush provides that RDP preflight evidence or changes the approval gate. No RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, order action, row cleanup/deletion, scheduled-task/process action, source-code edit, deploy, push, secrets/network use, external message, or production behavior change was performed.
+
+## Supervisor Gate Check - 2026-06-10 10:05 ET
+
+Ran `git status --short --branch` only, then read `AGENT_HANDOFF.md`, `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`, and the Second Mind Vincere note at `C:\Users\Administrator\Documents\Projects\System Control\workspace-sync\Second Mind\projects\vincere.md`. Current git status: `vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic` with `AGENT_HANDOFF.md` modified, `scripts\Invoke-NinjaTraderUiStackSetup.ps1` modified, and untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` plus `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+
+Visible/unlocked RDP preflight evidence complete: no. Missing evidence fields before any Add All retry: `READY_ALGOS_ENABLE_STRATEGIES=false`, NinjaTrader Control Center visible/unlocked, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond the approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+
+Single next operator/Kush action: Kush/Iron Man performs only the supervised visible/unlocked RDP preflight and records the missing evidence; do not request or perform Add All until that evidence is clean and Kush separately approves the exact Add All retry. No RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, order action, row cleanup/deletion, scheduled-task/process action, secrets use, push, external message, or production behavior change was performed.
+
+## 2026-06-10 War Machine Add All Evidence Gate Freshness Check
+
+- Evidence status: incomplete. No fresh complete supervised visible/unlocked RDP preflight evidence exists after the 2026-06-10 gate notes.
+- Exact missing fields: `READY_ALGOS_ENABLE_STRATEGIES=false`, desktop/Control Center visible and unlocked, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing fields; Add All remains blocked until evidence is clean and Kush separately approves the exact retry.
+- Forbidden actions: no Add All, RDP/browser/NinjaTrader UI automation from idle agent sessions, strategy enable/disable, order actions, row delete/reconcile/cleanup, task/process restart, source code changes, deploy, push/fetch/pull, secrets/network/Telegram/customer-data use, paused-project work, or production behavior change.
+
+## 2026-06-10 War Machine Evidence-Gate Refresh Confirmation
+
+- Evidence status remains incomplete; no fresh complete supervised visible/unlocked RDP preflight exists after the DJDR/PF failed-closed run and selector patch.
+- Still missing: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and Control Center, failure popup/modal state, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: complete only the supervised visible/unlocked RDP preflight and record those fields; Add All remains blocked until Kush separately approves the exact retry after clean evidence.
+
+## 2026-06-10 War Machine Documentation-Only Add All Evidence Gate Refresh
+
+- Evidence status: incomplete. No fresh complete supervised visible/unlocked RDP preflight evidence has appeared since the latest 2026-06-10 notes.
+- Exact blocker: Add All remains blocked on missing live-state proof after the DJDR/PF failed-closed run and selector patch: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and Control Center, failure popup/modal state, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record those fields; do not request or run Add All until that evidence is clean and Kush separately approves the exact retry.
+
+## 2026-06-10 War Machine Approval-Gated Add All Evidence Refresh
+
+- Evidence status: incomplete. The 2026-06-09 evidence still records an incomplete preflight, and no fresh complete supervised visible/unlocked RDP preflight evidence is present after the latest 2026-06-10 gate notes.
+- Current blocker: Add All remains blocked until Kush/operator records clean live-state proof: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and Control Center, failure popup/modal state, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next safe operator action: perform only the supervised visible/unlocked RDP preflight and record the missing evidence; Add All requires separate explicit Kush approval after that evidence is clean.
+
+## 2026-06-11 War Machine Add All Evidence-Gate Freshness Pass
+
+- Evidence status: incomplete. No new local Add All/RDP preflight evidence file exists after the latest 2026-06-10 gate notes; the only dated evidence file found remains `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`, which records an incomplete preflight.
+- Exact remaining blocker: Add All is blocked until supervised visible/unlocked RDP evidence proves `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record those fields; do not request or run Add All until evidence is clean and Kush separately approves the exact retry.
+
+## 2026-06-11 War Machine Add All Gate Status
+
+- Evidence status: incomplete. No fresh complete supervised visible/unlocked RDP preflight evidence exists after the 2026-06-10 gate notes; `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` remains the latest local evidence and records an incomplete preflight.
+- Exact missing fields: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing fields; Add All remains blocked until evidence is clean and Kush separately approves the exact retry.
+- Explicit forbidden actions: no RDP/browser/NinjaTrader UI automation, Add All, strategy/order/row changes, scheduled-task or process control, source code edits, deploy, push/fetch/pull, secrets/network/Telegram/customer-data access, paused-project work, or production behavior change.
+
+## 2026-06-11 War Machine Documentation Gate Refresh
+
+- Current gate status: incomplete. Local Add All/RDP filenames show no fresh complete supervised visible/unlocked RDP preflight evidence after the 2026-06-10/2026-06-11 gate notes; `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` remains the latest dated evidence file.
+- Exact missing evidence fields: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing fields; Add All remains blocked until that evidence is clean and Kush separately approves the exact retry.
+- Forbidden actions not taken: no RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, order action, row delete/reconcile/cleanup, source code edit, task/process control, deploy, push/fetch/pull, secrets/network/customer data/Telegram/external message, paused-project work, or production behavior change.
+
+## 2026-06-11 War Machine Add All Gate Filename Refresh
+
+- Current gate status: incomplete. Local Add All/RDP filenames show no fresh complete supervised visible/unlocked RDP preflight evidence after the 2026-06-10/2026-06-11 gate notes; only `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md` are present for RDP evidence/preflight.
+- Exact missing evidence fields: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing fields; Add All remains blocked until evidence is clean and Kush separately approves the exact retry.
+- Forbidden actions not taken: no RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, order action, row delete/reconcile/cleanup, source code edit, task/process control, deploy, push/fetch/pull, secrets/network/customer data/Telegram/external message, paused-project work, or production behavior change.
+
+## 2026-06-11 War Machine Evidence Freshness Check
+
+- Evidence status: incomplete. No fresh complete supervised visible/unlocked RDP preflight evidence exists after the latest 2026-06-11 gate note; `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` remains the latest local evidence and records an incomplete preflight.
+- Exact remaining blocker: Add All remains blocked until supervised RDP evidence proves `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing fields; Add All requires separate Kush approval after clean evidence.
+- Git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Forbidden actions respected: no RDP/browser/NinjaTrader UI, Add All, strategy/order/row action, source edit, task/process control, deploy, push/fetch/pull, secrets/network/customer data/Telegram/external message, paused-project work, or production behavior change.
+
+## 2026-06-11 War Machine Concise Add All Handoff
+
+- Gate status: Add All remains blocked; no fresh complete supervised visible/unlocked RDP preflight evidence is recorded after the latest 2026-06-11 gate notes.
+- Exact blocker: missing supervised proof of `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows, artifact/screenshot paths, and git status before/after preflight.
+- One next operator action: Kush/operator performs only the supervised visible/unlocked RDP preflight and records the evidence; Add All requires separate Kush approval after clean evidence.
+
+## 2026-06-11 War Machine Read-Only Gate Check
+
+- New evidence found: no. Existing Add All evidence/packet files are `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`; no newer complete supervised visible/unlocked RDP preflight evidence file is present.
+- Exact blocker: Add All remains blocked until supervised proof records `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows, artifact/screenshot paths, and git status before/after preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the evidence; do not run Add All until Kush separately approves the exact retry after clean evidence.
+
+## 2026-06-11 War Machine Evidence Metadata Freshness Check
+
+- Evidence status: no new complete evidence. Existing Add All evidence/packet metadata still shows only `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`; no fresh complete supervised visible/unlocked RDP preflight evidence appeared after the last 2026-06-11 gate note.
+- Exact blocker: Add All remains blocked until supervised proof records `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows, artifact/screenshot paths, and git status before/after preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the evidence; do not run Add All until Kush separately approves the exact retry after clean evidence.
+- Current git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Forbidden actions respected: no RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, order action, row delete/reconcile/cleanup, task/process control, secrets/network/Telegram/external messages, push/fetch/pull, paused-project work, or production behavior change.
+
+## 2026-06-12 War Machine Add All Evidence-Gate Refresh
+
+- Evidence status: no fresh complete supervised visible/unlocked RDP preflight evidence exists after the latest 2026-06-12 Second Mind note. Local evidence/preflight metadata still shows only `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`.
+- Exact missing fields while blocked: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing evidence; do not run Add All until Kush separately approves the exact retry after clean evidence.
+- Current git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Not touched: no browser/RDP/NinjaTrader UI, Add All, strategy enable/disable, order action, row delete/reconcile/cleanup, task/process control, source code beyond this handoff note, secrets/network/Telegram/customer data, push/fetch/pull, paused-project work, or production behavior.
+
+## 2026-06-12 War Machine Dirty-State Evidence Gate Refresh
+
+- Current git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Dirty-state metadata checked: `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1` are modified; `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` are untracked coordination/evidence docs. The 2026-06-09 evidence file remains the latest local evidence metadata inspected.
+- Evidence status: no fresh complete supervised visible/unlocked RDP preflight evidence exists.
+- Exact blocker/missing fields: Add All remains blocked until supervised evidence records `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing evidence; do not run Add All until Kush separately approves the exact retry after clean evidence.
+
+## 2026-06-12 Iron Man Add All Dirty-State Reconciliation
+
+Ran `git status --short --branch` after reading `AGENT_HANDOFF.md`. Current git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+
+Files inspected read-only: `scripts\Invoke-NinjaTraderUiStackSetup.ps1` diff, `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`.
+
+Dirty-state reconciliation:
+
+- `scripts\Invoke-NinjaTraderUiStackSetup.ps1` contains the local DJDR/PF selector safety patch: PF candidates are only considered for requested strategies containing `PF`, and PF candidates are excluded from base exact/prefix matches. Prior handoff records matcher proof complete for plain `DJDR`, prefixed `0 - DJDR-PF-1.1`, and explicit `DJDR-PF`.
+- `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` is the operator-facing preflight packet with the current gate, exact preflight-only approval question, required evidence fields, stop/no-go conditions, artifacts, and separate Add All approval question.
+- `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` remains the latest dated local evidence file and records an incomplete preflight plus the failed-closed DJDR/PF Add All audit summary.
+- `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md` remains the blank template for the next supervised visible/unlocked RDP preflight.
+
+Safe static next action remaining: none identified before Kush's supervised preflight. The pending state appears to be waiting only on supervised RDP evidence, not on another static/code review gap.
+
+Exact Kush/operator blocker: no fresh complete supervised visible/unlocked RDP preflight evidence exists after the failed-closed DJDR/PF run and selector patch. Add All remains blocked until evidence proves `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight. Add All still requires separate explicit Kush approval after clean evidence.
+
+Next safe action: keep `READY_ALGOS_ENABLE_STRATEGIES=false`; ask Kush to approve and perform only the supervised visible/unlocked RDP preflight using the operator packet/template, then record the missing evidence. Do not run or request Add All in that preflight.
+
+## 2026-06-12 War Machine Evidence-Gate Refresh
+
+- Git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Evidence status: no fresh complete supervised visible/unlocked RDP preflight evidence exists after the latest 2026-06-12 note. Metadata-level check shows only `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`.
+- Exact missing evidence fields: `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next operator action: Kush/operator performs only the supervised visible/unlocked RDP preflight and records the missing evidence; Add All remains blocked until Kush separately approves the exact retry after clean evidence.
+- Forbidden actions respected: no Add All, RDP/browser/NinjaTrader UI, strategy/order/row action, source edit beyond this handoff note, task/process control, fetch/pull/push, secrets/network/Telegram/customer-data access, paused-project work, or production behavior change.
+
+## 2026-06-12 War Machine Evidence-Gate Refresh Confirmation
+
+- Evidence status: no fresh complete supervised visible/unlocked RDP preflight evidence exists after the latest 2026-06-12 notes. Filename/status-only check shows only `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`.
+- Exact blocker: Add All remains blocked until supervised evidence records `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after the supervised preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing evidence; do not run Add All until Kush separately approves the exact retry after clean evidence.
+- Current git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Forbidden actions respected: no RDP/browser/NinjaTrader UI, Add All, strategy/order/row action, task/process control, script/source code edit, secrets/network/Telegram/customer-data access, push/fetch/pull, paused-project work, or production behavior change.
+
+## 2026-06-12 War Machine Evidence-Newer-Than-20260609 Check
+
+- Evidence status: no supervised RDP preflight evidence newer than `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md` exists by filename/metadata check; Add All remains blocked.
+- Exact blocker: missing complete supervised visible/unlocked preflight proof of `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing evidence; do not run Add All until Kush separately approves the exact retry after clean evidence.
+- Current git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Forbidden actions respected: no RDP/browser/NinjaTrader UI, Add All, strategy enable/disable, order/row action, task/process control, source code edit, push/fetch/pull, secrets/network/Telegram/customer-data access, paused-project work, or production behavior change.
+
+## 2026-06-12 War Machine Metadata Gate Freshness Check
+
+- Evidence status: no fresh complete supervised visible/unlocked RDP preflight evidence exists after the latest 2026-06-12 note. Filename/metadata check found no RDP preflight evidence newer than `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`; `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` remains the operator packet.
+- Exact blocker: Add All remains blocked until supervised evidence records `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing evidence; do not run Add All until Kush separately approves the exact retry after clean evidence.
+- Current git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Deliberately not touched: no Add All, RDP/browser/NinjaTrader UI, strategy enable/disable, order placement/cancel, row delete/reconcile/cleanup, scheduled-task/process start/stop/restart, source code edit, secrets/network/Telegram/customer-data access, push/fetch/pull, paused-project work, or production behavior change.
+
+## 2026-06-12 War Machine Metadata Evidence-Gate Cycle
+
+- Evidence status: no fresh complete supervised visible/unlocked RDP preflight evidence exists after the latest 2026-06-12 notes. Metadata-only check shows `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`; no newer completed evidence file is present.
+- Exact blocker: Add All remains blocked until supervised evidence records `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing evidence; do not run Add All until Kush separately approves the exact retry after clean evidence.
+- Current git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Forbidden actions respected: no Add All, RDP/browser/NinjaTrader UI, strategy enable/disable, order placement/cancel, row delete/reconcile/cleanup, readiness harness, scheduled-task/process start/stop/restart, source code edit, secrets/network/Telegram/customer-data access, push/fetch/pull, paused-project work, or production behavior change.
+
+## 2026-06-13 War Machine Narrow Evidence-Gate Freshness Pass
+
+- Evidence status: no fresh complete supervised visible/unlocked RDP preflight evidence exists after the latest 2026-06-12 gate notes. Metadata-only check shows `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md`, `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`, and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_TEMPLATE.md`; no newer completed evidence file is present.
+- Exact blocker: Add All remains blocked until supervised evidence records `READY_ALGOS_ENABLE_STRATEGIES=false`, visible/unlocked desktop and NinjaTrader Control Center, failure popup/modal state resolved or documented, `OrdersGrid=0`, `PositionsGrid=0`, all visible strategy rows disabled, exact Kush-approved target account set, baseline `StrategiesGrid`, no stale/leftover rows beyond approved baseline, artifact/screenshot paths, and git status before/after preflight.
+- Single next Kush/operator action: perform only the supervised visible/unlocked RDP preflight and record the missing evidence; do not run Add All until Kush separately approves the exact retry after clean evidence.
+- Current git status: `## vps-sync/20260607-vincere-diagnostic...origin/vps-sync/20260607-vincere-diagnostic`; modified `AGENT_HANDOFF.md` and `scripts\Invoke-NinjaTraderUiStackSetup.ps1`; untracked `docs\VINCERE_ADD_ALL_OPERATOR_PREFLIGHT_PACKET.md` and `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260609.md`.
+- Forbidden actions respected: no Add All, RDP/browser/NinjaTrader UI automation, strategy enable/disable, order placement/cancel, row delete/reconcile/cleanup, scheduled-task/process start/stop/restart, source code edit, readiness harness, secrets/network/Telegram/customer-data access, git fetch/pull/push, deployment, paused-project work, or production behavior change.
+
+## 2026-06-13 War Machine Approved RDP Preflight Attempt
+
+- Kush-approved scope: visible/unlocked RDP preflight only. Add All remained unapproved and was not clicked/run.
+- What moved: `READY_ALGOS_ENABLE_STRATEGIES=False` was confirmed from `C:\Users\Administrator\AppData\Local\Vincere.Operator\.env`; Windows session `administrator` on `rdp-tcp#1` was Active; NinjaTrader and Vincere.Operator processes were running/responding in SessionId 2.
+- Blocked evidence: NinjaTrader Control Center was not visible/readable to UI Automation. `Probe-NinjaTraderGridCounts.ps1` stopped with `Control Center not found.` and `Set-NinjaTraderStrategiesEnabled.ps1 -Enabled false -WhatIf` stopped with `NinjaTrader Control Center was not found.`
+- Exact current blocker: OrdersGrid, PositionsGrid, all visible strategy rows disabled, target account set, baseline `StrategiesGrid`, stale-row state, and failure popup/modal state remain unverified because Control Center was not readable.
+- Evidence doc: `docs\VINCERE_ADD_ALL_RDP_PREFLIGHT_EVIDENCE_20260613.md`.
+- Exact next approval needed: Kush must approve a follow-up supervised visible/unlocked RDP preflight only, with the human operator bringing Control Center visible/readable if needed, still with no Add All click/run and no strategy/order/row changes.
+- Forbidden actions respected: no Add All, browser, strategy enable/disable, order placement/cancel, row cleanup/delete/reconcile, scheduled-task/process changes, deploy, push/fetch/pull, Telegram, secrets, customer-data access, readiness harness, or production behavior change.
