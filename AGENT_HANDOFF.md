@@ -285,3 +285,32 @@ Blocked:
 4. Re-run the safe readiness harness.
 5. Re-run the Add All test only after the above automation fixes.
 6. Keep live strategy enabling disabled until Add All completes cleanly and the user explicitly approves a live enable test.
+
+## Web Control Panel — `src/Vincere.Web` (added 2026-07-21)
+
+New ASP.NET Core minimal-API host (`src/Vincere.Web/`, `net10.0`, added to `Vincere.slnx`) that serves a
+browser control panel and **reuses `Vincere.Core` services** via `AddVincereCore()` — no trading logic is
+reimplemented. It adapts the `ui-prototype` files into `src/Vincere.Web/wwwroot` and replaces the old Python
+`server.py` (blueprint parsing now uses `ExcelImportService`, .xlsx only). See `src/Vincere.Web/README.md`.
+
+MVP scope delivered (single-operator, **web auth deferred**): safe control surface (status, ping,
+connections list/connect/disconnect/refresh, accounts (masked), disable-all, blueprint preview/import) plus
+the **schedule + Get-Algos-Ready surface** and guarded action plumbing. Verified end-to-end in `DRY_RUN=true`.
+
+Architecture / operational rules:
+- **Must run on the NinjaTrader machine** (local named pipe) and binds to `127.0.0.1:5178` only.
+- **Run instead of the WPF app, not alongside it** — both arm the same orchestrator timer and share the
+  SQLite DB; running both risks duplicate scheduled automation and DB write contention.
+
+Safety — `LiveGuard` (`src/Vincere.Web/Hosting/LiveGuard.cs`): guarded actions (`enable-all`, `stack/apply`,
+`flatten/*`, `ready/run`, and enabling scheduled strategy-enable) only fire live when **all three** hold:
+`DRY_RUN=false` **and** `VINCERE_WEB_ALLOW_LIVE=true` **and** request body `"confirm":"LIVE"`. Otherwise they
+simulate (dry-run) or are refused outright. Defaults ship blocked. **Do not set `VINCERE_WEB_ALLOW_LIVE=true`**
+until the Add-All instrument-selector fix is retested, the pipe-name fix is recompiled in NT, and a supervised
+live test is approved (same gate as item 6 above).
+
+Pipe-name drift fixed: `nt8-addon/VincereOperatorIpcAddOn.cs` constant changed `VincereOperator2` →
+`VincereOperator` to match `VINCERE_IPC_PIPE_NAME`. **Requires recompiling the add-on inside NinjaTrader**;
+until then set `VINCERE_IPC_PIPE_NAME=VincereOperator2` in `.env`.
+
+Timezone note: the schedule is **Eastern** (`READY_ALGOS_TIME`). Product notes say "8:30 CT" = `09:30` Eastern.

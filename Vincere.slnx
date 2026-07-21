@@ -3,5 +3,6 @@
     <Project Path="src/Vincere.Core/Vincere.Core.csproj" />
     <Project Path="src/Vincere.Ipc.Contract/Vincere.Ipc.Contract.csproj" />
     <Project Path="src/Vincere.Operator/Vincere.Operator.csproj" />
+    <Project Path="src/Vincere.Web/Vincere.Web.csproj" />
   </Folder>
 </Solution>

@@ -48,6 +48,11 @@ VINCERE_IPC_PIPE_NAME=VincereOperator
 DRY_RUN=false
 ```
 
+> **Pipe-name fix (2026-07-21):** the add-on constant `PipeName` previously read `VincereOperator2`,
+> which did not match `VINCERE_IPC_PIPE_NAME` (default `VincereOperator`) — connections silently failed.
+> It is now `VincereOperator`. **Recompile the add-on inside NinjaTrader** for this to take effect.
+> Until you recompile, set `VINCERE_IPC_PIPE_NAME=VincereOperator2` in `.env` to match the running add-on.
+
 ## Disclaimer
 
 NinjaTrader APIs vary by minor version. This code is written for **NT 8.1.x** patterns (`Connection`, `Core.Globals.ConnectOptions`). If compilation fails, use the Help Guide for your exact build and adjust namespaces/usings.

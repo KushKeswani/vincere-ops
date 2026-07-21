@@ -25,7 +25,9 @@ namespace NinjaTrader.NinjaScript.AddOns
 	/// <summary>Named-pipe IPC for the external Vincere Operator app (JSON one line in, one line out).</summary>
 	public class VincereOperatorIpcAddOn : AddOnBase
 	{
-		private const string PipeName = "VincereOperator2";
+		// Must match VINCERE_IPC_PIPE_NAME (AppRuntimeConfig default "VincereOperator").
+		// This must be recompiled inside NinjaTrader for a change to take effect.
+		private const string PipeName = "VincereOperator";
 		private static readonly object StartStopLock = new object();
 		private static bool _globalStarted;
 		private static CancellationTokenSource _globalCts;
