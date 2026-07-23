@@ -1,0 +1,26 @@
+{
+  "canonicalization": "RFC8785",
+  "vectors": [
+    {
+      "name": "unicode-number-order",
+      "input": {
+        "€": "€",
+        "z": -0,
+        "a": [1e30, 0.002, 4.5],
+        "\r": "\n"
+      },
+      "canonical": "{\"\\r\":\"\\n\",\"a\":[1e+30,0.002,4.5],\"z\":0,\"€\":\"€\"}",
+      "sha256": "d53bbaa9ce3ccb23e92358cbf619c6893d8a36957e4908846d30818fd9aea857"
+    },
+    {
+      "name": "empty-runtime-state",
+      "input": {
+        "strategies": [],
+        "accounts": []
+      },
+      "canonical": "{\"accounts\":[],\"strategies\":[]}",
+      "sha256": "42c4fc16256894ce66f62f9c3686346539e3a7434f6c280d14d691b8d845057c"
+    }
+  ]
+}
+

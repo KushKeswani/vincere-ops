@@ -1,0 +1,58 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    ".next-central-connected/types/**/*.ts",
+    ".next-local-only/types/**/*.ts",
+    "**/*.mts",
+    ".next-e2e-central/types/**/*.ts",
+    ".next-e2e-central/dev/types/**/*.ts",
+    ".next-e2e-local/types/**/*.ts",
+    ".next-e2e-local/dev/types/**/*.ts",
+    ".next-central-connected/dev/types/**/*.ts",
+    ".next-local-only/dev/types/**/*.ts",
+    ".next-handoff-local/types/**/*.ts",
+    ".next-handoff-local/dev/types/**/*.ts",
+    ".next-webpack-local/types/**/*.ts",
+    ".next-webpack-local/dev/types/**/*.ts",
+    ".next-seq-central-managed2/types/**/*.ts",
+    ".next-seq-central-managed2/dev/types/**/*.ts",
+    ".next-seq-local-managed2/types/**/*.ts",
+    ".next-seq-local-managed2/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

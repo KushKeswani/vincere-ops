@@ -1,0 +1,72 @@
+import type { LatestRuntimeObservationV2 } from "@/lib/repositories/runtime-repository";
+
+export interface BlueprintAccountOption {
+  accountRef: string;
+  displayLabel: string;
+  maskedIdentifier: string;
+  classificationLabel: string;
+  connectionSummary: string;
+}
+
+export interface BlueprintMappingEvidence {
+  accountOptions: BlueprintAccountOption[];
+  mappingLockedReason: string | null;
+}
+
+export function buildBlueprintMappingEvidence(
+  latest: LatestRuntimeObservationV2 | null,
+  now: Date = new Date(),
+): BlueprintMappingEvidence {
+  if (!latest) {
+    return { accountOptions: [], mappingLockedReason: "No Runtime-v2 account observation exists for the selected local agent." };
+  }
+
+  const { observation } = latest;
+  const asOfMs = Date.parse(observation.asOf);
+  const receivedAtMs = new Date(latest.receivedAt).getTime();
+  const occurredAtMs = new Date(latest.occurredAt).getTime();
+  const evidenceAtMs = Math.min(asOfMs, receivedAtMs, occurredAtMs);
+  const liveAgeMs = now.getTime() - evidenceAtMs;
+  if (
+    observation.freshness.status !== "fresh"
+    || observation.freshness.ageMs === null
+    || !Number.isFinite(evidenceAtMs)
+    || liveAgeMs < 0
+    || liveAgeMs > observation.freshness.maxAgeMs
+  ) {
+    return { accountOptions: [], mappingLockedReason: "The selected agent's Runtime-v2 account evidence is stale or has unknown freshness." };
+  }
+
+  const { state } = observation;
+  if (
+    state.collection.scopes.accounts.status !== "complete"
+    || state.collection.scopes.connections.status !== "complete"
+    || state.addon?.status !== "connected"
+    || state.addon.ipcAuthenticated !== true
+  ) {
+    return { accountOptions: [], mappingLockedReason: "Fresh account mapping requires complete account and connection scopes from an authenticated Add-On." };
+  }
+
+  const connections = new Map(state.connections.map((connection) => [connection.connectionRef, connection]));
+  const accountOptions = state.accounts
+    .filter((account) => account.classification.authority === "authoritative")
+    .map((account): BlueprintAccountOption => {
+      const linkedConnections = account.connectionRefs
+        .map((connectionRef) => connections.get(connectionRef))
+        .filter((connection) => connection !== undefined);
+      return {
+        accountRef: account.accountRef,
+        displayLabel: account.displayLabel,
+        maskedIdentifier: account.maskedIdentifier,
+        classificationLabel: `Authoritative ${account.classification.environment}`,
+        connectionSummary: linkedConnections.length > 0
+          ? linkedConnections.map((connection) => `${connection.displayLabel} (${connection.status})`).join(", ")
+          : `Account ${account.status}; no linked connection reported`,
+      };
+    })
+    .sort((left, right) => left.displayLabel.localeCompare(right.displayLabel));
+
+  return accountOptions.length > 0
+    ? { accountOptions, mappingLockedReason: null }
+    : { accountOptions: [], mappingLockedReason: "The fresh Runtime-v2 observation contains no authoritatively classified accounts." };
+}
