@@ -91,8 +91,8 @@ test("LOCAL_ONLY auto-enters the operator console and serves local routes withou
 
   await page.goto("/client/strategy");
   await expect(page.getByText("Local automation gate")).toBeVisible();
-  await expect(page.getByLabel("Blueprint file")).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Preview import" })).toBeDisabled();
+  await expect(page.getByLabel("XLSX workbook")).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Preview and stage workbook" })).toBeEnabled();
 
   await page.goto("/staff/runtime");
   await expect(page).toHaveURL(/\/client$/);
@@ -163,6 +163,10 @@ test("LOCAL_ONLY mobile dialog is keyboard-safe and layouts remain contained at 
   await trigger.press("Enter");
   await dialog.getByRole("link", { name: "Blueprint" }).click();
   await expect(page).toHaveURL(/\/client\/strategy$/);
+  // Wait for the mobile sheet to fully close before scanning: an in-flight close
+  // animation transiently blends the active link's accent background and trips a
+  // false color-contrast violation.
+  await expect(dialog).toBeHidden();
   await expectNoSeriousAccessibilityViolations(page);
   await expectNoHorizontalOverflow(page);
   await expectCleanBrowser(diagnostics);

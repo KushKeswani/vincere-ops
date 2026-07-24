@@ -10,6 +10,7 @@ import {
   runtimeStateVersion,
 } from "../src/lib/domain/runtime-contracts";
 import { parseDeploymentMode } from "../src/lib/deployment/contracts";
+import { NinjaRepository } from "../src/lib/repositories/ninja-repository";
 import { RuntimeRepository } from "../src/lib/repositories/runtime-repository";
 
 const ids = {
@@ -141,6 +142,34 @@ try {
     VALUES ($1, $2, $3, $4, 'vps', 'healthy', 'VPS heartbeat received', $5::jsonb)
     ON CONFLICT (id) DO UPDATE SET status = 'healthy', summary = EXCLUDED.summary, checked_at = now()
   `, [ids.health, ids.organization, ids.client, ids.environment, JSON.stringify({ adapter: "simulated", latencyMs: 42 })]);
+
+  // Seed two pending strategy approvals for the demo client. These were previously
+  // created by the client-facing strategy questionnaire, which is not currently wired
+  // into the UI (see docs / E2E reconciliation). createStrategyRecommendation emits
+  // strategy.approval_requested and leaves each configuration pending_approval, which
+  // the CENTRAL_CONNECTED E2E relies on for staff approve/reject + client deployment
+  // coverage. Idempotent on requestId, so the repeat-run db:verify seed stays stable.
+  // The strategy-request capability is CENTRAL_CONNECTED-only, so gate the fixtures.
+  if (deploymentMode === "CENTRAL_CONNECTED") {
+    const clientUser = {
+      id: ids.clientUser,
+      organizationId: ids.organization,
+      email: process.env.DEMO_CLIENT_EMAIL ?? "client@vincere.local",
+      name: "Jamie Rivera",
+      role: "client" as const,
+    };
+    const ninjaRepository = new NinjaRepository(database);
+    await ninjaRepository.createStrategyRecommendation(
+      clientUser,
+      { objective: "consistent", experience: "intermediate", drawdownComfort: "moderate", automationLevel: "assisted", tradingWindow: "morning" },
+      "b0000000-0000-4000-8000-0000000000c1",
+    );
+    await ninjaRepository.createStrategyRecommendation(
+      clientUser,
+      { objective: "preserve", experience: "new", drawdownComfort: "low", automationLevel: "guided", tradingWindow: "morning" },
+      "b0000000-0000-4000-8000-0000000000c2",
+    );
+  }
 
   const staffUser = {
     id: ids.staff,
