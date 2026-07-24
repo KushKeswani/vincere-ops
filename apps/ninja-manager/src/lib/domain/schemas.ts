@@ -38,14 +38,6 @@ export const tradingAccountSchema = z.object({
   ninjaVersion: z.string().trim().min(2).max(40),
 });
 
-export const questionnaireSchema = z.object({
-  objective: z.enum(["preserve", "consistent", "growth"]),
-  experience: z.enum(["new", "intermediate", "advanced"]),
-  drawdownComfort: z.enum(["low", "moderate", "higher"]),
-  automationLevel: z.enum(["guided", "assisted"]),
-  tradingWindow: z.enum(["morning", "afternoon", "flexible"]),
-});
-
 export const reviewApprovalSchema = z.object({
   approvalId: z.string().uuid(),
   decision: z.enum(["approved", "rejected"]),

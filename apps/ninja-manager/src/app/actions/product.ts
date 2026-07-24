@@ -5,7 +5,6 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth/session";
-import { requireDeploymentCapability } from "@/lib/deployment/server";
 import {
   createClientSchema,
   clientAccessSchema,
@@ -13,7 +12,6 @@ import {
   incidentActionSchema,
   killSwitchSchema,
   onboardingSchema,
-  questionnaireSchema,
   requestIdSchema,
   reviewApprovalSchema,
   simulationSchema,
@@ -113,27 +111,6 @@ export async function addAccountAction(_state: ActionState, formData: FormData):
     await getNinjaRepository().addAccountAndEnvironment(user, parsed.data, requestId.data);
     return "Account and environment registered. Only the final four account characters were retained.";
   }, ["/client", "/client/setup", "/client/strategy"], requestId.data);
-}
-
-export async function recommendStrategyAction(_state: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireUser(["client"]);
-  const requestId = requestIdSchema.safeParse(formData.get("requestId"));
-  if (!requestId.success) return firstIssue(requestId.error);
-  try {
-    requireDeploymentCapability("client.strategy_requests");
-  } catch {
-    return {
-      status: "error",
-      message: "Central strategy requests are disabled in local-only mode.",
-      requestId: requestId.data,
-    };
-  }
-  const parsed = questionnaireSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return firstIssue(parsed.error, undefined, requestId.data);
-  return runAction(async () => {
-    await getNinjaRepository().createStrategyRecommendation(user, parsed.data, requestId.data);
-    return "Recommendation created and sent to Vincere staff for approval.";
-  }, ["/client", "/client/strategy", "/staff/approvals"], requestId.data);
 }
 
 export async function reviewApprovalAction(_state: ActionState, formData: FormData): Promise<ActionState> {

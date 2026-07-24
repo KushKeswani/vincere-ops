@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   clientAccessSchema, createClientSchema, deploymentSchema, incidentActionSchema, killSwitchSchema, onboardingSchema,
-  questionnaireSchema, reviewApprovalSchema, signInSchema, simulationSchema, tradingAccountSchema,
+  reviewApprovalSchema, signInSchema, simulationSchema, tradingAccountSchema,
 } from "./schemas";
 
 describe("inbound data contracts", () => {
@@ -18,7 +18,6 @@ describe("inbound data contracts", () => {
   });
 
   it("accepts only defined strategy, approval, incident, and safety actions", () => {
-    expect(questionnaireSchema.parse({ objective: "preserve", experience: "new", drawdownComfort: "low", automationLevel: "guided", tradingWindow: "morning" }).objective).toBe("preserve");
     const uuid = "10000000-0000-4000-8000-000000000001";
     expect(reviewApprovalSchema.parse({ approvalId: uuid, decision: "approved" }).decision).toBe("approved");
     expect(incidentActionSchema.parse({ incidentId: uuid, action: "resolve" }).action).toBe("resolve");

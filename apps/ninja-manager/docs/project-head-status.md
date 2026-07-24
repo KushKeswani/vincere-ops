@@ -31,7 +31,9 @@ typecheck, lint, unit (520 passed / 1 skipped), `db:verify` (both modes), build 
 
 ### Product decision — client strategy questionnaire
 
-Deprecated in favor of the blueprint workspace as the single client assignment path. `StrategyForm` + `recommendStrategyAction` are orphaned dead code (no importers). Removal is scoped to code with no remaining consumer; shared staff-approval / recommendation-engine / deployment / audit / domain components are preserved. (In progress on this branch.)
+Deprecated in favor of the blueprint workspace as the single client assignment path. **Done** (commit on this branch): removed `StrategyForm` (`src/components/forms/strategy-form.tsx`), `recommendStrategyAction` + its now-unused `requireDeploymentCapability`/`questionnaireSchema` imports (`product.ts`), and `questionnaireSchema` (`schemas.ts` + its test). Preserved (still consumed): the `StrategyQuestionnaire` type, the `recommendStrategy` engine, `createStrategyRecommendation` (used by the seed + tests + the staff-approval/deployment flow), and the staff approval + client deployment surfaces. All gates green after removal.
+
+Follow-up product question: with the client questionnaire removed, `strategy_configurations` now have no production creator — the staff approve/reject + client deployment surface is exercised only by seeded fixtures. Confirm whether that flow should migrate onto the blueprint approval path or be retired, so there is genuinely one client assignment path end-to-end.
 
 ### Open risks
 
