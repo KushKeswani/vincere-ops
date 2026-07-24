@@ -1,6 +1,6 @@
 # Ninja Manager Project Head Status
 
-Last updated: 2026-07-21 (America/New_York)
+Last updated: 2026-07-24 (America/New_York)
 
 ## Canonical boundary
 
@@ -8,6 +8,40 @@ Last updated: 2026-07-21 (America/New_York)
 - `Vincere/Automation` is read-only reference material and is not a runtime dependency.
 - Required topology: Next.js control plane -> durable companion/queue -> in-process NinjaTrader Add-On.
 - The Add-On is the authority for NinjaTrader state. A browser, queue acknowledgement, or process result alone cannot prove a control succeeded.
+
+## Reconciliation branch — current status (2026-07-24)
+
+- Repository `KushKeswani/vincere-ops`; branch `reconcile/ninja-manager-edith-20260722`. This branch is the continuity source of truth. The Edith transfer snapshot (268 filtered source files) was reconciled onto it by the coordinator; the legacy `Vincere/Automation ` and preserved `Vincere/NinjaManager` checkouts remain untouched. No merge to `main`.
+
+### Landed milestones
+
+- `41ec0f8` — Baseline gate fixes (independent audit: SOUND):
+  - `OccurrenceTransitionRow` was missing `agent_id`, which the transition hash reconstruction reads (typecheck/build).
+  - `countCurrentlyArmedAuthoritiesForAgent` added the missing lower bound `armed_at <= now` so not-yet-started authorities are not counted (unit).
+  - `requireRuntimeReader`/`requireRuntimeCommander` restored the staff `fleet.runtime` path (staff via `fleet.runtime` OR `transport.local`; client via `transport.local`; **client-central stays FORBIDDEN**), fixing the seed actor's rejection in `db:verify` + E2E. Mirrors the action-layer authorization.
+  - Playwright webServers set `PORT` so the pre-dev `db:seed` passes the LOCAL_ONLY `APP_URL===PORT` check.
+- `51c0d1f` — E2E-spec reconciliation to current source (independent audit: SOUND, no defect masked):
+  - `local.spec` blueprint field label (`XLSX workbook`) + button (`Preview and stage workbook`), asserted enabled (LOCAL_ONLY enables blueprint upload); activity heading aligned to shipped copy.
+  - `central.spec` removed the unwired client strategy-questionnaire flow. The two pending approvals it depended on are now **seeded** via the real `createStrategyRecommendation` path (CENTRAL_CONNECTED-gated, idempotent), preserving the wired staff approve/reject + client deployment coverage.
+  - Both specs wait for the mobile-nav sheet to close before the a11y scan, removing a transient sheet-close-animation color-contrast false positive (active link static contrast ~14.5:1).
+
+### Green gates (source-level; LOCAL_ONLY + CENTRAL_CONNECTED)
+
+typecheck, lint, unit (520 passed / 1 skipped), `db:verify` (both modes), build (both modes), Playwright E2E (8/8). These prove source/domain behavior only — NOT that Edith's installed Add-On/companion is connected. No "SIM-verified production-ready" claim until an approved supervised Edith Sim101 session proves the full chain (Definition of Done).
+
+### Product decision — client strategy questionnaire
+
+Deprecated in favor of the blueprint workspace as the single client assignment path. `StrategyForm` + `recommendStrategyAction` are orphaned dead code (no importers). Removal is scoped to code with no remaining consumer; shared staff-approval / recommendation-engine / deployment / audit / domain components are preserved. (In progress on this branch.)
+
+### Open risks
+
+- The authoritative layer (companion → local IPC → in-process Add-On) is source-complete but UNVERIFIED against real NinjaTrader — the gating dependency for every real-outcome feature.
+- `deploymentAllows` (runtime-repository) swallows deployment-configuration errors (fail-closed, but a misconfig surfaces as FORBIDDEN rather than a clear config error) — diagnosability follow-up.
+- Period-cycling semantics for M6/M7 (a period flip rotates active account-groups vs. swaps stacks on the same accounts; non-active-period strategies must be disabled/flat) require Kush's confirmation before implementation.
+
+### Next milestone
+
+M2 — authoritative read-only NinjaTrader discovery. Complete all local contract/parser/IPC/repository/UI/test preparation covering connections + state, accounts (masked), strategies + enabled state, positions, working orders, executions, realized/unrealized P&L, and Add-On/IPC/companion/feed/heartbeat health, with freshness/authentication/provenance/reconciliation timestamps. Then produce a supervised read-only Edith runbook and request approval for that exact operation before any Edith contact.
 
 ## Preserved baseline
 
