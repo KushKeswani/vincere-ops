@@ -17,6 +17,7 @@ import { requireUser } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
 import { getRuntimeRepository } from "@/lib/repositories/runtime-repository";
 import { RuntimeDiscoveryForm } from "@/components/forms/runtime-discovery-form";
+import { RuntimeObservationV2Dashboard } from "@/components/runtime-v2/runtime-observation-dashboard";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,12 +52,13 @@ export default async function StaffRuntimePage({ searchParams }: RuntimePageProp
     agent.effectiveStatus === "online" && agent.capabilities.includes("runtime.discovery"),
   ) ?? agents.find((agent) => agent.effectiveStatus === "online") ?? agents[0] ?? null;
   const selectedAgent = agents.find((agent) => agent.id === requestedAgentId) ?? defaultAgent;
-  const [snapshot, commands] = selectedAgent
+  const [observationV2, snapshot, commands] = selectedAgent
     ? await Promise.all([
+        repository.getLatestRuntimeObservationV2(user, selectedAgent.id),
         repository.getLatestRuntimeSnapshot(user, selectedAgent.id),
         repository.listCommands(user, selectedAgent.id),
       ])
-    : [null, []];
+    : [null, null, []];
 
   const onlineCount = agents.filter((agent) => agent.effectiveStatus === "online").length;
   const attentionCount = agents.filter((agent) =>
@@ -235,7 +237,9 @@ export default async function StaffRuntimePage({ searchParams }: RuntimePageProp
                 </CardContent>
               </Card>
 
-              {!snapshot ? (
+              {observationV2 ? (
+                <RuntimeObservationV2Dashboard latest={observationV2} />
+              ) : !snapshot ? (
                 <Card>
                   <CardHeader>
                     <CardTitle>No verified runtime snapshot</CardTitle>
