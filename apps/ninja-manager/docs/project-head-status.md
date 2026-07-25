@@ -41,9 +41,15 @@ Follow-up product question: with the client questionnaire removed, `strategy_con
 - `deploymentAllows` (runtime-repository) swallows deployment-configuration errors (fail-closed, but a misconfig surfaces as FORBIDDEN rather than a clear config error) — diagnosability follow-up.
 - Period-cycling semantics for M6/M7 (a period flip rotates active account-groups vs. swaps stacks on the same accounts; non-active-period strategies must be disabled/flat) require Kush's confirmation before implementation.
 
-### Next milestone
+### M2 status — local prep COMPLETE; Edith steps awaiting approval
 
-M2 — authoritative read-only NinjaTrader discovery. Complete all local contract/parser/IPC/repository/UI/test preparation covering connections + state, accounts (masked), strategies + enabled state, positions, working orders, executions, realized/unrealized P&L, and Add-On/IPC/companion/feed/heartbeat health, with freshness/authentication/provenance/reconciliation timestamps. Then produce a supervised read-only Edith runbook and request approval for that exact operation before any Edith contact.
+Local prep done (commits `bf5c138`, `b04e1c2`): fields (a)–(g) — connections+state, masked accounts, strategies+enabled, positions, working/completed orders, executions, realized/unrealized daily P&L — were already modeled/persisted/rendered. This branch added the v2 discovery dashboard to the **staff** runtime page and an **evidence-provenance** card (protocol/collector/authority + state integrity digest), respecting the tested design that excludes opaque per-entity references, account fingerprints, raw process ids, and the envelope observationId from the UI. Companion + heartbeat + Add-On health are already surfaced on **both** the staff and client consoles from `agent_installations` liveness (design decision: companion-plane liveness stays out of the authenticated observation). Freshness, `ipcAuthenticated` (auth), provenance digest, and `asOf`/`receivedAt` (reconciliation) are all surfaced.
+
+**Blocked on Edith:** the deployed Add-On is read-only v1, so full v2 discovery requires a supervised install/recompile. Runbook + two-part approval request: `docs/runbooks/m2-edith-read-only-discovery.md` — Step A (read-only v1 bring-up, no writes) and Step B (Add-On install/recompile, write + maintenance window). Awaiting Kush's explicit per-step approval.
+
+### Next local milestone (proceeding while the Edith approval is pending)
+
+M5 — server-side authenticated tenant identity + ownership foundation (no Edith). Then M6 blueprint completion, M7 scheduling + cycling (pending the period-flip decision), M9 OTP, M10 UI/UX. M3/M4 real execution and M2 Step B unlock only after the Add-On is installed on Edith.
 
 ## Preserved baseline
 
