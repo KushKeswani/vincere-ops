@@ -160,5 +160,8 @@ describe("Runtime Observation v2 display model", () => {
     expect(markup).toContain("$0.00");
     expect(markup).toContain("Unavailable");
     expect(markup).toContain("source unsupported");
+    expect(markup).toContain("Evidence provenance");
+    expect(markup).toContain("State integrity digest");
+    expect(markup).toContain("ninjatrader runtime");
   });
 });

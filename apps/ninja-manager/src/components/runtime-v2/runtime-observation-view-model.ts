@@ -48,6 +48,12 @@ interface LimitedRows<T> {
 
 export interface RuntimeObservationV2DisplayModel {
   sourceLabel: string;
+  provenance: {
+    protocolVersion: string;
+    collector: string;
+    authority: string;
+    stateDigest: string;
+  };
   asOf: string;
   receivedAt: string;
   freshness: "fresh" | "stale" | "unknown";
@@ -375,6 +381,12 @@ export function buildRuntimeObservationV2DisplayModel(
 
   return {
     sourceLabel: "NinjaTrader Runtime Observation v2",
+    provenance: {
+      protocolVersion: observation.protocolVersion,
+      collector: humanize(observation.source.collector),
+      authority: humanize(observation.source.authority),
+      stateDigest: observation.stateDigest,
+    },
     asOf: formatTimestamp(observation.asOf),
     receivedAt: formatTimestamp(input.receivedAt),
     freshness,

@@ -99,6 +99,21 @@ export function RuntimeObservationV2Dashboard({ latest }: RuntimeObservationV2Da
         </Card>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Evidence provenance</CardTitle>
+          <CardDescription>
+            Authenticated {model.provenance.protocolVersion} observation from {model.provenance.collector} · {model.provenance.authority} authority. Integrity digest only; opaque references and account identifiers are never displayed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 text-sm">
+          <div className="min-w-0">
+            <p className="text-muted-foreground">State integrity digest</p>
+            <code className="mt-1 block truncate text-xs" title={model.provenance.stateDigest}>{model.provenance.stateDigest}</code>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
