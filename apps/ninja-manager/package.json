@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "npm@11.12.1",
+  "engines": {
+    "node": ">=24.14.0 <25",
+    "npm": ">=11.12.1 <12"
+  },
   "scripts": {
     "dev": "node scripts/next-runtime.mjs dev",
     "dev:central": "node scripts/next-runtime.mjs dev --mode CENTRAL_CONNECTED",
