@@ -36,6 +36,8 @@ This is dashboard, fixture, and PGlite evidence. Real managed PostgreSQL, produc
 
 On `reconcile/ninja-manager-edith-20260722`, the proportional P0–P4 source checkpoint records typecheck and lint passing; 64 unit files with 560 passed / 1 skipped; all 15 checksummed migrations and repeatable seed state in both modes; both production builds; the LOCAL_ONLY production listener gate; and 8/8 Playwright tests. The browser prototype uses only the isolated `.data/local-prototype` fixture store and visibly labels demo/local evidence. P4 also verifies globally unambiguous sign-in email identity, fail-closed ambiguous LOCAL_ONLY identity, and client-owned agent scoping for Runtime-v2 reads/queues, process control, and EOD capture.
 
+Commit-bound command results and caveats are recorded in `verification-manifest-a36b923.md`.
+
 Runtime-v2 sequential inventory remains partial by contract. The source companion, authenticated local IPC, Runtime-v2 Add-On implementation, exact process identity, forced-v1/v2 doctor selection, Blueprint approval, EOD capture, and weekly schedule persistence have automated source evidence. None is installed or reconciled on Edith. The separate mutation-readiness command reports `atomicity: not_guaranteed`; its actuation-authority helper always returns false, so it is evidence of a fail-closed seam rather than a verified control outcome.
 
 ### LOCAL_ONLY runtime visibility checkpoint — 2026-07-19

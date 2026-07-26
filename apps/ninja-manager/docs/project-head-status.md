@@ -11,7 +11,7 @@ Last updated: 2026-07-26 (America/New_York)
 
 ## Reconciliation branch — current status (2026-07-26)
 
-- Repository `KushKeswani/vincere-ops`; branch `reconcile/ninja-manager-edith-20260722`, currently durable at remote commit `3e02ab0`. This branch is the continuity source of truth. The Edith transfer snapshot (268 filtered source files) was reconciled onto it by the coordinator; the legacy `Vincere/Automation ` and preserved `Vincere/NinjaManager` checkouts remain untouched. No merge to `main`.
+- Repository `KushKeswani/vincere-ops`; branch `reconcile/ninja-manager-edith-20260722`, with implementation complete through `a36b923` and a commit-bound P4 verification handoff following it. This branch is the continuity source of truth. The Edith transfer snapshot (268 filtered source files) was reconciled onto it by the coordinator; the legacy `Vincere/Automation ` and preserved `Vincere/NinjaManager` checkouts remain untouched. No merge to `main`.
 
 ### Landed milestones
 
@@ -27,10 +27,13 @@ Last updated: 2026-07-26 (America/New_York)
 - `a6c7399` / `3e304be` — pinned the project-local Node.js 24.14.0/npm 11.12.1 toolchain and recorded the clean commit-bound baseline verification manifest.
 - `dd15ac6` — added the isolated `LOCAL_ONLY` fixture prototype launcher, explicit fixture/demo/local evidence labels, Runtime-v2 fixture ingestion, Operator dashboard, and Blueprint preview/approval surface. The launcher binds only `127.0.0.1`, uses `.data/local-prototype`, and cannot contact or actuate NinjaTrader.
 - `3e02ab0` — repaired Runtime-v2 safety contracts: sequential inventory remains honestly partial; exact opaque process identity is produced; forced-v1/v2 doctor selection is explicit; Blueprint and weekly-authority persistence accept only the narrowly usable sequential partial shape; and a separate authenticated mutation-readiness seam was added.
+- `a36b923` — completed the P4 audit/remediation: global sign-in email identity, fail-closed ambiguous LOCAL_ONLY identity, client-owned Runtime/process/EOD agent scope, sanitized unknown action failures, corrected Runtime-v2 chronology/future freshness, eligible Blueprint options, truthful quit-readiness UI, and current architecture/runbook/handoff documentation.
 
 ### Green gates (source-level; LOCAL_ONLY + CENTRAL_CONNECTED)
 
 typecheck, lint, unit (64 files; 560 passed / 1 skipped), `db:verify` (15 checksummed migrations in both modes), build (both modes), listener gate, and Playwright E2E (8/8). These prove source/domain behavior only — NOT that Edith's installed Add-On/companion is connected. No "SIM-verified production-ready" claim until an approved supervised Edith Sim101 session proves the full chain (Definition of Done).
+
+Commit-bound evidence: `docs/testing/verification-manifest-a36b923.md`.
 
 ### Product decision — client strategy questionnaire
 
