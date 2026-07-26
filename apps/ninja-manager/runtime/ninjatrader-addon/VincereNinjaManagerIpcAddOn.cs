@@ -291,6 +291,66 @@ namespace NinjaTrader.NinjaScript.AddOns
         [DataMember(Name = "pnl", Order = 8)] public VnmCollectionScopeV2 Pnl { get; set; }
     }
 
+    // Mutation-readiness is a separate, short-lived read-only contract. It
+    // intentionally exports aggregate safety facts and a keyed state digest,
+    // never NinjaTrader-local account, strategy, position, or order identity.
+    [DataContract]
+    internal sealed class VnmMutationReadinessPayload
+    {
+        [DataMember(Name = "protocolVersion", Order = 1)] public string ProtocolVersion { get; set; }
+        [DataMember(Name = "startedAt", Order = 2)] public string StartedAt { get; set; }
+        [DataMember(Name = "completedAt", Order = 3)] public string CompletedAt { get; set; }
+        [DataMember(Name = "sampleCount", Order = 4)] public int SampleCount { get; set; }
+        [DataMember(Name = "consistencyMethod", Order = 5)] public string ConsistencyMethod { get; set; }
+        [DataMember(Name = "atomicity", Order = 6)] public string Atomicity { get; set; }
+        [DataMember(Name = "status", Order = 7)] public string Status { get; set; }
+        [DataMember(Name = "blockerCodes", Order = 8)] public List<string> BlockerCodes { get; set; }
+        [DataMember(Name = "summary", Order = 9)] public VnmMutationSafetySummary Summary { get; set; }
+    }
+
+    [DataContract]
+    internal sealed class VnmMutationSafetySummary
+    {
+        [DataMember(Name = "stateDigest", Order = 1)] public string StateDigest { get; set; }
+        [DataMember(Name = "accounts", Order = 2)] public VnmMutationAccountCounts Accounts { get; set; }
+        [DataMember(Name = "strategies", Order = 3)] public VnmMutationStrategyCounts Strategies { get; set; }
+        [DataMember(Name = "positions", Order = 4)] public VnmMutationPositionCounts Positions { get; set; }
+        [DataMember(Name = "orders", Order = 5)] public VnmMutationOrderCounts Orders { get; set; }
+    }
+
+    [DataContract]
+    internal sealed class VnmMutationAccountCounts
+    {
+        [DataMember(Name = "total", Order = 1)] public int Total { get; set; }
+        [DataMember(Name = "simulation", Order = 2)] public int Simulation { get; set; }
+        [DataMember(Name = "nonSimulationOrUnknown", Order = 3)] public int NonSimulationOrUnknown { get; set; }
+        [DataMember(Name = "connected", Order = 4)] public int Connected { get; set; }
+        [DataMember(Name = "disconnectedOrUnknown", Order = 5)] public int DisconnectedOrUnknown { get; set; }
+    }
+
+    [DataContract]
+    internal sealed class VnmMutationStrategyCounts
+    {
+        [DataMember(Name = "total", Order = 1)] public int Total { get; set; }
+        [DataMember(Name = "enabled", Order = 2)] public int Enabled { get; set; }
+        [DataMember(Name = "unknown", Order = 3)] public int Unknown { get; set; }
+    }
+
+    [DataContract]
+    internal sealed class VnmMutationPositionCounts
+    {
+        [DataMember(Name = "open", Order = 1)] public int Open { get; set; }
+        [DataMember(Name = "unknown", Order = 2)] public int Unknown { get; set; }
+    }
+
+    [DataContract]
+    internal sealed class VnmMutationOrderCounts
+    {
+        [DataMember(Name = "working", Order = 1)] public int Working { get; set; }
+        [DataMember(Name = "transitional", Order = 2)] public int Transitional { get; set; }
+        [DataMember(Name = "unknown", Order = 3)] public int Unknown { get; set; }
+    }
+
     // Internal capture metadata never crosses the pipe.
     internal sealed class VnmStrategySourceV2
     {
@@ -323,12 +383,14 @@ namespace NinjaTrader.NinjaScript.AddOns
         private const string AddonVersion = "0.1.0";
         private const string ProtocolVersion = "1.0";
         private const string RuntimeObservationV2Protocol = "ninjatrader-addon-snapshot/2.0";
+        private const string MutationReadinessProtocol = "ninjatrader-addon-mutation-readiness/1.0";
         private const string PipeName = "VincereNinjaManager.v1";
         private const int MaximumMessageBytes = 5 * 1024 * 1024;
         private const int MaximumRuntimeItems = 10000;
         private const int MaximumClockSkewSeconds = 30;
         private static readonly object LifecycleLock = new object();
         private static readonly object ReplayLock = new object();
+        private static readonly object MutationReadinessLock = new object();
         private static readonly Dictionary<string, DateTimeOffset> SeenNonces = new Dictionary<string, DateTimeOffset>();
         private static CancellationTokenSource listenerCancellation;
         private static Task listenerTask;
@@ -491,6 +553,8 @@ namespace NinjaTrader.NinjaScript.AddOns
                         return SignedSuccess(requestId, Serialize(BuildSnapshot()), secret);
                     case "GET_RUNTIME_OBSERVATION_V2":
                         return BuildRuntimeObservationV2Response(requestId, secret);
+                    case "GET_MUTATION_READINESS_PREFLIGHT":
+                        return BuildMutationReadinessResponse(requestId, secret);
                     default:
                         return SignedError(requestId, "UNSUPPORTED_COMMAND", secret);
                 }
@@ -719,6 +783,7 @@ namespace NinjaTrader.NinjaScript.AddOns
         {
             return new List<string> {
                 "GET_CAPABILITIES",
+                "GET_MUTATION_READINESS_PREFLIGHT",
                 "GET_RUNTIME_OBSERVATION_V2",
                 "GET_RUNTIME_SNAPSHOT",
                 "PING"
@@ -2055,6 +2120,266 @@ namespace NinjaTrader.NinjaScript.AddOns
                 return true;
             }
             catch { return false; }
+        }
+
+        private static VnmIpcResponse BuildMutationReadinessResponse(
+            string requestId, byte[] secret)
+        {
+            VnmMutationReadinessPayload payload;
+            lock (MutationReadinessLock)
+                payload = BuildMutationReadinessPayload(secret);
+            string payloadJson = Serialize(payload);
+            VnmIpcResponse response = SignedSuccess(requestId, payloadJson, secret);
+            if (Encoding.UTF8.GetByteCount(Serialize(response) + "\n") > MaximumMessageBytes)
+                throw new InvalidOperationException("Mutation-readiness response exceeds the protocol limit.");
+            return response;
+        }
+
+        private static VnmMutationReadinessPayload BuildMutationReadinessPayload(byte[] secret)
+        {
+            DateTimeOffset startedAt = DateTimeOffset.UtcNow;
+            try
+            {
+                VnmMutationSafetySummary first = CaptureMutationSafetySummary(secret);
+                VnmMutationSafetySummary second = CaptureMutationSafetySummary(secret);
+                DateTimeOffset completedAt = DateTimeOffset.UtcNow;
+                if (!ConstantTimeEquals(first.StateDigest, second.StateDigest))
+                    return BlockedMutationReadiness(
+                        startedAt, completedAt,
+                        new[] { "RUNTIME_CHANGED_DURING_PREFLIGHT" }, null);
+
+                List<string> blockers = new List<string>();
+                if (second.Accounts.Total == 0)
+                    blockers.Add("NO_ACCOUNTS");
+                if (second.Accounts.NonSimulationOrUnknown > 0)
+                    blockers.Add("NON_SIMULATION_ACCOUNT_PRESENT");
+                if (second.Accounts.DisconnectedOrUnknown > 0)
+                    blockers.Add("ACCOUNT_CONNECTION_UNREADY");
+                if (second.Strategies.Unknown > 0)
+                    blockers.Add("STRATEGY_STATE_UNKNOWN");
+                if (second.Positions.Unknown > 0)
+                    blockers.Add("POSITION_STATE_UNKNOWN");
+                if (second.Orders.Unknown > 0)
+                    blockers.Add("ORDER_STATE_UNKNOWN");
+                blockers.Sort(StringComparer.Ordinal);
+
+                return new VnmMutationReadinessPayload {
+                    ProtocolVersion = MutationReadinessProtocol,
+                    StartedAt = startedAt.ToString("o"),
+                    CompletedAt = completedAt.ToString("o"),
+                    SampleCount = 2,
+                    ConsistencyMethod = "bounded_consecutive_stability",
+                    Atomicity = "not_guaranteed",
+                    Status = blockers.Count == 0 ? "ready" : "blocked",
+                    BlockerCodes = blockers,
+                    Summary = second
+                };
+            }
+            catch
+            {
+                return BlockedMutationReadiness(
+                    startedAt, DateTimeOffset.UtcNow,
+                    new[] { "SOURCE_UNAVAILABLE" }, null);
+            }
+        }
+
+        private static VnmMutationReadinessPayload BlockedMutationReadiness(
+            DateTimeOffset startedAt,
+            DateTimeOffset completedAt,
+            IEnumerable<string> blockerCodes,
+            VnmMutationSafetySummary summary)
+        {
+            return new VnmMutationReadinessPayload {
+                ProtocolVersion = MutationReadinessProtocol,
+                StartedAt = startedAt.ToString("o"),
+                CompletedAt = completedAt.ToString("o"),
+                SampleCount = 2,
+                ConsistencyMethod = "bounded_consecutive_stability",
+                Atomicity = "not_guaranteed",
+                Status = "blocked",
+                BlockerCodes = blockerCodes.Distinct(StringComparer.Ordinal)
+                    .OrderBy(item => item, StringComparer.Ordinal).ToList(),
+                Summary = summary
+            };
+        }
+
+        private static VnmMutationSafetySummary CaptureMutationSafetySummary(byte[] secret)
+        {
+            List<Account> accounts;
+            lock (Account.All)
+                accounts = Account.All.Where(item => item != null)
+                    .OrderBy(item => item.Name, StringComparer.Ordinal).ToList();
+            if (accounts.Count > 500)
+                throw new InvalidOperationException("Account inventory exceeds the preflight limit.");
+
+            VnmMutationSafetySummary summary = new VnmMutationSafetySummary {
+                Accounts = new VnmMutationAccountCounts(),
+                Strategies = new VnmMutationStrategyCounts(),
+                Positions = new VnmMutationPositionCounts(),
+                Orders = new VnmMutationOrderCounts()
+            };
+            List<string> stateTokens = new List<string>();
+            HashSet<string> accountNames = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (Account account in accounts)
+            {
+                string accountName = account.Name ?? string.Empty;
+                if (!ValidLocalId(accountName) || !accountNames.Add(accountName))
+                    throw new InvalidOperationException("Account identity is missing or ambiguous.");
+                summary.Accounts.Total += 1;
+                VnmClassificationEvidenceV2 classification = ClassifyAccountV2(account);
+                if (classification.AccountType == "simulation")
+                    summary.Accounts.Simulation += 1;
+                else
+                    summary.Accounts.NonSimulationOrUnknown += 1;
+
+                string connectionState = account.Connection == null
+                    ? "unavailable" : MapConnectionStatusV2(account.Connection.Status);
+                if (connectionState == "connected")
+                    summary.Accounts.Connected += 1;
+                else
+                    summary.Accounts.DisconnectedOrUnknown += 1;
+                stateTokens.Add(MutationStateToken(new[] {
+                    "account", accountName, classification.AccountType, connectionState
+                }));
+
+                CaptureMutationStrategyFacts(account, accountName, summary, stateTokens);
+                CaptureMutationPositionFacts(account, accountName, summary, stateTokens);
+                CaptureMutationOrderFacts(account, accountName, summary, stateTokens);
+            }
+
+            stateTokens.Sort(StringComparer.Ordinal);
+            StringBuilder digestInput = new StringBuilder();
+            foreach (string token in stateTokens)
+                digestInput.Append(token.Length.ToString(CultureInfo.InvariantCulture))
+                    .Append(':').Append(token);
+            summary.StateDigest = Hmac(secret, digestInput.ToString());
+            return summary;
+        }
+
+        private static string MutationStateToken(IEnumerable<string> fields)
+        {
+            StringBuilder token = new StringBuilder();
+            foreach (string field in fields)
+            {
+                string value = field ?? string.Empty;
+                token.Append(value.Length.ToString(CultureInfo.InvariantCulture))
+                    .Append(':').Append(value);
+            }
+            return token.ToString();
+        }
+
+        private static void CaptureMutationStrategyFacts(
+            Account account,
+            string accountName,
+            VnmMutationSafetySummary summary,
+            List<string> stateTokens)
+        {
+            lock (account.Strategies)
+            {
+                foreach (StrategyBase strategy in account.Strategies)
+                {
+                    if (strategy == null)
+                        continue;
+                    summary.Strategies.Total += 1;
+                    if (summary.Strategies.Total > MaximumRuntimeItems)
+                        throw new InvalidOperationException("Strategy inventory exceeds the preflight limit.");
+                    bool enabled = IsEnabledLifecycle(strategy.State);
+                    bool? sync = CalculateSync(strategy, enabled);
+                    string runtimeState = MapStrategyRuntimeStateV2(strategy, enabled, sync);
+                    if (enabled)
+                        summary.Strategies.Enabled += 1;
+                    if (runtimeState == "unknown")
+                        summary.Strategies.Unknown += 1;
+                    stateTokens.Add(MutationStateToken(new[] {
+                        "strategy",
+                        accountName,
+                        strategy.GetType().FullName ?? strategy.GetType().Name,
+                        strategy.Name ?? string.Empty,
+                        ReadInstrument(strategy),
+                        Convert.ToString(strategy.State, CultureInfo.InvariantCulture),
+                        enabled ? "enabled" : "disabled",
+                        runtimeState
+                    }));
+                }
+            }
+        }
+
+        private static void CaptureMutationPositionFacts(
+            Account account,
+            string accountName,
+            VnmMutationSafetySummary summary,
+            List<string> stateTokens)
+        {
+            lock (account.Positions)
+            {
+                foreach (Position position in account.Positions)
+                {
+                    if (position == null || position.MarketPosition == MarketPosition.Flat)
+                        continue;
+                    summary.Positions.Open += 1;
+                    if (summary.Positions.Open > MaximumRuntimeItems)
+                        throw new InvalidOperationException("Position inventory exceeds the preflight limit.");
+                    bool known = (position.MarketPosition == MarketPosition.Long
+                            || position.MarketPosition == MarketPosition.Short)
+                        && position.Quantity != int.MinValue
+                        && Math.Abs(position.Quantity) >= 1
+                        && Math.Abs(position.Quantity) <= 1000000
+                        && IsBoundedPrice(position.AveragePrice)
+                        && position.Instrument != null
+                        && !string.IsNullOrEmpty(InstrumentCode(position.Instrument.FullName));
+                    if (!known)
+                        summary.Positions.Unknown += 1;
+                    stateTokens.Add(MutationStateToken(new[] {
+                        "position",
+                        accountName,
+                        position.Instrument == null ? string.Empty : position.Instrument.FullName,
+                        Convert.ToString(position.MarketPosition, CultureInfo.InvariantCulture),
+                        Convert.ToString(position.Quantity, CultureInfo.InvariantCulture),
+                        position.AveragePrice.ToString("R", CultureInfo.InvariantCulture)
+                    }));
+                }
+            }
+        }
+
+        private static void CaptureMutationOrderFacts(
+            Account account,
+            string accountName,
+            VnmMutationSafetySummary summary,
+            List<string> stateTokens)
+        {
+            int inspected = 0;
+            lock (account.Orders)
+            {
+                foreach (Order order in account.Orders)
+                {
+                    if (order == null)
+                        continue;
+                    inspected += 1;
+                    if (inspected > MaximumRuntimeItems * 2)
+                        throw new InvalidOperationException("Order inventory exceeds the preflight scan limit.");
+                    if (IsTerminalOrderStateV2(order.OrderState))
+                        continue;
+                    summary.Orders.Working += 1;
+                    if (summary.Orders.Working > MaximumRuntimeItems)
+                        throw new InvalidOperationException("Working order inventory exceeds the preflight limit.");
+                    string mapped = MapWorkingOrderStateV2(order.OrderState);
+                    if (mapped == "change_pending" || mapped == "cancel_pending")
+                        summary.Orders.Transitional += 1;
+                    if (mapped == "unknown")
+                        summary.Orders.Unknown += 1;
+                    stateTokens.Add(MutationStateToken(new[] {
+                        "order",
+                        accountName,
+                        string.IsNullOrEmpty(order.OrderId)
+                            ? order.Id.ToString(CultureInfo.InvariantCulture) : order.OrderId,
+                        order.Instrument == null ? string.Empty : order.Instrument.FullName,
+                        Convert.ToString(order.OrderState, CultureInfo.InvariantCulture),
+                        Convert.ToString(order.Quantity, CultureInfo.InvariantCulture),
+                        Convert.ToString(order.Filled, CultureInfo.InvariantCulture)
+                    }));
+                }
+            }
         }
 
         private static VnmIpcResponse BuildRuntimeObservationV2Response(string requestId, byte[] secret)

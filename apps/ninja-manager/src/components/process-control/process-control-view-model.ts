@@ -3,6 +3,7 @@ import {
   type ProcessControlCommand,
   type ProcessQuitSafetySummary,
 } from "@/lib/domain/process-control-contracts";
+import { isSequentialInventoryScopeUsable } from "@/lib/domain/runtime-observation-v2";
 import type {
   AgentInstallation,
   LatestRuntimeObservationV2,
@@ -118,11 +119,15 @@ function quitRuntimeReason(
   if (freshnessReason || !latest) return freshnessReason;
   if (latest.agentId !== agent.id) return "Runtime evidence belongs to a different installation.";
   const state = latest.observation.state;
-  const requiredScopes = ["process", "addon", "accounts", "strategies", "positions", "orders"] as const;
   if (
-    state.collection.overall !== "complete"
-    || requiredScopes.some((scope) => state.collection.scopes[scope].status !== "complete")
-  ) return "Graceful quit requires complete process, Add-On, account, strategy, position, and order evidence.";
+    state.collection.scopes.process.status !== "complete"
+    || state.collection.scopes.addon.status !== "complete"
+  ) return "Graceful quit preview requires complete process and Add-On evidence.";
+  for (const scope of ["accounts", "strategies", "positions", "orders"] as const) {
+    if (!isSequentialInventoryScopeUsable(state.collection.scopes[scope])) {
+      return "Graceful quit preview requires usable sequential account, strategy, position, and order evidence with no source error.";
+    }
+  }
   if (
     state.addon?.status !== "connected"
     || state.addon.health !== "healthy"

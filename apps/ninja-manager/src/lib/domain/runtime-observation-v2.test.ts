@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isSequentialInventoryScopeUsable,
   parseRuntimeObservationV2,
   runtimeAccountObservationV2Schema,
   runtimeObservationV2Schema,
@@ -55,7 +56,6 @@ function fullState(): RuntimeObservationV2State {
       processRef: refs.process,
       status: "running",
       health: "healthy",
-      processId: 4242,
       version: "8.1.7.2",
       startedAt: "2026-07-21T08:00:00.000-04:00",
     },
@@ -253,6 +253,10 @@ describe("authoritative runtime observation v2", () => {
     expect(runtimeObservationV2StateSchema.safeParse({
       ...state,
       accounts: [{ ...state.accounts[0], rawAccountId: "Sim101" }],
+    }).success).toBe(false);
+    expect(runtimeObservationV2StateSchema.safeParse({
+      ...state,
+      process: { ...state.process, processId: 4242 },
     }).success).toBe(false);
     expect(runtimeObservationV2StateSchema.safeParse({
       ...state,
@@ -455,6 +459,25 @@ describe("authoritative runtime observation v2", () => {
       ...state,
       collection: { ...state.collection, overall: "partial" },
     }).success).toBe(false);
+  });
+
+  it("keeps declared sequential inventory partial while permitting only non-actuating binding use", () => {
+    expect(isSequentialInventoryScopeUsable(completeScope(1))).toBe(true);
+    expect(isSequentialInventoryScopeUsable({
+      status: "partial",
+      itemCount: 1,
+      errors: [{ code: "CAPABILITY_UNSUPPORTED", retryable: false }],
+    })).toBe(true);
+    expect(isSequentialInventoryScopeUsable({
+      status: "partial",
+      itemCount: 1,
+      errors: [{ code: "SOURCE_ERROR", retryable: true }],
+    })).toBe(false);
+    expect(isSequentialInventoryScopeUsable({
+      status: "unavailable",
+      itemCount: 0,
+      errors: [{ code: "CAPABILITY_UNSUPPORTED", retryable: false }],
+    })).toBe(false);
   });
 
   it("produces a deterministic canonical digest and rejects digest reuse after mutation", () => {

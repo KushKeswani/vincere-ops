@@ -21,7 +21,6 @@ function observation(asOf = "2026-07-21T12:00:00.000Z"): RuntimeObservationV2 {
       processRef: "process_abcdefghijklmnop",
       status: "running",
       health: "healthy",
-      processId: 98765,
       version: "8.1.7.2",
       startedAt: "2026-07-21T11:00:00.000Z",
     },

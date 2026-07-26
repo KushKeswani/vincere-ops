@@ -50,6 +50,11 @@ function agent(state: "running" | "not_running" | "ambiguous" | "unknown" = "run
 
 function runtime(): LatestRuntimeObservationV2 {
   const complete = (itemCount: number) => ({ status: "complete" as const, itemCount, errors: [] });
+  const sequential = (itemCount: number) => ({
+    status: "partial" as const,
+    itemCount,
+    errors: [{ code: "CAPABILITY_UNSUPPORTED" as const, retryable: false }],
+  });
   return {
     protocolVersion: "1.0",
     eventType: "runtime.observation_v2",
@@ -70,7 +75,7 @@ function runtime(): LatestRuntimeObservationV2 {
       freshness: { status: "fresh", ageMs: 0, maxAgeMs: 60_000 },
       stateDigest: `sha256:${"4".repeat(64)}`,
       state: {
-        process: { processRef: PROCESS_REF, status: "running", health: "healthy", processId: 9232, version: "8.1.7.2", startedAt: "2026-07-21T18:00:00.000Z" },
+        process: { processRef: PROCESS_REF, status: "running", health: "healthy", version: "8.1.7.2", startedAt: "2026-07-21T18:00:00.000Z" },
         addon: { addonRef: "addon_abcdefghijklmnop", status: "connected", health: "healthy", version: "2.0.0", ipcAuthenticated: true, capabilities: [] },
         connections: [],
         accounts: [{
@@ -84,10 +89,10 @@ function runtime(): LatestRuntimeObservationV2 {
         }],
         strategies: [], positions: [], orders: [], executions: [], pnl: [],
         collection: {
-          overall: "complete",
+          overall: "partial",
           scopes: {
-            process: complete(1), addon: complete(1), connections: complete(0), accounts: complete(1),
-            strategies: complete(0), positions: complete(0), orders: complete(0), executions: complete(0), pnl: complete(0),
+            process: complete(1), addon: complete(1), connections: sequential(0), accounts: sequential(1),
+            strategies: sequential(0), positions: sequential(0), orders: sequential(0), executions: sequential(0), pnl: sequential(0),
           },
         },
       },
@@ -121,7 +126,7 @@ describe("process-control preflight", () => {
     expect(preflight.quit.ready).toBe(false);
   });
 
-  it("builds a quit approval only from fresh complete matched SIM-only evidence", () => {
+  it("builds a quit approval preview from fresh matched SIM-only sequential evidence", () => {
     const preflight = evaluateProcessControlPreflight({ agent: agent(), latestRuntime: runtime(), commandCounts: noCommands, now: NOW });
     expect(preflight.quit.ready).toBe(true);
     expect(preflight.quit.approvalInput).toMatchObject({
@@ -137,7 +142,13 @@ describe("process-control preflight", () => {
     ["stale runtime", (value: LatestRuntimeObservationV2) => { value.observation.asOf = "2026-07-21T18:59:00.000Z"; }],
     ["runtime chronology", (value: LatestRuntimeObservationV2) => { value.occurredAt = new Date("2026-07-21T19:00:17.000Z"); }],
     ["future receipt", (value: LatestRuntimeObservationV2) => { value.receivedAt = new Date("2026-07-21T19:00:21.000Z"); }],
-    ["incomplete runtime", (value: LatestRuntimeObservationV2) => { value.observation.state.collection.overall = "partial"; }],
+    ["runtime source error", (value: LatestRuntimeObservationV2) => {
+      value.observation.state.collection.scopes.accounts = {
+        status: "partial",
+        itemCount: 1,
+        errors: [{ code: "SOURCE_ERROR", retryable: true }],
+      };
+    }],
     ["mismatched process", (value: LatestRuntimeObservationV2) => { value.observation.state.process!.processRef = `process_${"c".repeat(64)}`; }],
     ["live account", (value: LatestRuntimeObservationV2) => { value.observation.state.accounts[0].classification = { environment: "live", authority: "authoritative", source: "ninjatrader_live_account" }; }],
     ["unknown account", (value: LatestRuntimeObservationV2) => { value.observation.state.accounts[0].classification = { environment: "unknown", authority: "unavailable", source: null, reasonCode: "CLASSIFICATION_UNAVAILABLE" }; }],

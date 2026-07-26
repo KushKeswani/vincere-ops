@@ -157,27 +157,57 @@ const inconsistentProcessEvidence = (): CompanionProcessObservationV2 => ({
   },
 });
 
-const unsupportedProcessIdentityEvidence = (): CompanionProcessObservationV2 => ({
-  process: null,
-  processCollectionScope: {
-    status: 'unavailable',
-    errors: [{ code: 'CAPABILITY_UNSUPPORTED', retryable: false }],
-  },
-});
-
 export function mapExactProcessObservationV2(
   input: unknown,
+  identity: {
+    installationRef: string;
+    executablePath: string;
+    identitySecret: Uint8Array;
+  },
 ): CompanionProcessObservationV2 {
-  const observation = input as ProcessPlatformObservation;
-  if (!observation || !Array.isArray(observation.processes)) return inconsistentProcessEvidence();
-  const active = observation.processes.filter((record) => record.state !== 'stopped');
-  if (active.length !== 1 || active[0]?.state !== 'running') return inconsistentProcessEvidence();
-  const process = active[0];
-  if (!Number.isInteger(process.pid) || process.pid <= 0) return inconsistentProcessEvidence();
-  if (typeof process.startedAt !== 'string' || !Number.isFinite(Date.parse(process.startedAt))) {
+  try {
+    const observation = input as ProcessPlatformObservation;
+    const controllerEvidence = createProcessObservation({
+      installationRef: identity.installationRef,
+      executablePath: identity.executablePath,
+      identitySecret: identity.identitySecret,
+      observation,
+    });
+    if (controllerEvidence.processStateVersion === null) return inconsistentProcessEvidence();
+    if (controllerEvidence.state === 'not_running') {
+      return {
+        process: {
+          processRef: null,
+          status: 'not_running',
+          health: 'offline',
+          version: null,
+          startedAt: null,
+        },
+        processCollectionScope: { status: 'complete', errors: [] },
+      };
+    }
+    if (controllerEvidence.state !== 'running' || controllerEvidence.processRef === null) {
+      return inconsistentProcessEvidence();
+    }
+    const exactRunning = observation.processes.filter((record) => (
+      record.state === 'running'
+      && path.win32.normalize(record.executablePath).toLocaleLowerCase('en-US')
+        === path.win32.normalize(identity.executablePath).toLocaleLowerCase('en-US')
+    ));
+    if (exactRunning.length !== 1 || !exactRunning[0]) return inconsistentProcessEvidence();
+    return {
+      process: {
+        processRef: controllerEvidence.processRef,
+        status: 'running',
+        health: 'healthy',
+        version: null,
+        startedAt: exactRunning[0].startedAt,
+      },
+      processCollectionScope: { status: 'complete', errors: [] },
+    };
+  } catch {
     return inconsistentProcessEvidence();
   }
-  return unsupportedProcessIdentityEvidence();
 }
 
 export function unavailableManagerLedgerProvider(): RuntimeObservationV2ManagerLedgerProvider {
@@ -208,6 +238,10 @@ export function createCompanionRuntimeV2Collector(input: {
 }): RuntimeObservationV2Collector {
   const config = companionRuntimeObservationV2ConfigSchema.parse(input.config);
   const collectionSessionLocalId = localIdSchema.parse(input.collectionSessionLocalId);
+  const installationRef = deriveRuntimeInstallationRefV2(
+    input.dependencies.identitySecret,
+    config.installationLocalId,
+  );
   return new RuntimeObservationV2Collector({
     installationLocalId: config.installationLocalId,
     collectionSessionLocalId,
@@ -221,7 +255,11 @@ export function createCompanionRuntimeV2Collector(input: {
           const observed = await input.dependencies.processPlatform.observe(
             config.ninjaTraderExecutablePath,
           );
-          return mapExactProcessObservationV2(observed);
+          return mapExactProcessObservationV2(observed, {
+            installationRef,
+            executablePath: config.ninjaTraderExecutablePath,
+            identitySecret: input.dependencies.identitySecret,
+          });
         } catch {
           return inconsistentProcessEvidence();
         }

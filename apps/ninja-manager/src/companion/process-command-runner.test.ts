@@ -10,7 +10,7 @@ import {
   companionProcessControlConfigSchema,
   companionStartupMode,
   launchReadinessFromRuntimeObservationV2,
-  quitRuntimeStateFromRuntimeObservationV2,
+  quitRuntimeStateFromMutationReadinessPreflight,
   runProcessCommandStep,
   type ProcessControlAgentTransport,
   type ProcessCommandRunnerDependencies,
@@ -370,7 +370,6 @@ function completeRuntimeObservation() {
       processRef: `process_${'c'.repeat(32)}`,
       status: 'running',
       health: 'healthy',
-      processId: 9232,
       version: '8.1.7.2',
       startedAt: '2026-07-21T14:00:00.000Z',
     },
@@ -440,29 +439,43 @@ describe('Runtime-v2 process evidence providers', () => {
     });
   });
 
-  it('returns quit state only for a fresh complete authoritative observation', () => {
-    const valid = completeRuntimeObservation();
-    expect(quitRuntimeStateFromRuntimeObservationV2(valid, NOW)).toMatchObject({
-      summary: {
-        armedScheduleCount: 0,
-        accountCounts: { simulation: 0, live: 0, unknown: 0 },
-        commandCounts: { inFlight: 0, indeterminate: 0 },
+  it('keeps stable authenticated but non-atomic mutation evidence fail-closed', () => {
+    const preflight = {
+      protocolVersion: 'mutation-readiness-preflight/1.0',
+      preflightId: randomUUID(),
+      receivedAt: NOW.toISOString(),
+      expiresAt: new Date(NOW.getTime() + 5_000).toISOString(),
+      source: {
+        command: 'GET_MUTATION_READINESS_PREFLIGHT',
+        transport: 'authenticated_local_ipc',
+        ipcAuthenticated: true,
       },
-    });
-
-    const incomplete = structuredClone(valid);
-    incomplete.state.collection.scopes.addon = {
-      status: 'partial',
-      itemCount: 1,
-      errors: [{ code: 'SOURCE_ERROR', retryable: true }],
+      addon: {
+        protocolVersion: 'ninjatrader-addon-mutation-readiness/1.0',
+        startedAt: new Date(NOW.getTime() - 10).toISOString(),
+        completedAt: NOW.toISOString(),
+        sampleCount: 2,
+        consistencyMethod: 'bounded_consecutive_stability',
+        atomicity: 'not_guaranteed',
+        status: 'ready',
+        blockerCodes: [],
+        summary: {
+          stateDigest: `hmac-sha256:${'a'.repeat(64)}`,
+          accounts: {
+            total: 1,
+            simulation: 1,
+            nonSimulationOrUnknown: 0,
+            connected: 1,
+            disconnectedOrUnknown: 0,
+          },
+          strategies: { total: 0, enabled: 0, unknown: 0 },
+          positions: { open: 0, unknown: 0 },
+          orders: { working: 0, transitional: 0, unknown: 0 },
+        },
+      },
     };
-    incomplete.state.collection.overall = 'partial';
-    incomplete.stateDigest = runtimeObservationV2StateDigest(incomplete.state);
-    expect(quitRuntimeStateFromRuntimeObservationV2(incomplete, NOW)).toBeNull();
-    expect(quitRuntimeStateFromRuntimeObservationV2({}, NOW)).toBeNull();
-    expect(quitRuntimeStateFromRuntimeObservationV2(
-      valid,
-      new Date(NOW.getTime() + 30_001),
-    )).toBeNull();
+
+    expect(quitRuntimeStateFromMutationReadinessPreflight(preflight, NOW)).toBeNull();
+    expect(quitRuntimeStateFromMutationReadinessPreflight({}, NOW)).toBeNull();
   });
 });

@@ -50,6 +50,15 @@ describe('local IPC authentication', () => {
     expect(signature).toBe(expectedSignature);
   });
 
+  it('signs the separate mutation-readiness read-only command', () => {
+    const command: LocalIpcCommand = 'GET_MUTATION_READINESS_PREFLIGHT';
+    const request = createSignedLocalRequest(command, {}, secret);
+
+    expect(localIpcCommandSchema.parse(command)).toBe(command);
+    expect(request.command).toBe(command);
+    expect(requestSigningInput(request).split('\n')[4]).toBe(command);
+  });
+
   it('keeps arbitrary and control commands outside the client allowlist', () => {
     expect(localIpcCommandSchema.safeParse('ARBITRARY_COMMAND').success).toBe(false);
     expect(localIpcCommandSchema.safeParse('ENABLE_ALL_STRATEGIES').success).toBe(false);

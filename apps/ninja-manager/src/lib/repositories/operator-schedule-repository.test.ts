@@ -61,6 +61,14 @@ function unavailableScope() {
   };
 }
 
+function sequentialScope(itemCount: number) {
+  return {
+    status: "partial" as const,
+    itemCount,
+    errors: [{ code: "CAPABILITY_UNSUPPORTED" as const, retryable: false }],
+  };
+}
+
 function runtimeState(mutate?: (state: RuntimeObservationV2State) => void): RuntimeObservationV2State {
   const value: RuntimeObservationV2State = {
     process: null,
@@ -116,9 +124,9 @@ function runtimeState(mutate?: (state: RuntimeObservationV2State) => void): Runt
       scopes: {
         process: unavailableScope(),
         addon: completeScope(1),
-        connections: completeScope(1),
-        accounts: completeScope(1),
-        strategies: completeScope(1),
+        connections: sequentialScope(1),
+        accounts: sequentialScope(1),
+        strategies: sequentialScope(1),
         positions: completeScope(0),
         orders: completeScope(0),
         executions: completeScope(0),

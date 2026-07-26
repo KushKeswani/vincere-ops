@@ -66,6 +66,23 @@ const rawProcessSchema = z.object({
   startedAt: isoTimestampSchema.nullable(),
 }).strict();
 
+const companionOpaqueProcessSchema = z.discriminatedUnion("status", [
+  z.object({
+    processRef: z.string().regex(/^process_[a-f0-9]{64}$/),
+    status: z.literal("running"),
+    health: z.literal("healthy"),
+    version: softwareVersionSchema.nullable(),
+    startedAt: isoTimestampSchema,
+  }).strict(),
+  z.object({
+    processRef: z.null(),
+    status: z.literal("not_running"),
+    health: z.literal("offline"),
+    version: z.null(),
+    startedAt: z.null(),
+  }).strict(),
+]);
+
 const rawAddonSchema = z.object({
   localId: localIdSchema.nullable(),
   status: z.enum(["connected", "initializing", "disconnected", "degraded", "unknown"]),
@@ -337,7 +354,7 @@ export const companionRuntimeObservationV2MetadataSchema = z.object({
   collectionSessionLocalId: localIdSchema,
   receivedAt: isoTimestampSchema,
   freshnessMaxAgeMs: z.number().int().positive().max(3_600_000),
-  process: rawProcessSchema.nullable(),
+  process: companionOpaqueProcessSchema.nullable(),
   processCollectionScope: collectionStatusSchema,
   managerObservedCumulativeByAccountLocalId: z.record(localIdSchema, rawManagerObservedCumulativeSchema),
 }).strict();
@@ -458,7 +475,11 @@ function totalDailyPnl(
   };
 }
 
-export function adaptAddonRuntimeObservationV2(input: unknown, identitySecret: Buffer) {
+export function adaptAddonRuntimeObservationV2(
+  input: unknown,
+  identitySecret: Buffer,
+  companionProcessInput?: unknown,
+) {
   if (identitySecret.length !== 32) throw new Error("Identity secret must contain exactly 32 bytes");
   const raw = rawAddonRuntimeObservationV2Schema.parse(input);
   const observedAtMs = Date.parse(raw.observedAt);
@@ -600,15 +621,19 @@ export function adaptAddonRuntimeObservationV2(input: unknown, identitySecret: B
     managerObservedCumulative: entry.managerObservedCumulative,
   })).sort((left, right) => left.accountRef < right.accountRef ? -1 : left.accountRef > right.accountRef ? 1 : 0);
 
+  const companionProcess = companionProcessInput === undefined
+    ? undefined
+    : companionOpaqueProcessSchema.nullable().parse(companionProcessInput);
   const state = runtimeObservationV2StateSchema.parse({
-    process: raw.process === null ? null : {
-      processRef: raw.process.localId === null ? null : opaqueRef(identitySecret, "process", "process-ref-v2", raw.process.localId),
-      status: raw.process.status,
-      health: raw.process.health,
-      processId: raw.process.processId,
-      version: raw.process.version,
-      startedAt: raw.process.startedAt,
-    },
+    process: companionProcess !== undefined
+      ? companionProcess
+      : raw.process === null ? null : {
+        processRef: raw.process.localId === null ? null : opaqueRef(identitySecret, "process", "process-ref-v2", raw.process.localId),
+        status: raw.process.status,
+        health: raw.process.health,
+        version: raw.process.version,
+        startedAt: raw.process.startedAt,
+      },
     addon: raw.addon === null ? null : {
       addonRef: raw.addon.localId === null ? null : opaqueRef(identitySecret, "addon", "addon-ref-v2", raw.addon.localId),
       status: raw.addon.status,
@@ -712,7 +737,7 @@ export function assembleNinjaTraderAddonRuntimeObservationV2(
     observedAt: addon.observedAt,
     receivedAt: metadata.receivedAt,
     freshnessMaxAgeMs: metadata.freshnessMaxAgeMs,
-    process: metadata.process,
+    process: null,
     addon: addon.addon,
     connections: addon.connections,
     accounts: addon.accounts,
@@ -725,5 +750,5 @@ export function assembleNinjaTraderAddonRuntimeObservationV2(
       overall: derivedOverall(scopes),
       scopes,
     },
-  }, identitySecret);
+  }, identitySecret, metadata.process);
 }

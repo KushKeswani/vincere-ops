@@ -71,16 +71,14 @@ export const runtimeProcessHealthV2Schema = z.object({
   processRef: processRefSchema.nullable(),
   status: z.enum(["running", "starting", "stopping", "not_running", "unknown"]),
   health: z.enum(["healthy", "degraded", "offline", "unknown"]),
-  processId: z.number().int().positive().max(4_294_967_295).nullable(),
   version: softwareVersionSchema.nullable(),
   startedAt: isoTimestampSchema.nullable(),
 }).strict().superRefine((value, context) => {
   if (value.status === "running") {
     if (value.processRef === null) context.addIssue({ code: "custom", message: "A running process requires an opaque process reference", path: ["processRef"] });
-    if (value.processId === null) context.addIssue({ code: "custom", message: "A running process requires a process id", path: ["processId"] });
     if (value.startedAt === null) context.addIssue({ code: "custom", message: "A running process requires a start time", path: ["startedAt"] });
   }
-  if (value.status === "not_running" && (value.processRef !== null || value.processId !== null || value.startedAt !== null)) {
+  if (value.status === "not_running" && (value.processRef !== null || value.startedAt !== null)) {
     context.addIssue({ code: "custom", message: "A stopped process cannot retain runtime identity" });
   }
   if (value.status === "not_running" && value.health !== "offline") {
@@ -537,6 +535,21 @@ export type RuntimeObservationV2 = z.infer<typeof runtimeObservationV2Schema>;
 
 export function runtimeObservationV2StateDigest(state: RuntimeObservationV2State): string {
   return hashCanonicalPayload(runtimeObservationV2StateSchema.parse(state));
+}
+
+/**
+ * The current Add-On collects Runtime-v2 inventory sequentially. A scope is
+ * usable for non-actuating identity and binding workflows only when its sole
+ * limitation is that declared non-atomic collection mode. This deliberately
+ * preserves `partial`; mutation readiness requires separate just-in-time
+ * evidence.
+ */
+export function isSequentialInventoryScopeUsable(scope: RuntimeCollectionScopeV2): boolean {
+  if (scope.status === "complete") return scope.errors.length === 0;
+  return scope.status === "partial"
+    && scope.errors.length === 1
+    && scope.errors[0].code === "CAPABILITY_UNSUPPORTED"
+    && scope.errors[0].retryable === false;
 }
 
 export function parseRuntimeObservationV2(input: unknown): RuntimeObservationV2 {

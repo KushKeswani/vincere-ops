@@ -13,6 +13,8 @@ The response protocol is ninjatrader-addon-snapshot/2.0. The Add-On emits only A
 
 Process/install/session identifiers, companion receipt time, freshness policy, manager cumulative P&L, item counts, and overall collection status remain companion-owned and are not emitted.
 
+The companion's process observation is privacy-separated from the Add-On snapshot. An exact running `NinjaTrader.exe` match is represented only by the same controller-owned HMAC `processRef` used by process-control heartbeat evidence; the configured path and Windows PID never enter the Runtime-v2 event, doctor summary, or logs. An exact zero-match observation is reported as `not_running` with no retained process identity. Multiple matches, transitional states, invalid timestamps, and provider failures remain unavailable with typed error evidence. The controller-owned installation-reference and process-state-version derivations validate the observation before it is mapped, while the process state version continues to travel in its existing heartbeat contract rather than being duplicated in Runtime-v2.
+
 ## Authority and identity
 
 - Account localId and accountIdentifier are the exact account name already used by v1. They remain inside the authenticated local IPC boundary.

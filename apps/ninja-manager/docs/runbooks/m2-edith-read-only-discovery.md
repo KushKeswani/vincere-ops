@@ -17,14 +17,18 @@ These are two separate approvals. Step A can proceed without Step B.
 
 ## STEP A — Read-only bring-up against the deployed v1 Add-On (no install, no writes)
 
-**Exact action:** start the companion in read-only "doctor" mode so it performs ONE local-IPC read from the already-running Add-On and prints a summary. Nothing is posted, installed, recompiled, connected, enabled, or mutated.
+**Exact action:** start the companion in read-only "doctor" mode with an explicit v1 selection so it performs ONE local-IPC read from the already-running Add-On and prints a summary. Nothing is posted, installed, recompiled, connected, enabled, or mutated.
+
+```powershell
+powershell -NoProfile -File .\scripts\windows\Start-VincereNinjaManagerCompanion.ps1 -Mode Doctor -DoctorProtocol V1
+```
 
 - **Machine / account:** Edith; NinjaTrader already running on Sim101 (as-is); no connection/feed/account change.
-- **Read/write effects:** READ ONLY. `companion doctor` opens the local named pipe `\\.\pipe\VincereNinjaManager.v1`, sends `GET_CAPABILITIES` + `GET_RUNTIME_SNAPSHOT` (v1 read commands), and prints the result. No event is posted to the manager; no file/registry/service/schedule change.
+- **Read/write effects:** READ ONLY. `companion doctor --doctor-protocol v1` opens the local named pipe `\\.\pipe\VincereNinjaManager.v1`, sends `GET_CAPABILITIES` + `GET_RUNTIME_SNAPSHOT` (v1 read commands), and prints the result. No event is posted to the manager; no file/registry/service/schedule change. The explicit v1 flag overrides a `runtimeObservationV2` block in the enrollment config for this doctor invocation only.
 - **Preconditions:** IPC secret present at `%LOCALAPPDATA%\Vincere\NinjaManager\secrets\ipc-secret.bin`; companion enrolled (`enroll-local-companion`) — enrollment writes only the local companion config + secret, no NT contact.
 - **Safety checks:** confirm NinjaTrader is on Sim101 and `OrdersGrid=0`/`PositionsGrid=0` before and after; the Add-On declares `read_only_supervised_simulation` authority and has no mutating command in its dispatch surface.
 - **Rollback / stop condition:** none needed (read-only); stop the doctor process if anything is unexpected. No state was changed to roll back.
-- **Success evidence:** `companion doctor` prints the v1 snapshot — accounts (masked), strategies with enabled/sync state, connection status — proving the companion → local-IPC → deployed Add-On chain works read-only end to end.
+- **Success evidence:** the forced-v1 doctor prints the v1 snapshot — accounts (masked), strategies with enabled/sync state, connection status — proving the companion → local-IPC → deployed Add-On chain works read-only end to end.
 
 **Approval requested for Step A:** run the read-only companion doctor against the current Edith Add-On. No install, no writes.
 
@@ -39,7 +43,7 @@ These are two separate approvals. Step A can proceed without Step B.
 - **Preconditions:** NT version exactly `8.1.7.2`; ≥3 GB free; `NinjaTrader.Custom.csproj` present; NinjaTrader closed. Run `Prepare-VincereNinjaManagerIntegration.ps1` first; optionally `-DryRun` the installer to confirm no file is written.
 - **Safety checks:** installer refuses if NinjaTrader is running; source-hash verification; full backup + `Restore-VincereNinjaManagerAddOn.ps1` rollback path; bring NT up **disconnected/SIM**; snapshots stay labelled `supervised_simulation` until a recorded SIM acceptance matrix promotes to `authoritative_read_only`.
 - **Rollback / stop condition:** `Restore-VincereNinjaManagerAddOn.ps1` restores the backed-up project/DLL/source; if the F5 recompile errors, revert via the rollback manifest and leave the v1 Add-On in place. Stop if NT version ≠ 8.1.7.2 or the csproj is unexpected.
-- **Success evidence:** after recompile, `companion doctor` returns a `GET_RUNTIME_OBSERVATION_V2` result with per-scope Add-On health, connections, accounts (masked), strategies+enabled, positions, working/completed orders, executions, and unrealized daily P&L, with freshness within threshold and `ipcAuthenticated=true` — rendered by the v2 dashboard (now on both staff and client pages) with the integrity-digest provenance card. `OrdersGrid=0`/`PositionsGrid=0` before and after.
+- **Success evidence:** after recompile, `Start-VincereNinjaManagerCompanion.ps1 -Mode Doctor -DoctorProtocol V2` returns a `GET_RUNTIME_OBSERVATION_V2` result with per-scope Add-On health, connections, accounts (masked), strategies+enabled, positions, working/completed orders, executions, and unrealized daily P&L, with freshness within threshold and `ipcAuthenticated=true` — rendered by the v2 dashboard (now on both staff and client pages) with the integrity-digest provenance card. `OrdersGrid=0`/`PositionsGrid=0` before and after. A forced v2 doctor fails closed when `runtimeObservationV2` is absent or collection fails; it never falls back to v1.
 
 **Approval requested for Step B (separate from A):** the exact install + recompile above, in a supervised maintenance window with NT closed.
 

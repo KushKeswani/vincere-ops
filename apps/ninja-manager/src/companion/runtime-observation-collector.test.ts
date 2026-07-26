@@ -102,10 +102,9 @@ function addonSnapshot(): RawNinjaTraderAddonSnapshotV2 {
 function runningProcess(): CompanionProcessObservationV2 {
   return {
     process: {
-      localId: "raw-process-id-never-return",
+      processRef: `process_${"a".repeat(64)}`,
       status: "running",
       health: "healthy",
-      processId: 4242,
       version: "8.1.7.2",
       startedAt: "2026-07-21T11:00:00.000Z",
     },
@@ -235,7 +234,7 @@ describe("RuntimeObservationV2Collector", () => {
     ).collect()).rejects.toThrow(/exactly match/);
   });
 
-  it("makes unavailable and unknown process evidence explicitly incomplete", async () => {
+  it("makes unavailable process evidence explicitly incomplete", async () => {
     const unavailable = await new RuntimeObservationV2Collector(config(), dependencies({
       process: {
         process: null,
@@ -252,14 +251,7 @@ describe("RuntimeObservationV2Collector", () => {
 
     const partial = await new RuntimeObservationV2Collector(config(), dependencies({
       process: {
-        process: {
-          localId: null,
-          status: "unknown",
-          health: "unknown",
-          processId: null,
-          version: null,
-          startedAt: null,
-        },
+        process: null,
         processCollectionScope: {
           status: "partial",
           errors: [{ code: "SOURCE_ERROR", retryable: true }],
@@ -268,24 +260,34 @@ describe("RuntimeObservationV2Collector", () => {
     })).collect();
     expect(partial.state.collection).toMatchObject({
       overall: "partial",
-      scopes: { process: { status: "partial", itemCount: 1 } },
+      scopes: { process: { status: "partial", itemCount: 0 } },
     });
   });
 
-  it("rejects false-complete offline process evidence", async () => {
-    await expect(new RuntimeObservationV2Collector(config(), dependencies({
+  it("accepts an exact complete not-running process observation", async () => {
+    const observation = await new RuntimeObservationV2Collector(config(), dependencies({
       process: {
         process: {
-          localId: null,
+          processRef: null,
           status: "not_running",
           health: "offline",
-          processId: null,
           version: null,
           startedAt: null,
         },
         processCollectionScope: complete,
       },
-    })).collect()).rejects.toThrow(/offline or unknown process/);
+    })).collect();
+    expect(observation.state.process).toEqual({
+      processRef: null,
+      status: "not_running",
+      health: "offline",
+      version: null,
+      startedAt: null,
+    });
+    expect(observation.state.collection.scopes.process).toMatchObject({
+      status: "complete",
+      itemCount: 1,
+    });
   });
 
   it("marks late receipts stale and rejects future observations", async () => {

@@ -117,6 +117,8 @@ export function ProcessControlDashboard({
         <p className="text-xs text-muted-foreground">
           No executable path, process identity, runtime digest, account identifier, safety count, password, force-kill,
           order, position, strategy, or connection instruction is accepted from the browser.
+          Browser readiness is only an approval preview; the companion must obtain a separate authenticated just-in-time
+          mutation-readiness preflight immediately before any graceful-close request, or the request remains blocked.
         </p>
       </CardContent>
     </Card>

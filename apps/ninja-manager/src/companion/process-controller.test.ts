@@ -544,6 +544,28 @@ describe("NinjaTraderProcessController launch", () => {
 });
 
 describe("NinjaTraderProcessController graceful quit", () => {
+  it("accepts a fresh JIT preflight with the same safety summary and a new digest", async () => {
+    const running = record("running");
+    const stopped = record("stopped");
+    const freshRuntimeState = runtimeState(safeSummary(), "2026-07-21T15:00:16.000Z");
+    const platform = new FakePlatform([
+      observation([running], "2026-07-21T15:00:16.000Z", freshRuntimeState),
+      observation([running], "2026-07-21T15:00:17.000Z", freshRuntimeState),
+      observation([stopped], "2026-07-21T15:00:18.000Z", freshRuntimeState),
+    ]);
+    const controller = new NinjaTraderProcessController(config(), SECRET, platform);
+
+    const result = await controller.execute(
+      quitDelivery(running, stateVersion([running]), runtimeState()),
+      CONTEXT,
+    );
+
+    expect(result.status).toBe("completed");
+    expect(result.outcomeCode).toBe("GRACEFUL_QUIT_VERIFIED");
+    expect(freshRuntimeState.digest).not.toBe(runtimeState().digest);
+    expect(platform.closeCalls).toHaveLength(1);
+  });
+
   it("blocks a changed unsafe runtime preflight with zero actuation", async () => {
     const running = record("running");
     const unsafe = safeSummary();

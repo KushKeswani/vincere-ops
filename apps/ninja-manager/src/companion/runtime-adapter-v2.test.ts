@@ -201,7 +201,13 @@ function separatedObservation(): {
       collectionSessionLocalId: raw.collectionSessionLocalId,
       receivedAt: raw.receivedAt,
       freshnessMaxAgeMs: raw.freshnessMaxAgeMs,
-      process: raw.process,
+      process: {
+        processRef: `process_${"a".repeat(64)}`,
+        status: "running",
+        health: "healthy",
+        version: "8.1.7.2",
+        startedAt: "2026-07-21T08:00:00.000-04:00",
+      },
       processCollectionScope: statusOnly(raw.collection.scopes.process),
       managerObservedCumulativeByAccountLocalId,
     },
@@ -248,6 +254,9 @@ describe("runtime observation v2 adapter", () => {
       "order-private",
       "execution-private",
     ]) expect(serialized).not.toContain(rawValue);
+    expect(serialized).not.toContain("4242");
+    expect(serialized).not.toContain("processId");
+    expect(observation.state.process?.processRef).toMatch(/^process_[a-f0-9]{32}$/);
     expect(observation.state.accounts[0].identifierFingerprint).toMatch(/^hmac-sha256:[a-f0-9]{64}$/);
     expect(observation.state.accounts[0].accountRef).toMatch(/^acct_[a-f0-9]{32}$/);
   });
@@ -408,11 +417,11 @@ describe("runtime observation v2 adapter", () => {
 
   it("assembles the Add-On snapshot with strict companion evidence", () => {
     const raw = rawObservation();
-    const { addon, metadata } = separatedObservation();
     const secret = Buffer.alloc(32, 12);
+    const { addon, metadata } = separatedObservation();
 
     expect(assembleNinjaTraderAddonRuntimeObservationV2(addon, metadata, secret))
-      .toEqual(adaptAddonRuntimeObservationV2(raw, secret));
+      .toEqual(adaptAddonRuntimeObservationV2({ ...raw, process: null }, secret, metadata.process));
   });
 
   it("requires manager cumulative keys to exactly match the Add-On account inventory", () => {

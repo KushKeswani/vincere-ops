@@ -12,7 +12,6 @@ function currentInput(): FeedAlgoHealthObservationInput {
       processRef: "process_abcdefghijklmnop",
       status: "running",
       health: "healthy",
-      processId: 1234,
       version: "8.1.7.2",
       startedAt: "2026-07-21T11:00:00.000Z",
     },

@@ -14,7 +14,6 @@ import type {
 import {
   launchReadinessObservationSchema,
   MAX_LAUNCH_READINESS_AGE_MS,
-  MAX_QUIT_RUNTIME_STATE_AGE_MS,
   processQuitRuntimeStateDigest,
   processQuitRuntimeStateSchema,
   type LaunchReadinessObservation,
@@ -22,8 +21,13 @@ import {
 } from '@/lib/domain/process-control-contracts';
 import {
   runtimeObservationV2Schema,
-  type RuntimeObservationV2,
 } from '@/lib/domain/runtime-observation-v2';
+import {
+  isFreshMutationReadinessEvidence,
+  mutationReadinessPreflightSchema,
+  permitsMutationActuation,
+} from '@/lib/domain/mutation-readiness-preflight';
+import type { MutationReadinessPreflightCollector } from './mutation-readiness-preflight-collector';
 
 export const companionProcessControlConfigSchema = z.object({
   enabled: z.literal(true),
@@ -253,24 +257,6 @@ function unknownLaunchReadiness(
   });
 }
 
-function parseFreshObservation(
-  input: unknown,
-  now: Date,
-  maximumAgeMs: number,
-): RuntimeObservationV2 | null {
-  const parsed = runtimeObservationV2Schema.safeParse(input);
-  if (!parsed.success || parsed.data.freshness.status !== 'fresh') return null;
-  const observedAtMs = Date.parse(parsed.data.asOf);
-  const ageMs = now.getTime() - observedAtMs;
-  if (
-    !Number.isFinite(ageMs)
-    || ageMs < 0
-    || ageMs > maximumAgeMs
-    || ageMs > parsed.data.freshness.maxAgeMs
-  ) return null;
-  return parsed.data;
-}
-
 export function launchReadinessFromRuntimeObservationV2(
   input: unknown,
   nowInput: Date,
@@ -319,72 +305,56 @@ export function launchReadinessFromRuntimeObservationV2(
   });
 }
 
-export function quitRuntimeStateFromRuntimeObservationV2(
+export function quitRuntimeStateFromMutationReadinessPreflight(
   input: unknown,
   nowInput: Date,
 ) {
-  const observation = parseFreshObservation(input, new Date(nowInput), MAX_QUIT_RUNTIME_STATE_AGE_MS);
-  if (
-    !observation
-    || observation.state.collection.overall !== 'complete'
-    || observation.state.addon?.status !== 'connected'
-    || observation.state.addon.health !== 'healthy'
-    || !observation.state.addon.ipcAuthenticated
-  ) return null;
+  const parsed = mutationReadinessPreflightSchema.safeParse(input);
+  const now = new Date(nowInput);
+  const evidenceSummary = parsed.success ? parsed.data.addon.summary : null;
+  if (!parsed.success
+    || !Number.isFinite(now.getTime())
+    || !isFreshMutationReadinessEvidence(parsed.data, now)
+    || !permitsMutationActuation(parsed.data, now)
+    || evidenceSummary === null) return null;
 
+  const evidence = parsed.data.addon;
   const summary = {
     // This companion has no scheduler actuator. A future scheduler integration
     // must replace this with its durable local schedule authority before enabling
     // process control alongside scheduling.
     armedScheduleCount: 0,
     accountCounts: {
-      simulation: observation.state.accounts.filter(
-        (account) => account.classification.environment === 'simulation',
-      ).length,
+      simulation: evidenceSummary.accounts.simulation,
       evaluation: 0,
       funded: 0,
-      live: observation.state.accounts.filter(
-        (account) => account.classification.environment === 'live',
-      ).length,
-      unknown: observation.state.accounts.filter(
-        (account) => account.classification.environment === 'unknown',
-      ).length,
+      live: 0,
+      unknown: evidenceSummary.accounts.nonSimulationOrUnknown,
     },
     strategyCounts: {
-      enabled: observation.state.strategies.filter((strategy) => strategy.enabled).length,
-      unknown: observation.state.strategies.filter((strategy) =>
-        strategy.runtimeState === 'unknown'
-        || strategy.runtimeState === 'error'
-        || strategy.synchronizationState === 'unknown'
-      ).length,
+      enabled: evidenceSummary.strategies.enabled,
+      unknown: evidenceSummary.strategies.unknown,
     },
-    positionCounts: { open: observation.state.positions.length, unknown: 0 },
+    positionCounts: evidenceSummary.positions,
     orderCounts: {
-      working: observation.state.orders.filter((order) =>
-        order.lifecycle === 'working'
-        && ['submitted', 'accepted', 'working'].includes(order.state)
-      ).length,
-      transitional: observation.state.orders.filter((order) =>
-        order.lifecycle === 'working'
-        && ['change_pending', 'cancel_pending'].includes(order.state)
-      ).length,
-      unknown: observation.state.orders.filter((order) =>
-        order.lifecycle === 'working' && order.state === 'unknown'
-      ).length,
+      working: evidenceSummary.orders.working,
+      transitional: evidenceSummary.orders.transitional,
+      unknown: evidenceSummary.orders.unknown,
     },
     // The process runner guarantees no read-only command or prior process result
     // can interleave with this preflight; the currently executing quit is excluded.
     commandCounts: { inFlight: 0, indeterminate: 0 },
   };
   return processQuitRuntimeStateSchema.parse({
-    observedAt: observation.asOf,
-    digest: processQuitRuntimeStateDigest(observation.asOf, summary),
+    observedAt: evidence.completedAt,
+    digest: processQuitRuntimeStateDigest(evidence.completedAt, summary),
     summary,
   });
 }
 
 export function createRuntimeV2ProcessEvidenceProviders(input: {
   collector: RuntimeObservationV2Collector;
+  mutationReadinessCollector: MutationReadinessPreflightCollector;
   now(): Date;
 }) {
   return {
@@ -392,8 +362,8 @@ export function createRuntimeV2ProcessEvidenceProviders(input: {
       await input.collector.collect(),
       input.now(),
     ),
-    runtimeStateProvider: async () => quitRuntimeStateFromRuntimeObservationV2(
-      await input.collector.collect(),
+    runtimeStateProvider: async () => quitRuntimeStateFromMutationReadinessPreflight(
+      await input.mutationReadinessCollector.collect(),
       input.now(),
     ),
   };

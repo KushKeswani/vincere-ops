@@ -1,4 +1,5 @@
 import type { LatestRuntimeObservationV2 } from "@/lib/repositories/runtime-repository";
+import { isSequentialInventoryScopeUsable } from "@/lib/domain/runtime-observation-v2";
 
 export interface BlueprintAccountOption {
   accountRef: string;
@@ -39,12 +40,12 @@ export function buildBlueprintMappingEvidence(
 
   const { state } = observation;
   if (
-    state.collection.scopes.accounts.status !== "complete"
-    || state.collection.scopes.connections.status !== "complete"
+    !isSequentialInventoryScopeUsable(state.collection.scopes.accounts)
+    || !isSequentialInventoryScopeUsable(state.collection.scopes.connections)
     || state.addon?.status !== "connected"
     || state.addon.ipcAuthenticated !== true
   ) {
-    return { accountOptions: [], mappingLockedReason: "Fresh account mapping requires complete account and connection scopes from an authenticated Add-On." };
+    return { accountOptions: [], mappingLockedReason: "Fresh account mapping requires usable sequential account and connection evidence from an authenticated Add-On; any source error remains blocking." };
   }
 
   const connections = new Map(state.connections.map((connection) => [connection.connectionRef, connection]));

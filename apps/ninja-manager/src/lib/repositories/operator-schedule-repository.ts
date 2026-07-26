@@ -28,11 +28,12 @@ import {
   parseRuntimeObservationV2Event,
   type RuntimeObservationV2Event,
 } from "@/lib/domain/runtime-contracts";
-import type {
-  RuntimeAccountObservationV2,
-  RuntimeConnectionObservationV2,
-  RuntimeObservationV2,
-  RuntimeStrategyObservationV2,
+import {
+  isSequentialInventoryScopeUsable,
+  type RuntimeAccountObservationV2,
+  type RuntimeConnectionObservationV2,
+  type RuntimeObservationV2,
+  type RuntimeStrategyObservationV2,
 } from "@/lib/domain/runtime-observation-v2";
 import { RuntimeServiceError } from "@/lib/domain/runtime-errors";
 import type { AuthenticatedUser } from "@/lib/domain/types";
@@ -864,7 +865,7 @@ export class OperatorScheduleRepository {
     if (!addon || addon.status !== "connected" || addon.health !== "healthy" || !addon.ipcAuthenticated) throw new RuntimeServiceError("CONFLICT", "Weekly authority requires a healthy authenticated NinjaTrader Add-On");
     for (const scope of ["accounts", "connections", "strategies"] as const) {
       const evidence = observation.state.collection.scopes[scope];
-      if (evidence.status !== "complete" || evidence.errors.length !== 0) throw new RuntimeServiceError("CONFLICT", "Weekly authority requires complete Runtime-v2 account, connection, and strategy evidence");
+      if (!isSequentialInventoryScopeUsable(evidence)) throw new RuntimeServiceError("CONFLICT", "Weekly authority requires usable sequential Runtime-v2 account, connection, and strategy evidence with no source error");
     }
   }
 

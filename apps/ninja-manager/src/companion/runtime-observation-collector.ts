@@ -59,22 +59,6 @@ export const companionProcessObservationV2Schema = companionRuntimeObservationV2
         path: ["process"],
       });
     }
-    if (
-      value.process !== null
-      && value.processCollectionScope.status === "complete"
-      && (
-        value.process.status === "not_running"
-        || value.process.status === "unknown"
-        || value.process.health === "offline"
-        || value.process.health === "unknown"
-      )
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: "An offline or unknown process requires an explicit partial or unavailable scope",
-        path: ["processCollectionScope", "status"],
-      });
-    }
   });
 
 export type CompanionProcessObservationV2 = z.infer<

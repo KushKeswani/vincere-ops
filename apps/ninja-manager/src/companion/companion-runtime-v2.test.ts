@@ -16,7 +16,7 @@ import {
   runtimeObservationV2DoctorSummary,
 } from './companion-runtime-v2';
 import { RuntimeObservationV2Collector } from './runtime-observation-collector';
-import { type ProcessPlatformObservation } from './process-controller';
+import { deriveProcessRef, type ProcessPlatformObservation } from './process-controller';
 import { adaptAddonSnapshot } from './runtime-adapter';
 import {
   RAW_NINJATRADER_ADDON_SNAPSHOT_V2_PROTOCOL,
@@ -31,9 +31,11 @@ const COMMAND_ID = '10000000-0000-4000-8000-000000000003';
 const OBSERVATION_ID = '10000000-0000-4000-8000-000000000004';
 const OBSERVED_AT = '2026-07-21T12:00:00.000Z';
 const EXECUTABLE = 'C:\\Program Files\\NinjaTrader 8\\bin\\NinjaTrader.exe';
+const OTHER_EXECUTABLE = 'C:\\Tools\\NinjaTrader.exe';
 const INSTALLATION_ID = 'raw-edith-installation';
 const SESSION_ID = 'raw-per-run-session';
 const ACCOUNT_ID = 'raw-account-id';
+const IDENTITY_SECRET = Buffer.alloc(32, 9);
 
 const complete = { status: 'complete' as const, errors: [] };
 const unavailableMoney = {
@@ -153,6 +155,14 @@ function legacySnapshot() {
   }, Buffer.alloc(32, 4));
 }
 
+function mapProcess(input: unknown) {
+  return mapExactProcessObservationV2(input, {
+    installationRef: deriveRuntimeInstallationRefV2(IDENTITY_SECRET, INSTALLATION_ID),
+    executablePath: EXECUTABLE,
+    identitySecret: IDENTITY_SECRET,
+  });
+}
+
 describe('companion runtime v2 wiring', () => {
   it('accepts only the strict three-field v2 config with an exact local NinjaTrader path', () => {
     expect(companionRuntimeObservationV2ConfigSchema.parse({
@@ -200,7 +210,13 @@ describe('companion runtime v2 wiring', () => {
       'private-Sim101',
       'raw-addon-id',
     ]) expect(eventText).not.toContain(raw);
-    expect(observation.state.process).toBeNull();
+    expect(observation.state.process).toMatchObject({
+      status: 'running',
+      health: 'healthy',
+    });
+    expect(observation.state.process?.processRef).toMatch(/^process_[a-f0-9]{64}$/);
+    expect(eventText).not.toContain('processId');
+    expect(eventText).not.toContain('4242');
 
     const doctorText = JSON.stringify(runtimeObservationV2DoctorSummary(observation));
     for (const raw of [
@@ -213,29 +229,55 @@ describe('companion runtime v2 wiring', () => {
       observation.source.installationRef,
     ]) expect(doctorText).not.toContain(raw);
     expect(JSON.parse(doctorText)).toMatchObject({
-      status: 'degraded',
+      status: 'ready',
       collectionMode: 'runtime_observation_v2',
       counts: { accounts: 1, executions: 0, pnl: 1 },
     });
   });
 
-  it('marks absent, ambiguous, unknown, and provider-failed process evidence unavailable', async () => {
-    expect(mapExactProcessObservationV2({
+  it('publishes exact running and not-running identity while failing closed on ambiguity', async () => {
+    const runningRecord = {
+      executablePath: EXECUTABLE,
+      pid: 4242,
+      startedAt: OBSERVED_AT,
+      state: 'running' as const,
+    };
+    const mappedRunning = mapProcess({
+      observedAt: OBSERVED_AT,
+      processes: [runningRecord],
+      runtimeState: null,
+    });
+    expect(mappedRunning).toMatchObject({
+      process: {
+        processRef: expect.stringMatching(/^process_[a-f0-9]{64}$/),
+        status: 'running',
+        health: 'healthy',
+        version: null,
+        startedAt: OBSERVED_AT,
+      },
+      processCollectionScope: { status: 'complete', errors: [] },
+    });
+    expect(mappedRunning.process?.processRef).toBe(deriveProcessRef(IDENTITY_SECRET, runningRecord));
+    expect(mapProcess({
+      observedAt: OBSERVED_AT,
       processes: [{
-        executablePath: EXECUTABLE,
-        pid: 4242,
+        executablePath: OTHER_EXECUTABLE,
+        pid: 9876,
         startedAt: OBSERVED_AT,
         state: 'running',
       }],
+      runtimeState: null,
     })).toEqual({
-      process: null,
-      processCollectionScope: {
-        status: 'unavailable',
-        errors: [{ code: 'CAPABILITY_UNSUPPORTED', retryable: false }],
+      process: {
+        processRef: null,
+        status: 'not_running',
+        health: 'offline',
+        version: null,
+        startedAt: null,
       },
+      processCollectionScope: { status: 'complete', errors: [] },
     });
     const cases: ProcessPlatformObservation['processes'][] = [
-      [],
       [
         { executablePath: EXECUTABLE, pid: 1, startedAt: OBSERVED_AT, state: 'running' },
         { executablePath: EXECUTABLE, pid: 2, startedAt: OBSERVED_AT, state: 'running' },
@@ -243,7 +285,7 @@ describe('companion runtime v2 wiring', () => {
       [{ executablePath: EXECUTABLE, pid: 3, startedAt: OBSERVED_AT, state: 'unknown' }],
     ];
     for (const processes of cases) {
-      expect(mapExactProcessObservationV2({ processes })).toEqual({
+      expect(mapProcess({ observedAt: OBSERVED_AT, processes, runtimeState: null })).toEqual({
         process: null,
         processCollectionScope: {
           status: 'unavailable',

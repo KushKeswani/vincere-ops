@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { z } from 'zod';
 
+import { parseCompanionArguments, resolveDoctorProtocol } from './companion-arguments';
 import { AgentApiClient, AgentApiError, buildAcknowledgement, buildAgentEvent } from '../src/companion/agent-client';
 import {
   collectRuntimeDiscovery,
@@ -18,6 +19,7 @@ import {
   type RuntimeDiscoverySelection,
 } from '../src/companion/companion-runtime-v2';
 import { sendLocalIpcCommand } from '../src/companion/local-ipc';
+import { MutationReadinessPreflightCollector } from '../src/companion/mutation-readiness-preflight-collector';
 import {
   companionProcessControlConfigSchema,
   companionStartupMode,
@@ -380,22 +382,24 @@ async function acquireProcessLock(lockPath: string) {
 }
 
 async function main() {
-  const mode = process.argv[2] ?? 'doctor';
-  const configIndex = process.argv.indexOf('--config');
-  if (!['doctor', 'once', 'run'].includes(mode) || configIndex < 0 || !process.argv[configIndex + 1]) {
-    throw new Error('Usage: companion.ts <doctor|once|run> --config <absolute-config-path>');
-  }
-  const config = await loadConfig(path.resolve(process.argv[configIndex + 1]));
+  const cli = parseCompanionArguments(process.argv.slice(2));
+  const config = await loadConfig(path.resolve(cli.configPath));
+  const doctorProtocol = cli.mode === 'doctor'
+    ? resolveDoctorProtocol(cli.doctorProtocol, config.runtimeObservationV2 !== undefined)
+    : null;
   const [ipcSecret, identitySecret] = await Promise.all([
     readSecret(config.ipcSecretFile, 'IPC secret'),
     readSecret(config.identitySecretFile, 'Identity secret'),
   ]);
-  const observationProcessPlatform = config.runtimeObservationV2
+  const runtimeV2Config = cli.mode === 'doctor' && doctorProtocol === 'v1'
+    ? null
+    : (config.runtimeObservationV2 ?? null);
+  const observationProcessPlatform = runtimeV2Config
     ? new WindowsProcessPlatform()
     : null;
-  const runtimeV2Collector = config.runtimeObservationV2 && observationProcessPlatform
+  const runtimeV2Collector = runtimeV2Config && observationProcessPlatform
     ? createCompanionRuntimeV2Collector({
-      config: config.runtimeObservationV2,
+      config: runtimeV2Config,
       collectionSessionLocalId: randomUUID(),
       pipeName: config.pipeName,
       dependencies: {
@@ -408,15 +412,15 @@ async function main() {
       },
     })
     : null;
-  const processHeartbeatObserver = config.runtimeObservationV2 && observationProcessPlatform
+  const processHeartbeatObserver = runtimeV2Config && observationProcessPlatform
     ? createCompanionProcessHeartbeatObserver({
-      config: config.runtimeObservationV2,
+      config: runtimeV2Config,
       processPlatform: observationProcessPlatform,
       identitySecret,
       now: () => new Date(),
     })
     : null;
-  if (mode === 'doctor') return doctor(config, ipcSecret, identitySecret, runtimeV2Collector);
+  if (cli.mode === 'doctor') return doctor(config, ipcSecret, identitySecret, runtimeV2Collector);
 
   const token = (await readFile(config.agentTokenFile, 'utf8')).trim();
   const client = new AgentApiClient(config.dashboardUrl, token);
@@ -424,8 +428,18 @@ async function main() {
   const processInstanceId = randomUUID();
   const processRunner = config.processControl && config.runtimeObservationV2 && runtimeV2Collector
     ? (() => {
+      const mutationReadinessCollector = new MutationReadinessPreflightCollector({
+        pipeName: config.pipeName,
+        freshnessMaxAgeMs: 5_000,
+      }, {
+        ipcSender: { send: (input) => sendLocalIpcCommand(input) },
+        localIpcSecret: ipcSecret,
+        now: () => new Date(),
+        uuid: randomUUID,
+      });
       const providers = createRuntimeV2ProcessEvidenceProviders({
         collector: runtimeV2Collector,
+        mutationReadinessCollector,
         now: () => new Date(),
       });
       const controllerPlatform = new WindowsProcessPlatform(providers);
@@ -453,7 +467,7 @@ async function main() {
   await flushOutbox(config, state, client);
   await sendHeartbeat(config, state, client, ipcSecret, processHeartbeatObserver);
 
-  if (mode === 'once') {
+  if (cli.mode === 'once') {
     if (processRunner) await runProcessCommandStep(processRunner);
     if (!state.activeProcessControl) {
       await processCommand(config, state, client, ipcSecret, identitySecret, runtimeV2Collector);

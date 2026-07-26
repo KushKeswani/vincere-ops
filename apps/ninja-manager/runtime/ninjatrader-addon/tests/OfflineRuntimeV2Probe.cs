@@ -89,6 +89,31 @@ namespace Vincere.NinjaManager.OfflineTests
             AssertTrue(
                 source.Contains("MarkSequentialScopesPartialV2"),
                 "sequential runtime scopes are not marked non-atomic");
+            AssertTrue(
+                source.Contains("case \"GET_MUTATION_READINESS_PREFLIGHT\":"),
+                "mutation-readiness command is absent from the authenticated dispatcher");
+            AssertTrue(
+                source.Contains("CaptureMutationSafetySummary(secret)"),
+                "mutation-readiness command does not capture its dedicated safety summary");
+            AssertTrue(
+                source.Contains("MutationStateToken"),
+                "mutation-readiness keyed state input is not length-framed");
+            AssertTrue(
+                source.Contains("bounded_consecutive_stability"),
+                "mutation-readiness response does not disclose its limited consistency method");
+            AssertTrue(
+                source.Contains("Atomicity = \"not_guaranteed\""),
+                "mutation-readiness response overclaims atomicity");
+            AssertTrue(
+                source.Contains("RUNTIME_CHANGED_DURING_PREFLIGHT"),
+                "mutation-readiness does not fail closed when consecutive samples differ");
+            string readinessDtos = Slice(
+                source,
+                "// Mutation-readiness is a separate, short-lived read-only contract.",
+                "// Internal capture metadata never crosses the pipe.");
+            AssertFalse(readinessDtos.Contains("localId"), "preflight DTO exposes a local identifier");
+            AssertFalse(readinessDtos.Contains("accountName"), "preflight DTO exposes an account name");
+            AssertFalse(readinessDtos.Contains("orderId"), "preflight DTO exposes an order identifier");
         }
 
         private static void AssertClassification(

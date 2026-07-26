@@ -2,9 +2,11 @@
 
 ## Scope and authority
 
-Local IPC v1 connects the per-user Vincere Ninja Manager companion to an in-process NinjaTrader Add-On over a Windows named pipe. It is deliberately read-only. The allowlisted commands are `PING`, `GET_CAPABILITIES`, `GET_RUNTIME_SNAPSHOT`, and the additive `GET_RUNTIME_OBSERVATION_V2`. Unknown commands and every trading or configuration mutation are rejected.
+Local IPC v1 connects the per-user Vincere Ninja Manager companion to an in-process NinjaTrader Add-On over a Windows named pipe. It is deliberately read-only. The allowlisted commands are `PING`, `GET_CAPABILITIES`, `GET_RUNTIME_SNAPSHOT`, `GET_RUNTIME_OBSERVATION_V2`, and the separate additive `GET_MUTATION_READINESS_PREFLIGHT`. Unknown commands and every trading or configuration mutation are rejected.
 
 `GET_RUNTIME_OBSERVATION_V2` adds the richer read-only observation surface without changing framing, authentication, named-pipe defaults, or protocol version. Existing v1 clients and the `GET_RUNTIME_SNAPSHOT` command remain compatible.
+
+`GET_MUTATION_READINESS_PREFLIGHT` is not Runtime-v2 and does not upgrade sequential Runtime-v2 scopes to complete. It returns a five-second, target-independent simulation safety baseline containing aggregate account/strategy/position/order counts and a keyed state digest. The Add-On requires two consecutive bounded samples with equal keyed digests; any source error or changed digest blocks the preflight. Because supported NinjaTrader APIs do not provide a demonstrated transaction across those collections, v1 reports `atomicity: not_guaranteed` and cannot authorize actuation. See `mutation-readiness-preflight-v1.md` for the exact limit.
 
 The initial integration must label snapshots `supervised_simulation`. Installing this source is not evidence that strategy `Sync` semantics, account classification, stable identity, or lifecycle mapping are correct for every client environment. Promotion to `authoritative_read_only` requires a recorded SIM acceptance matrix and an explicit protocol/configuration change.
 

@@ -198,6 +198,18 @@ function state(mutate?: (value: RuntimeObservationV2State) => void): RuntimeObse
   return value;
 }
 
+function sequentialBindingState(): RuntimeObservationV2State {
+  return state((value) => {
+    for (const scope of ["accounts", "connections", "strategies"] as const) {
+      value.collection.scopes[scope] = {
+        status: "partial",
+        itemCount: value.collection.scopes[scope].itemCount,
+        errors: [{ code: "CAPABILITY_UNSUPPORTED", retryable: false }],
+      };
+    }
+  });
+}
+
 function runtimeEvent(options: {
   state?: RuntimeObservationV2State;
   asOf?: string;
@@ -353,7 +365,7 @@ afterEach(async () => {
 
 describe("Blueprint assignment repository", () => {
   it("stages, binds the latest authoritative SIM evidence, and appends explicit approval", async () => {
-    await record();
+    await record(runtimeEvent({ state: sequentialBindingState() }));
     const staged = await stage();
     expect(staged.duplicate).toBe(false);
     expect(staged.stagedPreview).toMatchObject({ assignmentCount: 2, uniqueAccountCount: 2, expired: false });
@@ -370,7 +382,7 @@ describe("Blueprint assignment repository", () => {
       mappings: mappings(),
     })).rejects.toMatchObject({ code: "FORBIDDEN" });
     now = new Date(now.getTime() + 1_000);
-    await record();
+    await record(runtimeEvent({ state: sequentialBindingState() }));
     const approved = await repository.approveRevision(staff, {
       revisionRef: draft.revision.revisionRef,
       expectedVersion: 1,

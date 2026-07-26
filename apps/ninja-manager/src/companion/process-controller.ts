@@ -765,7 +765,10 @@ export class NinjaTraderProcessController {
     const runtimeState = state.observation.runtimeState ?? command.payload.runtimeState;
     const blockers: ProcessQuitBlockerCode[] = [];
     if (!state.observation.runtimeState) blockers.push("RUNTIME_STATE_STALE");
-    if (runtimeState.digest !== command.payload.runtimeState.digest) blockers.push("PROCESS_STATE_CHANGED");
+    if (
+      hashCanonicalPayload(runtimeState.summary)
+      !== hashCanonicalPayload(command.payload.runtimeState.summary)
+    ) blockers.push("PROCESS_STATE_CHANGED");
     const nowMs = validClock(now);
     const observedMs = Date.parse(runtimeState.observedAt);
     if (observedMs > nowMs || nowMs - observedMs > MAX_QUIT_RUNTIME_STATE_AGE_MS) {
