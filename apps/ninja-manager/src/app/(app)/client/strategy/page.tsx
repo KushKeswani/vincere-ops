@@ -15,10 +15,12 @@ import {
   type BlueprintRecentRevisionItem,
 } from "@/components/forms/blueprint-preview-form";
 import { buildBlueprintMappingEvidence } from "@/components/forms/blueprint-preview-view-model";
+import { LocalEvidenceNotice } from "@/components/evidence/local-evidence-notice";
 import { DeploymentForm } from "@/components/forms/deployment-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolveLocalEvidencePresentation } from "@/lib/presentation/local-evidence";
 
 export default async function ClientStrategyPage() {
   const user = await requireUser(["client"]);
@@ -33,6 +35,7 @@ export default async function ClientStrategyPage() {
   const localOnly = profile.mode === "LOCAL_ONLY";
   let mappingEvidence = buildBlueprintMappingEvidence(null);
   let selectedAgentId: string | null = null;
+  let selectedAgentVersion: string | null = null;
   let recentRevisions: BlueprintRecentRevisionItem[] = [];
   let revisionHistoryUnavailable: string | null = null;
   if (localOnly) {
@@ -54,6 +57,7 @@ export default async function ClientStrategyPage() {
         && agent.capabilities.includes("runtime.discovery"),
       ) ?? agents.find((agent) => agent.effectiveStatus === "online") ?? agents[0] ?? null;
       selectedAgentId = selectedAgent?.id ?? null;
+      selectedAgentVersion = selectedAgent?.agentVersion ?? null;
       const latest = selectedAgent
         && selectedAgent.effectiveStatus === "online"
         && selectedAgent.addonConnected === true
@@ -67,8 +71,13 @@ export default async function ClientStrategyPage() {
       };
     }
   }
+  const evidencePresentation = resolveLocalEvidencePresentation({
+    configuredClass: process.env.NINJA_MANAGER_EVIDENCE_CLASS,
+    agentVersion: selectedAgentVersion,
+  });
 
-  return <div className="space-y-8"><div><p className="text-sm text-primary">Blueprint workspace</p><h2 className="text-3xl font-semibold">Map algorithms to accounts</h2><p className="mt-2 text-muted-foreground">Import the operating blueprint, review account and algorithm assignments, save an immutable mapping draft, then approve it against fresh authoritative SIM evidence.</p></div>
+  return <div className="space-y-8"><div><p className="text-sm text-primary">Blueprint workspace</p><h2 className="text-3xl font-semibold">Map algorithms to accounts</h2><p className="mt-2 text-muted-foreground">Import the operating blueprint, review account and algorithm assignments, save an immutable mapping draft, then approve it against fresh Runtime-v2 SIM evidence. Approval remains local evidence and never authorizes NinjaTrader actuation.</p></div>
+    {localOnly && <LocalEvidenceNotice presentation={evidencePresentation} surface="blueprint" />}
     {localOnly && <Alert><ShieldCheck className="size-4" aria-hidden="true" /><AlertTitle>Local automation gate</AlertTitle><AlertDescription>This dashboard is local and login-free on 127.0.0.1. Live strategy enabling, connection reconnects, and recovery actions are still disabled until the NinjaTrader Add-On is installed and verified in SIM.</AlertDescription></Alert>}
     {mappingEvidence.accountOptions.length === 0 && <Alert><TriangleAlert className="size-4" /><AlertTitle>Authoritative account mapping is not ready</AlertTitle><AlertDescription>{mappingEvidence.mappingLockedReason}</AlertDescription></Alert>}
 

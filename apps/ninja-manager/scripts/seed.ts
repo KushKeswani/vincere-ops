@@ -9,6 +9,10 @@ import {
   readOnlyCommandEnvelopeSchema,
   runtimeStateVersion,
 } from "../src/lib/domain/runtime-contracts";
+import {
+  runtimeObservationV2StateDigest,
+  type RuntimeObservationV2State,
+} from "../src/lib/domain/runtime-observation-v2";
 import { parseDeploymentMode } from "../src/lib/deployment/contracts";
 import { NinjaRepository } from "../src/lib/repositories/ninja-repository";
 import { RuntimeRepository } from "../src/lib/repositories/runtime-repository";
@@ -35,6 +39,8 @@ const ids = {
   onlineSnapshot: "c2222222-2222-4222-8222-222222222222",
   onlineHeartbeat2: "c3333333-3333-4333-8333-333333333333",
   staleHeartbeat: "c4444444-4444-4444-8444-444444444444",
+  onlineObservationV2: "c5555555-5555-4555-8555-555555555555",
+  observationV2Payload: "c6666666-6666-4666-8666-666666666666",
   snapshotRecord: "d1111111-1111-4111-8111-111111111111",
   accountIdentity: "d2222222-2222-4222-8222-222222222222",
   accountObservation: "d3333333-3333-4333-8333-333333333333",
@@ -213,7 +219,7 @@ try {
     eventId: string;
     agentId: string;
     sequence: number;
-    eventType: "agent.heartbeat" | "runtime.snapshot";
+    eventType: "agent.heartbeat" | "runtime.snapshot" | "runtime.observation_v2";
     occurredAt: string;
     payload: Record<string, unknown>;
   }) => {
@@ -421,6 +427,125 @@ try {
       pendingEventCount: 0,
     },
   }));
+
+  if (deploymentMode === "LOCAL_ONLY") {
+    const partialScope = (itemCount: number) => ({
+      status: "partial" as const,
+      itemCount,
+      errors: [{ code: "CAPABILITY_UNSUPPORTED" as const, retryable: false }],
+    });
+    const observationState: RuntimeObservationV2State = {
+      process: null,
+      addon: {
+        addonRef: "addon_demo000000000001",
+        status: "connected",
+        health: "healthy",
+        version: "fixture-1.0.0",
+        ipcAuthenticated: true,
+        capabilities: ["GET_RUNTIME_OBSERVATION_V2"],
+      },
+      connections: [{
+        connectionRef: "conn_demo000000000001",
+        displayLabel: "Connection 1",
+        kind: "simulation",
+        providerCode: "FIXTURE_SIM",
+        status: "connected",
+        health: "healthy",
+        marketDataStatus: "unknown",
+        lastStateChangeAt: null,
+      }],
+      accounts: [{
+        accountRef: "acct_demo000000000001",
+        maskedIdentifier: "****4821",
+        identifierFingerprint: "hmac-sha256:" + "a".repeat(64),
+        displayLabel: "Simulation account 1",
+        classification: {
+          environment: "simulation",
+          authority: "authoritative",
+          source: "ninjatrader_simulation_account",
+        },
+        connectionRefs: ["conn_demo000000000001"],
+        status: "connected",
+      }],
+      strategies: [{
+        strategyRef: "strat_demo000000000001",
+        accountRef: "acct_demo000000000001",
+        displayLabel: "Strategy 1",
+        strategyTypeCode: "VincereSteady",
+        instrumentCode: "MNQ SEP26",
+        enabled: true,
+        runtimeState: "running",
+        synchronizationState: "synchronized",
+        operationalParameters: [],
+        lastStateChangeAt: null,
+      }],
+      positions: [],
+      orders: [],
+      executions: [],
+      pnl: [{
+        accountRef: "acct_demo000000000001",
+        sessionDate: finalHeartbeatTime.slice(0, 10),
+        daily: {
+          realized: { availability: "available", currency: "USD", amountMinor: 0, source: "ninjatrader_account_item" },
+          unrealized: { availability: "available", currency: "USD", amountMinor: 0, source: "ninjatrader_account_item" },
+          total: { availability: "available", currency: "USD", amountMinor: 0, source: "calculated_by_companion" },
+        },
+        nativeLifetime: {
+          availability: "unavailable",
+          currency: "USD",
+          amountMinor: null,
+          source: null,
+          reasonCode: "SOURCE_UNSUPPORTED",
+        },
+        managerObservedCumulative: {
+          value: {
+            availability: "unavailable",
+            currency: "USD",
+            amountMinor: null,
+            source: null,
+            reasonCode: "NOT_OBSERVED_YET",
+          },
+          observedSince: null,
+        },
+      }],
+      collection: {
+        overall: "partial",
+        scopes: {
+          process: partialScope(0),
+          addon: { status: "complete", itemCount: 1, errors: [] },
+          connections: partialScope(1),
+          accounts: partialScope(1),
+          strategies: partialScope(1),
+          positions: partialScope(0),
+          orders: partialScope(0),
+          executions: partialScope(0),
+          pnl: partialScope(1),
+        },
+      },
+    };
+    const observationPayload = {
+      protocolVersion: "runtime-observation/2.0" as const,
+      observationId: ids.observationV2Payload,
+      source: {
+        collector: "vps_companion_agent" as const,
+        authority: "ninjatrader_runtime" as const,
+        installationRef: "install_demo000000000001",
+        collectionSessionRef: "session_demo000000000001",
+      },
+      asOf: finalHeartbeatTime,
+      freshness: { status: "fresh" as const, ageMs: 0, maxAgeMs: 60_000 },
+      stateDigest: runtimeObservationV2StateDigest(observationState),
+      state: observationState,
+    };
+    await runtimeRepository.recordAgentEvent(onlineIdentity, buildEvent({
+      eventId: ids.onlineObservationV2,
+      agentId: ids.onlineAgent,
+      sequence: 4,
+      eventType: "runtime.observation_v2",
+      occurredAt: finalHeartbeatTime,
+      payload: observationPayload,
+    }));
+  }
 
   runtimeNow = new Date(seededAt.getTime() - 10 * 60 * 1000);
   const staleEnrollment = await runtimeRepository.enrollAgent(staffUser, {

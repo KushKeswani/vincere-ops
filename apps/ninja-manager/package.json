@@ -12,6 +12,7 @@
     "dev": "node scripts/next-runtime.mjs dev",
     "dev:central": "node scripts/next-runtime.mjs dev --mode CENTRAL_CONNECTED",
     "dev:local": "node scripts/next-runtime.mjs dev --mode LOCAL_ONLY",
+    "prototype:local": "node scripts/local-prototype.mjs",
     "build": "node scripts/next-runtime.mjs build-all",
     "build:all": "node scripts/next-runtime.mjs build-all",
     "build:central": "node scripts/next-runtime.mjs build --mode CENTRAL_CONNECTED",

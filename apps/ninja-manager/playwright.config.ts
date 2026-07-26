@@ -27,6 +27,7 @@ const demoEnvironment = {
   DEMO_CLIENT_PASSWORD: "VincereClient!2026",
   DEMO_EMPTY_STAFF_EMAIL: "empty-staff@vincere.local",
   DEMO_AGENT_TOKEN: demoAgentToken,
+  NINJA_MANAGER_EVIDENCE_CLASS: "FIXTURE_DEMO",
   NODE_ENV: "development",
 };
 

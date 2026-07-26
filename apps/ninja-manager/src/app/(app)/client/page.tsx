@@ -33,6 +33,7 @@ import {
   type LatestRuntimeSnapshot,
 } from "@/lib/repositories/runtime-repository";
 import { RuntimeDiscoveryForm } from "@/components/forms/runtime-discovery-form";
+import { LocalEvidenceNotice } from "@/components/evidence/local-evidence-notice";
 import { ProcessControlDashboard } from "@/components/process-control/process-control-dashboard";
 import {
   buildProcessControlDashboardModel,
@@ -42,6 +43,10 @@ import {
 import { LegacyRuntimeV1FallbackNotice } from "@/components/runtime-v2/legacy-runtime-v1-fallback-notice";
 import { RuntimeObservationV2Dashboard } from "@/components/runtime-v2/runtime-observation-dashboard";
 import { StatusBadge } from "@/components/status-badge";
+import {
+  resolveLocalEvidencePresentation,
+  type LocalEvidencePresentation,
+} from "@/lib/presentation/local-evidence";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +69,7 @@ interface LocalOperatorDashboardProps {
   incidentTitle: string | null;
   openIncidentCount: number;
   processControlModel: ProcessControlDashboardModel;
+  evidencePresentation: LocalEvidencePresentation;
 }
 
 function formatTimestamp(value: Date | null): string {
@@ -85,7 +91,14 @@ function LocalOperatorDashboard({
   incidentTitle,
   openIncidentCount,
   processControlModel,
+  evidencePresentation,
 }: LocalOperatorDashboardProps) {
+  const discoveryEnabled = Boolean(
+    selectedAgent
+    && selectedAgent.effectiveStatus === "online"
+    && selectedAgent.addonConnected === true
+    && selectedAgent.capabilities.includes("runtime.discovery"),
+  );
   if (observationV2) {
     return (
       <div className="space-y-8">
@@ -93,9 +106,13 @@ function LocalOperatorDashboard({
           <p className="text-sm text-primary">Local operator console</p>
           <h2 className="text-3xl font-semibold tracking-tight">NinjaTrader account manager</h2>
           <p className="mt-2 max-w-3xl text-muted-foreground">
-            Authoritative state from the durable companion and Add-On, plus separately gated NinjaTrader process requests.
+            Persisted evidence from the durable companion and Add-On path, plus separately gated NinjaTrader process requests.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Installation: <span className="font-medium text-foreground">{selectedAgent?.displayName ?? "No local installation"}</span>
           </p>
         </div>
+        <LocalEvidenceNotice presentation={evidencePresentation} surface="runtime" />
         {operationalPause && (
           <Alert variant="destructive">
             <AlertTriangle className="size-4" aria-hidden="true" />
@@ -115,17 +132,31 @@ function LocalOperatorDashboard({
           launchRequestId={randomUUID()}
           quitRequestId={randomUUID()}
         />
+        <Card>
+          <CardHeader>
+            <CardTitle>Read-only discovery</CardTitle>
+            <CardDescription>Queue a bounded refresh through the selected durable companion. This does not actuate NinjaTrader.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RuntimeDiscoveryForm
+              key={selectedAgent?.id ?? "no-agent"}
+              agentId={selectedAgent?.id ?? ""}
+              expectedStateVersion={null}
+              requestId={randomUUID()}
+              disabled={!discoveryEnabled}
+            />
+            {!discoveryEnabled && (
+              <p className="mt-2 text-xs text-destructive">
+                Discovery requires a current online heartbeat, a connected Add-On, and the runtime.discovery capability.
+              </p>
+            )}
+          </CardContent>
+        </Card>
         <RuntimeObservationV2Dashboard latest={observationV2} />
       </div>
     );
   }
 
-  const discoveryEnabled = Boolean(
-    selectedAgent
-    && selectedAgent.effectiveStatus === "online"
-    && selectedAgent.addonConnected === true
-    && selectedAgent.capabilities.includes("runtime.discovery"),
-  );
   const connections = new Map<string, { name: string; status: string; accountCount: number }>();
   for (const account of snapshot?.accounts ?? []) {
     const current = connections.get(account.connection_name);
@@ -159,6 +190,8 @@ function LocalOperatorDashboard({
           The screen reports only evidence received from that runtime path.
         </p>
       </div>
+
+      <LocalEvidenceNotice presentation={evidencePresentation} surface="runtime" />
 
       {snapshot && (
         <LegacyRuntimeV1FallbackNotice />
@@ -584,6 +617,10 @@ export default async function ClientDashboardPage() {
     const snapshot = selectedAgent && !observationV2
       ? await runtimeRepository.getLatestRuntimeSnapshot(user, selectedAgent.id)
       : null;
+    const evidencePresentation = resolveLocalEvidencePresentation({
+      configuredClass: process.env.NINJA_MANAGER_EVIDENCE_CLASS,
+      agentVersion: selectedAgent?.agentVersion,
+    });
     const processControlPreflight = evaluateProcessControlPreflight({
       agent: selectedAgent,
       latestRuntime: observationV2,
@@ -601,6 +638,7 @@ export default async function ClientDashboardPage() {
         incidentTitle={openIncidents[0]?.title ?? null}
         openIncidentCount={openIncidents.length}
         processControlModel={processControlModel}
+        evidencePresentation={evidencePresentation}
       />
     );
   }

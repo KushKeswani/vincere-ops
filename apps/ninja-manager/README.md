@@ -25,11 +25,22 @@ The CENTRAL_CONNECTED dashboard implements one database-backed simulated path:
 
 ## Local setup
 
-Requirements: Node.js 20.9+ and npm 10+.
+Requirements: the project-pinned Node.js version in `.node-version` and the npm version in `package.json`.
+
+For the fastest safe browser prototype, activate the pinned Node version and run:
+
+```bash
+npm ci
+npm run prototype:local
+```
+
+Open `http://127.0.0.1:3000`. The launcher forces `LOCAL_ONLY`, binds only to `127.0.0.1`, migrates and seeds the isolated `.data/local-prototype` PGlite database, and labels the resulting records as fixture/demo evidence. It does not select `.data/ninja-manager`, connect to NinjaTrader, install an Add-On, or perform NinjaTrader actuation. Stop it with `Ctrl+C`. Re-running the launcher reuses and repeatably seeds only that prototype database.
+
+For manual mode-specific setup:
 
 ```bash
 cp .env.example .env.local
-npm install
+npm ci
 npm run db:migrate
 npm run db:seed
 npm run dev:central

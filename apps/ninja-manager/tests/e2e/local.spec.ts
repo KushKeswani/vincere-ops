@@ -56,13 +56,18 @@ test("LOCAL_ONLY auto-enters the operator console and serves local routes withou
   await page.goto("/sign-in");
   await expect(page).toHaveURL(/\/client$/);
   await expect(page.getByRole("heading", { name: "NinjaTrader account manager" })).toBeVisible();
+  await expect(page.getByText("Fixture/demo evidence — not NinjaTrader state", { exact: true })).toBeVisible();
+  await expect(page.getByText(/This browser view performs no NinjaTrader actuation/)).toBeVisible();
   await expect(page.getByText("Primary SIM companion", { exact: true })).toBeVisible();
-  await expect(page.getByText("Supervised simulation evidence")).toBeVisible();
-  await expect(page.getByRole("cell", { name: "Simulation account 1" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "****4821" })).toHaveCount(2);
-  await expect(page.getByRole("cell", { name: "VincereSteady" })).toBeVisible();
+  await expect(page.getByText("NinjaTrader Runtime Observation v2")).toBeVisible();
+  await expect(page.getByText("Runtime evidence has limitations")).toBeVisible();
+  await expect(page.getByText(/Overall collection is partial/)).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Simulation account 1", exact: true })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "****4821", exact: true })).toBeVisible();
+  await expect(page.getByText("VincereSteady", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Queue read-only discovery" })).toBeEnabled();
-  await expect(page.getByText("Positions, orders, executions, realized/unrealized P&L")).toBeVisible();
+  await expect(page.getByText("Collection coverage", { exact: true })).toBeVisible();
+  await expect(page.getByText("Account P&L", { exact: true })).toBeVisible();
   await expect(page.getByText("Loopback dashboard · no cloud login")).toBeVisible();
   await expectNoSeriousAccessibilityViolations(page);
 
@@ -90,6 +95,8 @@ test("LOCAL_ONLY auto-enters the operator console and serves local routes withou
   }
 
   await page.goto("/client/strategy");
+  await expect(page.getByText("Fixture/demo evidence — not NinjaTrader state", { exact: true })).toBeVisible();
+  await expect(page.getByText(/do not authorize or actuate NinjaTrader/)).toBeVisible();
   await expect(page.getByText("Local automation gate")).toBeVisible();
   await expect(page.getByLabel("XLSX workbook")).toBeEnabled();
   await expect(page.getByRole("button", { name: "Preview and stage workbook" })).toBeEnabled();
