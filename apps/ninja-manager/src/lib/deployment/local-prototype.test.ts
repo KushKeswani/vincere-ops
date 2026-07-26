@@ -1,3 +1,6 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -29,7 +32,8 @@ describe("local prototype launcher environment", () => {
   });
 
   it("forces loopback LOCAL_ONLY and an isolated fixture database", () => {
-    const environment = buildLocalPrototypeEnvironment("/workspace/ninja-manager", {
+    const projectRoot = path.resolve("/workspace/ninja-manager");
+    const environment = buildLocalPrototypeEnvironment(projectRoot, {
       APP_URL: "https://unsafe.example",
       DATABASE_URL: "postgresql://not-selected.invalid/database",
       NINJA_MANAGER_MODE: "CENTRAL_CONNECTED",
@@ -39,14 +43,24 @@ describe("local prototype launcher environment", () => {
 
     expect(environment).toMatchObject({
       APP_URL: "http://127.0.0.1:3000",
-      DATABASE_URL: "file:///workspace/ninja-manager/.data/local-prototype",
       NINJA_MANAGER_BIND_HOST: "127.0.0.1",
       NINJA_MANAGER_EVIDENCE_CLASS: "FIXTURE_DEMO",
       NINJA_MANAGER_MODE: "LOCAL_ONLY",
       NEXT_DIST_DIR: ".next-local-prototype",
       PORT: "3000",
     });
-    expect(environment.DATABASE_URL).toContain(LOCAL_PROTOTYPE_DATABASE_DIRECTORY);
+    const databaseUrl = new URL(environment.DATABASE_URL);
+    expect(databaseUrl).toMatchObject({
+      protocol: "file:",
+      username: "",
+      password: "",
+      hostname: "",
+      search: "",
+      hash: "",
+    });
+    expect(path.normalize(fileURLToPath(databaseUrl))).toBe(
+      path.resolve(projectRoot, LOCAL_PROTOTYPE_DATABASE_DIRECTORY),
+    );
     expect(environment.DEMO_AGENT_TOKEN).toBeUndefined();
   });
 });
