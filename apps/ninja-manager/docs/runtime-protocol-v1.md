@@ -29,7 +29,7 @@ Mode selection, capability/authority profiles, provider ports, persisted install
 
 The managed LOCAL_ONLY `127.0.0.1` HTTP listener serves the dashboard only. It is not the local IPC shown in the target topology. The separately launched companion can bridge that dashboard API to authenticated local IPC after supervised installation, but this does not make LOCAL_ONLY runtime discovery authoritative.
 
-The shared domain now exposes explicit ports for identity, tenant directory, secret references, notifications, central synchronization, and transport. Mode-aware authorization, navigation, and actions consume a shared deployment profile; LOCAL_ONLY browser tests verify that central-only staff controls are absent and requests stay on the local origin. Concrete production adapters and a production outbound-only companion remain unimplemented.
+The shared domain now exposes explicit ports for identity, tenant directory, secret references, notifications, central synchronization, and transport. Mode-aware authorization, navigation, and actions consume a shared deployment profile; LOCAL_ONLY browser tests verify that central-only staff controls are absent and requests stay on the local origin. Concrete production adapters and production deployment/recovery of the implemented outbound-only companion remain incomplete.
 
 See architecture.md for the implemented authority/portability seams and remaining authority matrix, and production-readiness.md for the prerequisite gates.
 
@@ -49,7 +49,7 @@ VPS companion (initial read-only implementation; not installed/proven)
        -> authoritative NinjaTrader state in a later gated phase
 ~~~
 
-The companion is a transport and durability boundary; it must not invent NinjaTrader state. The future Add-On is the only component permitted to call documented NinjaTrader APIs and, after review, label a snapshot authoritative_read_only.
+The companion is a transport and durability boundary; it must not invent NinjaTrader state. The Add-On source is the only component permitted to call documented NinjaTrader APIs and may label observations authoritative only after supervised installation, review, and SIM reconciliation.
 
 The separate Vincere/Automation project may be consulted only as a read-only source of reusable operator and Add-On foundations. Reused logic must be intentionally consolidated into the companion or Add-On. Automation is not a runtime dependency, must not be modified by this work, and must not become a third control plane.
 
@@ -59,8 +59,8 @@ The separate Vincere/Automation project may be consulted only as a read-only sou
 |---|---|---|
 | Client or staff browser | Database-backed HTTP-only session cookie | Role- and organization-scoped dashboard operations |
 | Staff runtime operation | Staff session plus repository role and tenant checks | Inspect runtime evidence and enqueue supervised, read-only discovery; credential lifecycle exists at repository level but lacks a complete staff workflow |
-| Future VPS companion/current authenticated API fixture | Authorization: Bearer agent-token | Submit ordered events, poll only its own commands, and acknowledge only its own leased commands |
-| NinjaTrader Add-On | Future local IPC identity | No implementation or runtime authority exists yet |
+| Source VPS companion/current authenticated API fixture | Authorization: Bearer agent-token | Submit ordered events, poll only its own commands, and acknowledge only its own leased commands; production installation/recovery remains unverified |
+| NinjaTrader Add-On source | Authenticated same-user local IPC | Read-only v1/v2 source implementation exists; no deployed or supervised runtime authority exists yet |
 
 Organization, agent, credential, and protocol version are derived from the stored bearer credential, not request JSON. Browser sessions and agent credentials are separate and not interchangeable.
 
@@ -148,7 +148,7 @@ complete=true makes absence meaningful, including a valid empty inventory. Parti
 
 ### Sequence and replay
 
-The future companion must persist its next event sequence with its crash-safe outbox. Under a transaction and agent row lock, the server accepts exactly last_event_sequence + 1:
+The companion persists its next event sequence with its crash-safe outbox. Under a transaction and agent row lock, the server accepts exactly last_event_sequence + 1:
 
 - same event ID, sequence, and envelope hash: exact idempotent replay;
 - same event ID with different evidence: CONFLICT;
@@ -184,7 +184,7 @@ The semantic hash excludes retry-specific command/correlation IDs and timestamps
 
 ### Polling, integrity, ordering, and leases
 
-The dashboard poll handler implements the outbound-only contract: it authenticates the credential, expires overdue work, and selects queued work with row locks and SKIP LOCKED. Current tests emulate the caller; the future companion must poll outbound rather than accept inbound VPS connections.
+The dashboard poll handler implements the outbound-only contract: it authenticates the credential, expires overdue work, and selects queued work with row locks and SKIP LOCKED. The source companion polls outbound rather than accepting inbound VPS connections; deployment/network-policy proof remains pending.
 
 Before delivery the repository reparses the stored command and recomputes payload, semantic, and envelope hashes. A mismatch is not delivered: the command becomes indeterminate and an agent.command_integrity_failed audit event is written.
 
@@ -307,11 +307,11 @@ The repository now has explicit modes and capability/authority profiles, provide
 
 ### Local IPC
 
-Publish a separate versioned specification for endpoint ownership, authentication, ACLs, secure local binding, framing, correlation, payload limits, timeouts, retries, replay, backpressure, restart behavior, negotiation, error mapping, and evidence transfer. It must be local-only and must not expose a general remote-control port. No IPC transport is selected or implemented.
+Authenticated local IPC v1 now specifies same-user pipe ownership/ACLs, signed framing, correlation, payload limits, timeouts, clock/replay rejection, and typed errors. It is local-only and exposes no general remote-control port. Remaining production work is supervised installation, compatibility/upgrade policy, recovery/backpressure evidence, secret lifecycle, and Edith runtime acceptance.
 
 ### NinjaTrader Add-On
 
-Use only documented NinjaTrader APIs. Before authoritative_read_only is authorized, the Add-On must discover real accounts and strategies, generate stable opaque references without exporting raw identifiers, report account/connection and Enabled/Sync/runtime state, compute complete content-bound snapshots, obey platform threading/lifecycle rules, survive reconnects, and pass supervised SIM comparisons for empty, duplicate, disconnected, stale, large, and partial-read cases.
+Use only documented NinjaTrader APIs. Branch source discovers accounts, connections, strategies, positions, orders, executions, and supported P&L, then the companion generates stable opaque references without exporting raw identifiers. Runtime-v2 remains sequential and explicitly partial; it must never claim a complete atomic snapshot. Before authoritative_read_only is authorized, the Add-On must be installed/recompiled, obey platform threading/lifecycle rules, survive reconnects, and pass supervised SIM comparisons for empty, duplicate, disconnected, stale, large, and partial-read cases.
 
 Positions, orders, executions, reconciled P&L, post-action verification, SIM deployment, and risk enforcement require later gated work. No live action is authorized.
 

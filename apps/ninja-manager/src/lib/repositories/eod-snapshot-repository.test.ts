@@ -17,6 +17,8 @@ const otherOrgId = "10000000-0000-4000-8000-000000000002";
 const staffId = "20000000-0000-4000-8000-000000000001";
 const otherStaffId = "20000000-0000-4000-8000-000000000002";
 const clientId = "30000000-0000-4000-8000-000000000001";
+const clientRecordId = "31000000-0000-4000-8000-000000000001";
+const environmentId = "32000000-0000-4000-8000-000000000001";
 const agentId = "40000000-0000-4000-8000-000000000001";
 const secondAgentId = "40000000-0000-4000-8000-000000000002";
 const otherAgentId = "40000000-0000-4000-8000-000000000003";
@@ -273,9 +275,14 @@ function withFailingAuditWrites(client: DatabaseClient): DatabaseClient {
   };
 }
 
-async function enroll(targetUser: AuthenticatedUser, targetAgentId: string): Promise<AgentIdentity> {
+async function enroll(
+  targetUser: AuthenticatedUser,
+  targetAgentId: string,
+  targetEnvironmentId?: string,
+): Promise<AgentIdentity> {
   const enrollment = await runtimeRepository.enrollAgent(targetUser, {
     id: targetAgentId,
+    ...(targetEnvironmentId ? { environmentId: targetEnvironmentId } : {}),
     displayName: `Agent ${targetAgentId.slice(-4)}`,
     agentVersion: "1.0.0",
     protocolVersion: "1.0",
@@ -318,9 +325,17 @@ beforeEach(async () => {
     ].join(" "),
     [staffId, otherStaffId, clientId, orgId, otherOrgId],
   );
+  await database.query(
+    "INSERT INTO clients (id, organization_id, user_id, display_name, created_by) VALUES ($1, $2, $3, 'Client', $4)",
+    [clientRecordId, orgId, clientId, staffId],
+  );
+  await database.query(
+    "INSERT INTO environments (id, organization_id, client_id, vps_provider, vps_region, ninja_version) VALUES ($1, $2, $3, 'local', 'local', '8')",
+    [environmentId, orgId, clientRecordId],
+  );
   runtimeRepository = new RuntimeRepository(database, () => now);
   repository = new EodSnapshotRepository(database, () => now);
-  identity = await enroll(staff, agentId);
+  identity = await enroll(staff, agentId, environmentId);
 });
 
 afterEach(async () => {
@@ -406,6 +421,19 @@ describe("EOD snapshot repository", () => {
     await expect(repository.captureManualSnapshot(client, input)).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(await database.query("SELECT id FROM eod_snapshots")).toHaveLength(1);
     expect(await database.query("SELECT id FROM audit_events WHERE action = 'eod_snapshot.captured'")).toHaveLength(1);
+  });
+
+  it("rejects LOCAL_ONLY EOD capture for an agent not owned by the client", async () => {
+    const secondIdentity = await enroll(staff, secondAgentId);
+    const event = runtimeObservation(secondAgentId, 1);
+    await recordSource(secondIdentity, event);
+
+    await expect(repository.captureManualSnapshot(client, {
+      agentId: secondAgentId,
+      sourceEventId: event.eventId,
+      idempotencyKey: "eod:manual:foreign-agent:0001",
+    })).rejects.toMatchObject({ code: "AGENT_NOT_FOUND" });
+    expect(await database.query("SELECT id FROM eod_snapshots")).toHaveLength(0);
   });
 
   it("enforces server-owned freshness, declared-age consistency, chronology, and future rejection", async () => {

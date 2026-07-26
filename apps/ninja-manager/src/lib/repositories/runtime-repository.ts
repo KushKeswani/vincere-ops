@@ -597,6 +597,13 @@ export class RuntimeRepository {
 
   async listAgents(user: AuthenticatedUser): Promise<AgentInstallation[]> {
     this.requireRuntimeReader(user);
+    const accessJoin = user.role === "client"
+      ? [
+        "JOIN environments environment ON environment.id = agent.environment_id AND environment.organization_id = agent.organization_id",
+        "JOIN clients client ON client.id = environment.client_id AND client.organization_id = agent.organization_id",
+      ].join(" ")
+      : "";
+    const accessPredicate = user.role === "client" ? "AND client.user_id = $2" : "";
     const rows = await this.database.query<{
       id: string;
       display_name: string;
@@ -623,14 +630,15 @@ export class RuntimeRepository {
       process_unavailable_reason: string | null;
     }>(
       [
-        "SELECT id, display_name, status, agent_version, protocol_version, capabilities,",
-        "last_heartbeat_at, last_contact_at, addon_connected, addon_version, pending_event_count,",
-        "last_event_sequence, environment_id, process_evidence_event_id, process_evidence_sequence,",
-        "process_observed_at, process_evidence_received_at, process_installation_ref, process_state_version,",
-        "process_state, process_ref, process_matched_count, process_unavailable_reason",
-        "FROM agent_installations WHERE organization_id = $1 ORDER BY display_name",
+        "SELECT agent.id, agent.display_name, agent.status, agent.agent_version, agent.protocol_version, agent.capabilities,",
+        "agent.last_heartbeat_at, agent.last_contact_at, agent.addon_connected, agent.addon_version, agent.pending_event_count,",
+        "agent.last_event_sequence, agent.environment_id, agent.process_evidence_event_id, agent.process_evidence_sequence,",
+        "agent.process_observed_at, agent.process_evidence_received_at, agent.process_installation_ref, agent.process_state_version,",
+        "agent.process_state, agent.process_ref, agent.process_matched_count, agent.process_unavailable_reason",
+        "FROM agent_installations agent", accessJoin,
+        "WHERE agent.organization_id = $1", accessPredicate, "ORDER BY agent.display_name",
       ].join(" "),
-      [user.organizationId],
+      user.role === "client" ? [user.organizationId, user.id] : [user.organizationId],
     );
     const now = this.clock().getTime();
     return rows.map((row) => {
@@ -698,6 +706,9 @@ export class RuntimeRepository {
 
   async getLatestRuntimeSnapshot(user: AuthenticatedUser, agentId: string): Promise<LatestRuntimeSnapshot | null> {
     this.requireRuntimeReader(user);
+    if (user.role === "client") {
+      await this.requireAgentForRuntimeUser(this.database, user, agentId);
+    }
     const events = await this.database.query<{
       id: string;
       event_id: string;
@@ -753,6 +764,9 @@ export class RuntimeRepository {
     agentId: string,
   ): Promise<LatestRuntimeObservationV2 | null> {
     this.requireRuntimeReader(user);
+    if (user.role === "client") {
+      await this.requireAgentForRuntimeUser(this.database, user, agentId);
+    }
     const events = await this.database.query<{
       protocol_version: string;
       event_id: string;
@@ -809,7 +823,7 @@ export class RuntimeRepository {
   async listCommands(user: AuthenticatedUser, agentId: string): Promise<CommandSummary[]> {
     this.requireRuntimeCommander(user);
     return this.database.transaction(async (transaction) => {
-      await this.requireAgentForStaff(transaction, user, agentId);
+      await this.requireAgentForRuntimeUser(transaction, user, agentId);
       await this.expireCommands(
         transaction,
         { agentId, organizationId: user.organizationId },
@@ -864,7 +878,7 @@ export class RuntimeRepository {
     const envelopeHash = commandDeliveryEnvelopeHash(command, payloadHash, semanticHash);
 
     return this.database.transaction(async (transaction) => {
-      await this.requireAgentForStaff(transaction, user, command.agentId);
+      await this.requireAgentForRuntimeUser(transaction, user, command.agentId);
       const agentRows = await transaction.query<{ capabilities: unknown }>(
         "SELECT capabilities FROM agent_installations WHERE id = $1 AND organization_id = $2",
         [command.agentId, user.organizationId],
@@ -1510,6 +1524,31 @@ export class RuntimeRepository {
       "SELECT id, status FROM agent_installations WHERE id = $1 AND organization_id = $2" + (lock ? " FOR UPDATE" : ""),
       [agentId, user.organizationId],
     );
+    if (!rows[0]) throw new RuntimeServiceError("AGENT_NOT_FOUND", "Authorized agent installation not found");
+    return rows[0];
+  }
+
+  private async requireAgentForRuntimeUser(
+    database: Pick<DatabaseTransaction, "query">,
+    user: AuthenticatedUser,
+    agentId: string,
+    lock = false,
+  ): Promise<{ id: string; status: string }> {
+    const rows = user.role === "client"
+      ? await database.query<{ id: string; status: string }>(
+        [
+          "SELECT agent.id, agent.status FROM agent_installations agent",
+          "JOIN environments environment ON environment.id = agent.environment_id AND environment.organization_id = agent.organization_id",
+          "JOIN clients client ON client.id = environment.client_id AND client.organization_id = agent.organization_id",
+          "WHERE agent.id = $1 AND agent.organization_id = $2 AND client.user_id = $3",
+          lock ? "FOR UPDATE OF agent" : "",
+        ].join(" "),
+        [agentId, user.organizationId, user.id],
+      )
+      : await database.query<{ id: string; status: string }>(
+        "SELECT id, status FROM agent_installations WHERE id = $1 AND organization_id = $2" + (lock ? " FOR UPDATE" : ""),
+        [agentId, user.organizationId],
+      );
     if (!rows[0]) throw new RuntimeServiceError("AGENT_NOT_FOUND", "Authorized agent installation not found");
     return rows[0];
   }

@@ -4,7 +4,11 @@ import { createDatabaseClient, type DatabaseClient, type DatabaseTransaction } f
 import { migrateDatabase } from "@/lib/db/migrate";
 import { auditEvidenceHash } from "@/lib/domain/audit-evidence";
 import type { AuthenticatedUser } from "@/lib/domain/types";
-import { IdempotencyConflictError, NinjaRepository } from "./ninja-repository";
+import {
+  EmailIdentityConflictError,
+  IdempotencyConflictError,
+  NinjaRepository,
+} from "./ninja-repository";
 
 const ids = {
   org: "10000000-0000-4000-8000-000000000001",
@@ -99,6 +103,21 @@ beforeEach(async () => {
 });
 
 describe("NinjaRepository golden path", () => {
+  it("fails LOCAL_ONLY operator selection closed when more than one client is active", async () => {
+    await expect(repository.findLocalOperatorUser()).resolves.toMatchObject({ id: ids.clientUser });
+    const peerUserId = "30000000-0000-4000-8000-000000000002";
+    const peerClientId = "40000000-0000-4000-8000-000000000002";
+    await database.query(
+      "INSERT INTO users (id, organization_id, email, name, password_hash, role) VALUES ($1, $2, 'peer@test.local', 'Peer', 'hash', 'client')",
+      [peerUserId, ids.org],
+    );
+    await database.query(
+      "INSERT INTO clients (id, organization_id, user_id, display_name, created_by) VALUES ($1, $2, $3, 'Peer', $4)",
+      [peerClientId, ids.org, peerUserId, ids.staff],
+    );
+    await expect(repository.findLocalOperatorUser()).resolves.toBeNull();
+  });
+
   it("completes setup, approval, deployment, incident resolution, and audit", async () => {
     await repository.completeOnboarding(clientUser, "555-0100", "America/Chicago", nextRequestId());
     await repository.addAccountAndEnvironment(clientUser, {
@@ -210,6 +229,18 @@ describe("NinjaRepository golden path", () => {
       "kill_switch.enabled",
       "kill_switch.disabled",
     ]));
+  });
+
+  it("keeps email identity globally unique across organizations", async () => {
+    const before = await database.query("SELECT id FROM users");
+    await expect(repository.createClient(otherStaff, {
+      name: "Conflicting Client",
+      email: "CLIENT@TEST.LOCAL",
+      timezone: "America/New_York",
+      temporaryPassword: "StrongPassword!2026",
+    }, nextRequestId())).rejects.toBeInstanceOf(EmailIdentityConflictError);
+    expect(await database.query("SELECT id FROM users")).toHaveLength(before.length);
+    expect(await repository.findUserByEmail("client@test.local")).toMatchObject({ id: ids.clientUser });
   });
 
   it("rolls back a kill-switch change when audit evidence cannot be recorded", async () => {

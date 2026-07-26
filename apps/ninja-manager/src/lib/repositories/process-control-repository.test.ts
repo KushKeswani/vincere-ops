@@ -26,6 +26,8 @@ const otherOrganizationId = "10000000-0000-4000-8000-000000000002";
 const staffId = "20000000-0000-4000-8000-000000000001";
 const otherStaffId = "20000000-0000-4000-8000-000000000002";
 const clientId = "20000000-0000-4000-8000-000000000003";
+const clientRecordId = "21000000-0000-4000-8000-000000000003";
+const environmentId = "22000000-0000-4000-8000-000000000003";
 const agentId = "30000000-0000-4000-8000-000000000001";
 const otherAgentId = "30000000-0000-4000-8000-000000000002";
 const credentialId = "40000000-0000-4000-8000-000000000001";
@@ -302,13 +304,21 @@ beforeEach(async () => {
     [staffId, otherStaffId, clientId, organizationId, otherOrganizationId],
   );
   await database.query(
+    "INSERT INTO clients (id, organization_id, user_id, display_name, created_by) VALUES ($1, $2, $3, 'Client', $4)",
+    [clientRecordId, organizationId, clientId, staffId],
+  );
+  await database.query(
+    "INSERT INTO environments (id, organization_id, client_id, vps_provider, vps_region, ninja_version) VALUES ($1, $2, $3, 'local', 'local', '8')",
+    [environmentId, organizationId, clientRecordId],
+  );
+  await database.query(
     [
       "INSERT INTO agent_installations",
-      "(id, organization_id, display_name, status, agent_version, protocol_version, capabilities, created_by) VALUES",
-      "($1, $3, 'Edith', 'online', '1.0.0', '1.0', '[]'::jsonb, $5),",
-      "($2, $4, 'Other', 'online', '1.0.0', '1.0', '[]'::jsonb, $6)",
+      "(id, organization_id, environment_id, display_name, status, agent_version, protocol_version, capabilities, created_by) VALUES",
+      "($1, $3, $7, 'Edith', 'online', '1.0.0', '1.0', '[]'::jsonb, $5),",
+      "($2, $4, NULL, 'Other', 'online', '1.0.0', '1.0', '[]'::jsonb, $6)",
     ].join(" "),
-    [agentId, otherAgentId, organizationId, otherOrganizationId, staffId, otherStaffId],
+    [agentId, otherAgentId, organizationId, otherOrganizationId, staffId, otherStaffId, environmentId],
   );
   await database.query(
     [
@@ -384,6 +394,37 @@ describe("ProcessControlRepository", () => {
       idempotencyKey: first.key,
       commandType: "LAUNCH_NINJATRADER",
     })).rejects.toThrow("Authorized agent installation not found");
+  });
+
+  it("rejects LOCAL_ONLY process control for an agent owned by another client", async () => {
+    const peerUserId = "20000000-0000-4000-8000-000000000004";
+    const peerClientId = "21000000-0000-4000-8000-000000000004";
+    const peerEnvironmentId = "22000000-0000-4000-8000-000000000004";
+    const peerAgentId = "30000000-0000-4000-8000-000000000004";
+    await database.query(
+      "INSERT INTO users (id, organization_id, email, name, password_hash, role) VALUES ($1, $2, 'peer@test.local', 'Peer', 'hash', 'client')",
+      [peerUserId, organizationId],
+    );
+    await database.query(
+      "INSERT INTO clients (id, organization_id, user_id, display_name, created_by) VALUES ($1, $2, $3, 'Peer', $4)",
+      [peerClientId, organizationId, peerUserId, staffId],
+    );
+    await database.query(
+      "INSERT INTO environments (id, organization_id, client_id, vps_provider, vps_region, ninja_version) VALUES ($1, $2, $3, 'local', 'local', '8')",
+      [peerEnvironmentId, organizationId, peerClientId],
+    );
+    await database.query(
+      "INSERT INTO agent_installations (id, organization_id, environment_id, display_name, status, agent_version, protocol_version, capabilities, created_by) VALUES ($1, $2, $3, 'Peer', 'online', '1.0.0', '1.0', '[]'::jsonb, $4)",
+      [peerAgentId, organizationId, peerEnvironmentId, staffId],
+    );
+
+    await expect(repository.getCommandSafetyCounts(client, peerAgentId)).rejects.toMatchObject({
+      code: "AGENT_NOT_FOUND",
+    });
+    await expect(repository.createApproval(client, {
+      ...launchApprovalInput(),
+      agentId: peerAgentId,
+    })).rejects.toMatchObject({ code: "AGENT_NOT_FOUND" });
   });
 
   it("does not disclose another operator's idempotent process command", async () => {

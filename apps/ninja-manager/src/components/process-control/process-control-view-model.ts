@@ -255,7 +255,7 @@ export function evaluateProcessControlPreflight(input: {
       const observedAt = latestRuntime.observation.asOf;
       quit = {
         ready: true,
-        reason: "Fresh complete SIM-only evidence is safe for one queued graceful-quit request.",
+        reason: "Fresh usable sequential SIM-only evidence permits a queued readiness check only. Graceful-close actuation remains unavailable because atomic mutation readiness has not been proven.",
         approvalInput: {
           agentId: agent.id,
           commandType: "REQUEST_NINJATRADER_QUIT",

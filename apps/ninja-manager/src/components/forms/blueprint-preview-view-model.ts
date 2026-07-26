@@ -50,24 +50,38 @@ export function buildBlueprintMappingEvidence(
 
   const connections = new Map(state.connections.map((connection) => [connection.connectionRef, connection]));
   const accountOptions = state.accounts
-    .filter((account) => account.classification.authority === "authoritative")
-    .map((account): BlueprintAccountOption => {
+    .filter((account) => (
+      account.classification.environment === "simulation"
+      && account.classification.authority === "authoritative"
+      && account.classification.source === "ninjatrader_simulation_account"
+      && account.status === "connected"
+      && account.connectionRefs.length > 0
+    ))
+    .flatMap((account): BlueprintAccountOption[] => {
       const linkedConnections = account.connectionRefs
         .map((connectionRef) => connections.get(connectionRef))
         .filter((connection) => connection !== undefined);
-      return {
+      if (
+        linkedConnections.length !== account.connectionRefs.length
+        || linkedConnections.some((connection) => (
+          connection.kind === "unknown"
+          || connection.providerCode === null
+          || connection.status !== "connected"
+          || connection.health !== "healthy"
+          || ["stale", "unavailable", "unknown"].includes(connection.marketDataStatus)
+        ))
+      ) return [];
+      return [{
         accountRef: account.accountRef,
         displayLabel: account.displayLabel,
         maskedIdentifier: account.maskedIdentifier,
         classificationLabel: `Authoritative ${account.classification.environment}`,
-        connectionSummary: linkedConnections.length > 0
-          ? linkedConnections.map((connection) => `${connection.displayLabel} (${connection.status})`).join(", ")
-          : `Account ${account.status}; no linked connection reported`,
-      };
+        connectionSummary: linkedConnections.map((connection) => `${connection.displayLabel} (${connection.status})`).join(", "),
+      }];
     })
     .sort((left, right) => left.displayLabel.localeCompare(right.displayLabel));
 
   return accountOptions.length > 0
     ? { accountOptions, mappingLockedReason: null }
-    : { accountOptions: [], mappingLockedReason: "The fresh Runtime-v2 observation contains no authoritatively classified accounts." };
+    : { accountOptions: [], mappingLockedReason: "The fresh Runtime-v2 observation contains no eligible authoritative connected simulation accounts." };
 }

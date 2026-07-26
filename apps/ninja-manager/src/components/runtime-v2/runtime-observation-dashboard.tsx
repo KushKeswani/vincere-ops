@@ -129,6 +129,7 @@ export function RuntimeObservationV2Dashboard({ latest }: RuntimeObservationV2Da
                 <div><dt className="text-muted-foreground">Health</dt><dd className="mt-1"><StatusBadge status={model.process.health} /></dd></div>
                 <div><dt className="text-muted-foreground">Version</dt><dd className="mt-1 font-medium">{model.process.version}</dd></div>
                 <div><dt className="text-muted-foreground">Started</dt><dd className="mt-1 font-medium">{model.process.startedAt}</dd></div>
+                <div><dt className="text-muted-foreground">Process observed</dt><dd className="mt-1 font-medium">{model.process.observedAt}</dd></div>
               </dl>
             )}
           </CardContent>

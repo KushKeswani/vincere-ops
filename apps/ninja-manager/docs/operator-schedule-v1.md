@@ -1,6 +1,6 @@
 # Operator weekly schedule v1
 
-`operator-schedule/1.0` is a domain contract, not a scheduler or trading actuator. It defines the only weekly schedule that may later issue exact supervised-SIM commands through the durable companion queue.
+`operator-schedule/1.0` is a domain contract plus repository persistence boundary, not a running scheduler or trading actuator. Settings revisions, one-week authorities, deterministic occurrences, state transitions, idempotency, tenant checks, and audit evidence are implemented. No executor leases due occurrences and no schedule currently issues a companion or NinjaTrader command.
 
 ## Defaults and authority
 
@@ -40,4 +40,6 @@ Custom wall times that are nonexistent or ambiguous during an Eastern DST transi
 
 ## Integration boundary
 
-Persistence and execution layers must store the settings revision, weekly authority, occurrence key/status, and audit transitions. Before leasing a mutation they must run the safety evaluation against fresh authoritative NinjaTrader state. Scheduled strategy commands must retain their own short TTL, idempotency, exact expected state, and verified before/after evidence from `sim-control/1.0`; this schedule contract does not weaken those controls.
+The repository stores the settings revision, weekly authority, occurrence key/status, and audit transitions. Creating or arming these records is non-actuating and may use only fresh Runtime-v2 account, connection, and strategy scopes whose sole partial limitation is the declared non-atomic `CAPABILITY_UNSUPPORTED` collection mode. That evidence remains partial and cannot authorize execution.
+
+A future executor must re-authorize the exact due occurrence and run a genuinely atomic just-in-time safety preflight before leasing any mutation. The current bounded consecutive-stability preflight reports `atomicity: not_guaranteed`, so it cannot satisfy that gate. Scheduled strategy commands must retain their own short TTL, idempotency, exact expected state, and verified before/after evidence from `sim-control/1.0`; this schedule contract does not weaken those controls.

@@ -32,6 +32,12 @@ The fresh checkpoint on 2026-07-14 used an uncommitted `main` worktree one commi
 
 This is dashboard, fixture, and PGlite evidence. Real managed PostgreSQL, production LOCAL_ONLY storage/identity, companion, IPC, Add-On, and supervised visible NinjaTrader SIM evidence remain separate gates.
 
+### Reconciliation/P4 checkpoint — 2026-07-26
+
+On `reconcile/ninja-manager-edith-20260722`, the proportional P0–P4 source checkpoint records typecheck and lint passing; 64 unit files with 560 passed / 1 skipped; all 15 checksummed migrations and repeatable seed state in both modes; both production builds; the LOCAL_ONLY production listener gate; and 8/8 Playwright tests. The browser prototype uses only the isolated `.data/local-prototype` fixture store and visibly labels demo/local evidence. P4 also verifies globally unambiguous sign-in email identity, fail-closed ambiguous LOCAL_ONLY identity, and client-owned agent scoping for Runtime-v2 reads/queues, process control, and EOD capture.
+
+Runtime-v2 sequential inventory remains partial by contract. The source companion, authenticated local IPC, Runtime-v2 Add-On implementation, exact process identity, forced-v1/v2 doctor selection, Blueprint approval, EOD capture, and weekly schedule persistence have automated source evidence. None is installed or reconciled on Edith. The separate mutation-readiness command reports `atomicity: not_guaranteed`; its actuation-authority helper always returns false, so it is evidence of a fail-closed seam rather than a verified control outcome.
+
 ### LOCAL_ONLY runtime visibility checkpoint — 2026-07-19
 
 This uncommitted checkpoint changes only the web/runtime repository boundary and its tests. It does not install or start a companion, install or compile a NinjaTrader Add-On, invoke `Vincere.Operator.exe`, send IPC, or perform a NinjaTrader mutation.
@@ -95,8 +101,8 @@ The LOCAL_ONLY Operator route now reads minimized runtime DTOs from the durable 
 | DB-TX-01 | Database transaction callback commits or rolls back as one unit | Automated on PGlite | src/lib/db/client.test.ts | Repeat against managed PostgreSQL |
 | DB-CONFIG-01 | Production fails closed without PostgreSQL and sslmode=verify-full | Automated configuration check | production database configuration tests in src/lib/db/client.test.ts | Establish an actual verified TLS connection |
 | DB-MIG-01 | Populated 0002 upgrades safely to hardened 0003 constraints | Automated on PGlite | src/lib/db/runtime-migration-upgrade.test.ts | Rehearse with sanitized production-scale copy and managed PostgreSQL |
-| DB-MIG-02 | Applied migrations are checksum-bound and drift/legacy ledgers fail closed | Automated for drift/legacy; missing-file branch implemented | `src/lib/db/migrate.test.ts` proves unchanged rerun, changed-file rejection, and refusal to bless a filename-only legacy ledger; the runner code also rejects an applied filename missing from disk; `npm run db:verify` checks all five filenames/checksums | Named missing-file branch test, explicit trusted-baseline procedure, global/cross-process migration lock, and managed-PostgreSQL rehearsal |
-| DB-MODE-01 | Every migration and repeatable demo seed produce the correct installation mode | Automated on fresh PGlite stores | `npm run db:verify` applies all five checksummed migrations and seed twice, then asserts one mode-correct installation and stable fixture counts for CENTRAL_CONNECTED and LOCAL_ONLY | Atomic production seeding policy and managed-PostgreSQL rehearsal |
+| DB-MIG-02 | Applied migrations are checksum-bound and drift/legacy ledgers fail closed | Automated for drift/legacy; missing-file branch implemented | `src/lib/db/migrate.test.ts` proves unchanged rerun, changed-file rejection, and refusal to bless a filename-only legacy ledger; the runner code also rejects an applied filename missing from disk; `npm run db:verify` checks all 14 filenames/checksums | Named missing-file branch test, explicit trusted-baseline procedure, global/cross-process migration lock, and managed-PostgreSQL rehearsal |
+| DB-MODE-01 | Every migration and repeatable demo seed produce the correct installation mode | Automated on fresh PGlite stores | `npm run db:verify` applies all 15 checksummed migrations and seed twice, then asserts one mode-correct installation and stable fixture counts for CENTRAL_CONNECTED and LOCAL_ONLY | Atomic production seeding policy and managed-PostgreSQL rehearsal |
 | DB-PG-01 | MVCC, row locks, SKIP LOCKED, partial unique index, and TLS work on the production engine | Pending | None in this workspace; Docker/psql/managed disposable DB unavailable | Required real PostgreSQL suite |
 | BUILD-01 | Production start selects only a fresh, matching mode artifact | Automated contract plus recorded build | The schema-v2 validator binds mode, directory, timestamp, and Next.js `BUILD_ID`; tests cover output-directory mapping, fresh/reused build IDs, and stale manifest-`BUILD_ID` rejection | Add targeted wrong-mode/wrong-directory assertions; deployment-system artifact provenance/signing and production rollout proof |
 
@@ -171,9 +177,9 @@ Existing simulated incidents are not evidence for these cross-mode case controls
 
 | ID | Outcome | Status | Evidence required before promotion |
 |---|---|---|---|
-| NT-DISC-01 | Add-On discovers authoritative accounts/strategies | Dashboard/queue boundary implemented; external Add-On deployment unverified; manual SIM required | Enroll and run the durable companion, install/compile the Add-On, then compare visible NinjaTrader SIM inventory with event/API/database evidence across reconnect/empty/large/partial cases |
+| NT-DISC-01 | Add-On discovers authoritative runtime inventory | Companion/IPC/Add-On source and dashboard boundary implemented; external deployment unverified; manual SIM required | Run the separately approved forced-v1 doctor, then separately install/compile v2 and compare visible NinjaTrader SIM inventory with event/API/database evidence across reconnect/empty/large/partial cases |
 | NT-DEPLOY-01 | Approved SIM strategy is Enabled, Sync=true, running, and green | Not implemented; manual SIM pending | Exact approved version, command/ack, Add-On post-state, visible NinjaTrader state, rollback |
-| NT-PNL-01 | P&L is reconciled | Not implemented | Execution/position/order/P&L contracts plus independent reconciliation evidence |
+| NT-PNL-01 | P&L is reconciled | Source contract/persistence/UI implemented; manual reconciliation pending | Supervised Add-On observations plus independent session/date/source comparison; unsupported realized/native metrics must remain unavailable |
 | NT-RISK-01 | Risk shadow mode | Not implemented | Deterministic evaluation against reconciled data with no mutations |
 | NT-RISK-02 | SIM risk enforcement | Not implemented | Separate approval, SIM post-action evidence, failure/rollback exercises |
 | NT-LIVE-01 | Live enabling/orders/cancel/flatten/account mutation/risk enforcement | Prohibited | No implementation or test may perform these actions in the current phase |

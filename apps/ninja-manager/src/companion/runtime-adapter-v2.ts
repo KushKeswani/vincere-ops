@@ -73,6 +73,7 @@ const companionOpaqueProcessSchema = z.discriminatedUnion("status", [
     health: z.literal("healthy"),
     version: softwareVersionSchema.nullable(),
     startedAt: isoTimestampSchema,
+    observedAt: isoTimestampSchema,
   }).strict(),
   z.object({
     processRef: z.null(),
@@ -80,6 +81,7 @@ const companionOpaqueProcessSchema = z.discriminatedUnion("status", [
     health: z.literal("offline"),
     version: z.null(),
     startedAt: z.null(),
+    observedAt: isoTimestampSchema,
   }).strict(),
 ]);
 
@@ -633,6 +635,7 @@ export function adaptAddonRuntimeObservationV2(
         health: raw.process.health,
         version: raw.process.version,
         startedAt: raw.process.startedAt,
+        observedAt: raw.observedAt,
       },
     addon: raw.addon === null ? null : {
       addonRef: raw.addon.localId === null ? null : opaqueRef(identitySecret, "addon", "addon-ref-v2", raw.addon.localId),
@@ -695,6 +698,9 @@ export function assembleNinjaTraderAddonRuntimeObservationV2(
 ) {
   const addon = rawNinjaTraderAddonSnapshotV2Schema.parse(addonInput);
   const metadata = companionRuntimeObservationV2MetadataSchema.parse(companionMetadataInput);
+  if (metadata.process && Date.parse(metadata.process.observedAt) > Date.parse(metadata.receivedAt)) {
+    throw new Error("Process evidence cannot be observed after final companion receipt");
+  }
 
   const accountLocalIds = addon.accounts.map((account) => account.localId);
   const uniqueAccountLocalIds = new Set(accountLocalIds);

@@ -66,6 +66,7 @@ export interface RuntimeObservationV2DisplayModel {
     health: string;
     version: string;
     startedAt: string;
+    observedAt: string;
   };
   addon: null | {
     status: string;
@@ -279,13 +280,17 @@ export function buildRuntimeObservationV2DisplayModel(
   const { observation } = input;
   const state = observation.state;
   const asOfMs = Date.parse(observation.asOf);
-  const liveAgeMs = Number.isNaN(asOfMs) ? null : Math.max(0, now.getTime() - asOfMs);
-  const freshness = observation.freshness.status === "unknown"
+  const rawLiveAgeMs = Number.isNaN(asOfMs) ? null : now.getTime() - asOfMs;
+  const liveAgeMs = rawLiveAgeMs === null || rawLiveAgeMs < 0 ? null : rawLiveAgeMs;
+  const futureObservation = rawLiveAgeMs !== null && rawLiveAgeMs < 0;
+  const freshness = observation.freshness.status === "unknown" || futureObservation
     ? "unknown"
     : observation.freshness.status === "stale"
       || liveAgeMs === null
       || liveAgeMs > observation.freshness.maxAgeMs ? "stale" : "fresh";
-  const freshnessDetail = liveAgeMs === null
+  const freshnessDetail = futureObservation
+    ? "Observation timestamp is in the future; check clock synchronization"
+    : liveAgeMs === null
     ? "Age cannot be measured from the reported timestamp"
     : `${formatDuration(liveAgeMs)} old · threshold ${formatDuration(observation.freshness.maxAgeMs)}`;
 
@@ -399,6 +404,7 @@ export function buildRuntimeObservationV2DisplayModel(
       health: state.process.health,
       version: state.process.version ?? "Not reported",
       startedAt: formatTimestamp(state.process.startedAt),
+      observedAt: formatTimestamp(state.process.observedAt ?? null),
     },
     addon: state.addon === null ? null : {
       status: state.addon.status,

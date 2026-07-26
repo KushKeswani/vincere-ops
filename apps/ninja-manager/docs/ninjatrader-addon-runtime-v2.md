@@ -2,7 +2,7 @@
 
 ## Status and boundary
 
-GET_RUNTIME_OBSERVATION_V2 is an additive authenticated local-pipe command. Existing framing, authentication, PING, and GET_RUNTIME_SNAPSHOT payloads are unchanged; GET_CAPABILITIES adds only the new read-only command. No trading, order, strategy, connection, process, configuration, or credential mutation is added.
+GET_RUNTIME_OBSERVATION_V2 is an additive authenticated local-pipe command. Existing framing, authentication, PING, and GET_RUNTIME_SNAPSHOT payloads are unchanged; branch-source GET_CAPABILITIES advertises this command and the separate read-only GET_MUTATION_READINESS_PREFLIGHT command. No trading, order, strategy, connection, process, configuration, or credential mutation is added.
 
 The response protocol is ninjatrader-addon-snapshot/2.0. The Add-On emits only Add-On-owned evidence:
 
@@ -25,7 +25,7 @@ The companion's process observation is privacy-separated from the Add-On snapsho
 
 ## Scope truth
 
-The runtime collections are captured sequentially from a changing NinjaTrader process. Except for the Add-On handler itself, every scope is therefore partial with CAPABILITY_UNSUPPORTED even when every source row validates. This is intentional: the observation is display and reconciliation evidence, not an atomic safety preflight. Any future strategy, connection, or process mutation must perform a separate just-in-time in-process preflight against the exact authorized account and expected state.
+The runtime collections are captured sequentially from a changing NinjaTrader process. Except for the Add-On handler itself, every scope is therefore partial with CAPABILITY_UNSUPPORTED even when every source row validates. This is intentional: the observation is display and reconciliation evidence, not an atomic safety preflight. Non-mutating Blueprint and weekly-authority persistence may accept only this narrowly defined partial shape when no additional source/integrity error exists; they do not promote it to complete. The separate GET_MUTATION_READINESS_PREFLIGHT seam takes two bounded consecutive samples and emits one aggregate summary only when their keyed digests match, but it truthfully reports `atomicity: not_guaranteed` and deliberately cannot authorize strategy, connection, or process actuation.
 
 | Scope | Evidence retained | Additional partial/unavailable cases |
 | --- | --- | --- |

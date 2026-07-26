@@ -207,6 +207,7 @@ function separatedObservation(): {
         health: "healthy",
         version: "8.1.7.2",
         startedAt: "2026-07-21T08:00:00.000-04:00",
+        observedAt: "2026-07-21T08:31:00.100-04:00",
       },
       processCollectionScope: statusOnly(raw.collection.scopes.process),
       managerObservedCumulativeByAccountLocalId,
@@ -422,6 +423,17 @@ describe("runtime observation v2 adapter", () => {
 
     expect(assembleNinjaTraderAddonRuntimeObservationV2(addon, metadata, secret))
       .toEqual(adaptAddonRuntimeObservationV2({ ...raw, process: null }, secret, metadata.process));
+  });
+
+  it("rejects companion process evidence observed after final receipt", () => {
+    const { addon, metadata } = separatedObservation();
+    expect(() => assembleNinjaTraderAddonRuntimeObservationV2(addon, {
+      ...metadata,
+      process: metadata.process && {
+        ...metadata.process,
+        observedAt: "2026-07-21T08:31:00.251-04:00",
+      },
+    }, Buffer.alloc(32, 12))).toThrow(/observed after final companion receipt/);
   });
 
   it("requires manager cumulative keys to exactly match the Add-On account inventory", () => {

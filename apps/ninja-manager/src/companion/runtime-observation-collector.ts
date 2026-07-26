@@ -135,12 +135,13 @@ export class RuntimeObservationV2Collector {
     });
     const addon = rawNinjaTraderAddonSnapshotV2Schema.parse(ipcResult.payload);
 
-    // Receipt time is intentionally sampled only after the complete authenticated response arrives.
-    const receivedAt = receiptTimestamp(this.dependencies.now());
+    // Preserve the Add-On receipt boundary for dependent local providers, then
+    // sample the final receipt only after all companion-owned evidence exists.
+    const addonReceivedAt = receiptTimestamp(this.dependencies.now());
     const processEvidence = companionProcessObservationV2Schema.parse(
       await this.dependencies.processProvider.observe({
         installationLocalId: this.config.installationLocalId,
-        receivedAt,
+        receivedAt: addonReceivedAt,
       }),
     );
     const accountLocalIds = Object.freeze(addon.accounts.map((account) => account.localId));
@@ -150,8 +151,9 @@ export class RuntimeObservationV2Collector {
         collectionSessionLocalId: this.config.collectionSessionLocalId,
         accountLocalIds,
         runtimeObservedAt: addon.observedAt,
-        receivedAt,
+        receivedAt: addonReceivedAt,
       });
+    const receivedAt = receiptTimestamp(this.dependencies.now());
 
     const metadata = companionRuntimeObservationV2MetadataSchema.parse({
       observationId: z.uuid().parse(this.dependencies.uuid()),

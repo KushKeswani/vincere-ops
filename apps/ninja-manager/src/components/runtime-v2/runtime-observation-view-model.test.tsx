@@ -23,6 +23,7 @@ function observation(asOf = "2026-07-21T12:00:00.000Z"): RuntimeObservationV2 {
       health: "healthy",
       version: "8.1.7.2",
       startedAt: "2026-07-21T11:00:00.000Z",
+      observedAt: "2026-07-21T12:00:00.100Z",
     },
     addon: {
       addonRef: "addon_abcdefghijklmnop",
@@ -130,6 +131,16 @@ describe("Runtime Observation v2 display model", () => {
     expect(model.freshnessDetail).toContain("5 min old");
   });
 
+  it("never presents a future observation timestamp as fresh", () => {
+    const model = buildRuntimeObservationV2DisplayModel({
+      observation: observation("2026-07-21T12:00:01.000Z"),
+      receivedAt: "2026-07-21T12:00:01.500Z",
+    }, new Date("2026-07-21T12:00:00.000Z"));
+
+    expect(model.freshness).toBe("unknown");
+    expect(model.freshnessDetail).toContain("timestamp is in the future");
+  });
+
   it("excludes opaque references, fingerprints, raw process ids, and envelope identifiers", () => {
     const model = buildRuntimeObservationV2DisplayModel({ observation: observation(), receivedAt: "2026-07-21T12:00:01.000Z" });
     const rendered = JSON.stringify(model);
@@ -161,6 +172,7 @@ describe("Runtime Observation v2 display model", () => {
     expect(markup).toContain("source unsupported");
     expect(markup).toContain("Evidence provenance");
     expect(markup).toContain("State integrity digest");
+    expect(markup).toContain("Process observed");
     expect(markup).toContain("ninjatrader runtime");
   });
 });

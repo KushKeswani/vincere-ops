@@ -39,7 +39,7 @@ The diagram below is the required product topology, not a claim that the compani
 
 The companion is a durability and transport boundary, not an alternate source of NinjaTrader truth. The future in-process Add-On is the only component permitted to use documented NinjaTrader APIs and produce reviewed authoritative runtime observations.
 
-No production companion or deployed NinjaTrader Add-On exists yet. An initial read-only companion, authenticated local IPC v1, secure per-user setup scripts, and offline-compiled Add-On source now exist under a supervised-simulation authority label. They have not been installed or reconciled inside NinjaTrader. The managed dashboard HTTP listener remains distinct from Add-On IPC. Production packaging, credential lifecycle, recovery monitoring, controlled mode migration, and authoritative-read promotion do not exist.
+No production-packaged companion or deployed NinjaTrader Add-On exists yet. A read-only companion, authenticated local IPC v1, secure per-user setup scripts, Runtime-v2/process-control source integration, and Add-On source exist under a supervised-simulation authority label. They have not been installed/recompiled or reconciled inside NinjaTrader. The managed dashboard HTTP listener remains distinct from Add-On IPC. Production packaging, credential lifecycle, recovery monitoring, controlled mode migration, and authoritative-read promotion do not exist.
 
 ## Shared core and required mode adapters
 
@@ -166,7 +166,7 @@ LOCAL_ONLY currently uses the shared database-backed session implementation with
 
 ### Companion identity
 
-The implemented dashboard-side agent API boundary uses a hashed, expiring, rotatable, revocable bearer credential. Tenant and agent identity are derived from the credential. Current tests emulate the caller; a future companion will poll outbound and may access only its own event, command-delivery, and acknowledgement paths.
+The implemented dashboard-side agent API boundary uses a hashed, expiring, rotatable, revocable bearer credential. Tenant and agent identity are derived from the credential. The source companion polls outbound and may access only its own event, command-delivery, and acknowledgement paths; production deployment/recovery and supervised Edith evidence remain pending.
 
 Production still requires verified TLS termination, secure one-time credential delivery, OS-backed storage, rate limiting, and a decision on request signing/mTLS. No inbound VPS listener is authorized.
 
@@ -208,7 +208,7 @@ The schema models organizations, users, sessions, clients, trading accounts, env
 
 PGlite provides embedded PostgreSQL semantics for development and automated tests. Production configuration currently rejects PGlite, requires a PostgreSQL URL, and requires sslmode=verify-full in both modes. That is not a selected production LOCAL_ONLY storage adapter. A real managed PostgreSQL concurrency/TLS suite has not run in this workspace.
 
-The migration runner records SHA-256 checksums and refuses a changed or missing applied file and a legacy filename-only ledger without an explicitly trusted baseline. All five current migrations and both mode-specific fixture passes are verified on fresh PGlite stores. Cross-process/global migration locking and execution against managed PostgreSQL remain pending.
+The migration runner records SHA-256 checksums and refuses a changed or missing applied file and a legacy filename-only ledger without an explicitly trusted baseline. All 15 migrations landed through P4 and both mode-specific fixture passes are verified on fresh PGlite stores. Cross-process/global migration locking and execution against managed PostgreSQL remain pending.
 
 ### Deterministic strategy recommendation
 
@@ -216,7 +216,7 @@ The MVP selects only from approved catalog entries and generates bounded configu
 
 ### Simulated connectors and runtime protocol
 
-OperationsConnector remains a simulated health boundary for NinjaTrader, VPS, Discord, GHL, and n8n. The runtime protocol currently provides the dashboard-side agent API and durable queue foundation for a future companion/Add-On. Protocol 1.0 has no mutation commands, the staff UI exposes read-only discovery, and current authority is supervised simulation.
+OperationsConnector remains a simulated health boundary for NinjaTrader, VPS, Discord, GHL, and n8n. The runtime protocol provides the dashboard-side agent API and durable queues consumed by the source companion; authenticated local IPC and Add-On source provide the local read-only boundary. Protocol 1.0 has no trading mutation commands, and current authority remains supervised simulation until installation and Edith reconciliation. Separate process-control source exists but is opt-in, undeployed, and unable to actuate graceful quit because its preflight truthfully reports non-atomic evidence.
 
 ### Auditable safety controls
 

@@ -862,13 +862,24 @@ export class ProcessControlRepository {
     agentId: string,
     lock = false,
   ): Promise<void> {
-    const rows = await transaction.query<{ id: string }>(
-      [
-        "SELECT id FROM agent_installations WHERE id = $1 AND organization_id = $2 AND status <> 'disabled'",
-        lock ? "FOR UPDATE" : "",
-      ].join(" "),
-      [agentId, user.organizationId],
-    );
+    const rows = user.role === "client"
+      ? await transaction.query<{ id: string }>(
+        [
+          "SELECT agent.id FROM agent_installations agent",
+          "JOIN environments environment ON environment.id = agent.environment_id AND environment.organization_id = agent.organization_id",
+          "JOIN clients client ON client.id = environment.client_id AND client.organization_id = agent.organization_id",
+          "WHERE agent.id = $1 AND agent.organization_id = $2 AND client.user_id = $3 AND agent.status <> 'disabled'",
+          lock ? "FOR UPDATE OF agent" : "",
+        ].join(" "),
+        [agentId, user.organizationId, user.id],
+      )
+      : await transaction.query<{ id: string }>(
+        [
+          "SELECT id FROM agent_installations WHERE id = $1 AND organization_id = $2 AND status <> 'disabled'",
+          lock ? "FOR UPDATE" : "",
+        ].join(" "),
+        [agentId, user.organizationId],
+      );
     if (!rows[0]) throw new RuntimeServiceError("AGENT_NOT_FOUND", "Authorized agent installation not found");
   }
 

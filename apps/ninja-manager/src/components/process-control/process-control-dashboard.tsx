@@ -29,7 +29,7 @@ function ProcessControlRequestForm({
   reason,
 }: ProcessControlRequestFormProps) {
   const confirmation = commandType === "LAUNCH_NINJATRADER" ? "LAUNCH NINJATRADER" : "QUIT NINJATRADER";
-  const label = commandType === "LAUNCH_NINJATRADER" ? "Launch NinjaTrader" : "Gracefully quit NinjaTrader";
+  const label = commandType === "LAUNCH_NINJATRADER" ? "Launch NinjaTrader" : "Graceful quit readiness check";
   const [typedConfirmation, setTypedConfirmation] = useState("");
   const [state, action] = useActionState(queueProcessControlAction, initialActionState);
   const descriptionId = `process-${commandType.toLowerCase()}-reason`;
@@ -65,7 +65,7 @@ function ProcessControlRequestForm({
         variant={commandType === "REQUEST_NINJATRADER_QUIT" ? "destructive" : "default"}
         disabled={!ready || !agentId || typedConfirmation !== confirmation}
       >
-        {commandType === "LAUNCH_NINJATRADER" ? "Queue launch" : "Queue graceful quit"}
+        {commandType === "LAUNCH_NINJATRADER" ? "Queue launch" : "Queue quit readiness check"}
       </SubmitButton>
     </form>
   );
@@ -118,7 +118,8 @@ export function ProcessControlDashboard({
           No executable path, process identity, runtime digest, account identifier, safety count, password, force-kill,
           order, position, strategy, or connection instruction is accepted from the browser.
           Browser readiness is only an approval preview; the companion must obtain a separate authenticated just-in-time
-          mutation-readiness preflight immediately before any graceful-close request, or the request remains blocked.
+          mutation-readiness preflight immediately before any graceful-close request. The current preflight cannot prove
+          atomic readiness, so every queued quit readiness check remains blocked before the operating-system call.
         </p>
       </CardContent>
     </Card>

@@ -24,6 +24,8 @@ const otherOrgId = "10000000-0000-4000-8000-000000000002";
 const staffId = "20000000-0000-4000-8000-000000000001";
 const otherStaffId = "20000000-0000-4000-8000-000000000002";
 const clientId = "30000000-0000-4000-8000-000000000001";
+const clientRecordId = "31000000-0000-4000-8000-000000000001";
+const environmentId = "32000000-0000-4000-8000-000000000001";
 const agentId = "40000000-0000-4000-8000-000000000001";
 const originalDeploymentEnvironment = {
   mode: process.env.NINJA_MANAGER_MODE,
@@ -106,9 +108,18 @@ beforeEach(async () => {
     ].join(" "),
     [staffId, otherStaffId, clientId, orgId, otherOrgId],
   );
+  await database.query(
+    "INSERT INTO clients (id, organization_id, user_id, display_name, created_by) VALUES ($1, $2, $3, 'Client', $4)",
+    [clientRecordId, orgId, clientId, staffId],
+  );
+  await database.query(
+    "INSERT INTO environments (id, organization_id, client_id, vps_provider, vps_region, ninja_version) VALUES ($1, $2, $3, 'local', 'local', '8')",
+    [environmentId, orgId, clientRecordId],
+  );
   repository = new RuntimeRepository(database, () => now);
   const enrollment = await repository.enrollAgent(staff, {
     id: agentId,
+    environmentId,
     displayName: "Client VPS 1",
     agentVersion: "1.0.0",
     protocolVersion: "1.0",
@@ -396,6 +407,7 @@ function runtimeObservationV2(
 function command(
   value: number,
   overrides: {
+    agentId?: string;
     idempotencyKey?: string;
     commandId?: string;
     correlationId?: string;
@@ -411,7 +423,7 @@ function command(
     protocolVersion: "1.0",
     commandId: overrides.commandId ?? uuid("60000000", value),
     correlationId: overrides.correlationId ?? uuid("61000000", value),
-    agentId,
+    agentId: overrides.agentId ?? agentId,
     idempotencyKey: overrides.idempotencyKey ?? "discover:agent:request:" + value,
     commandType: "DISCOVER_RUNTIME_STATE",
     issuedAt,
@@ -955,6 +967,43 @@ describe("RuntimeRepository credentials and event evidence", () => {
     await expect(repository.listCommands(client, agentId)).resolves.toMatchObject([
       { commandType: "DISCOVER_RUNTIME_STATE", status: "queued" },
     ]);
+  });
+
+  it("scopes LOCAL_ONLY agent inventory and commands to the owning client", async () => {
+    const otherClientUserId = "30000000-0000-4000-8000-000000000002";
+    const otherClientRecordId = "31000000-0000-4000-8000-000000000002";
+    const otherEnvironmentId = "32000000-0000-4000-8000-000000000002";
+    const otherAgentId = "40000000-0000-4000-8000-000000000002";
+    await database.query(
+      "INSERT INTO users (id, organization_id, email, name, password_hash, role) VALUES ($1, $2, 'peer@test.local', 'Peer', 'hash', 'client')",
+      [otherClientUserId, orgId],
+    );
+    await database.query(
+      "INSERT INTO clients (id, organization_id, user_id, display_name, created_by) VALUES ($1, $2, $3, 'Peer', $4)",
+      [otherClientRecordId, orgId, otherClientUserId, staffId],
+    );
+    await database.query(
+      "INSERT INTO environments (id, organization_id, client_id, vps_provider, vps_region, ninja_version) VALUES ($1, $2, $3, 'local', 'local', '8')",
+      [otherEnvironmentId, orgId, otherClientRecordId],
+    );
+    await database.query(
+      "INSERT INTO agent_installations (id, organization_id, environment_id, display_name, agent_version, protocol_version, capabilities, created_by) VALUES ($1, $2, $3, 'Peer VPS', '1.0.0', '1.0', $4::jsonb, $5)",
+      [otherAgentId, orgId, otherEnvironmentId, JSON.stringify(["runtime.discovery"]), staffId],
+    );
+
+    await expect(repository.listAgents(client)).resolves.toMatchObject([{ id: agentId }]);
+    await expect(repository.getLatestRuntimeSnapshot(client, otherAgentId)).rejects.toMatchObject({
+      code: "AGENT_NOT_FOUND",
+    });
+    await expect(repository.getLatestRuntimeObservationV2(client, otherAgentId)).rejects.toMatchObject({
+      code: "AGENT_NOT_FOUND",
+    });
+    await expect(repository.listCommands(client, otherAgentId)).rejects.toMatchObject({
+      code: "AGENT_NOT_FOUND",
+    });
+    await expect(repository.enqueueReadOnlyCommand(client, command(71, {
+      agentId: otherAgentId,
+    }))).rejects.toMatchObject({ code: "AGENT_NOT_FOUND" });
   });
 
   it("leases queued commands durably and redelivers the same command after a lost lease", async () => {

@@ -8,7 +8,7 @@ Machine: **Edith** (the only approved NinjaTrader host). Account: **Sim101** onl
 
 The v2 discovery pipeline is source-complete on all three tiers (C# Add-On, local IPC, companion), but the Add-On **binary currently deployed on Edith is still read-only v1** (`PING`, `GET_CAPABILITIES`, `GET_RUNTIME_SNAPSHOT`). So:
 
-- **Step A** — a genuinely read-only bring-up against the *current v1* Add-On yields **accounts + strategies (+ enabled/sync state) + per-account connection status** only. No writes, no install.
+- **Step A** — a genuinely read-only bring-up against the *current v1* Add-On proves authenticated pipe reachability, the command allowlist, Add-On version, collection mode, and aggregate account/strategy counts. No writes, no install. It does not print account rows or strategy state.
 - **Step B** — full M2 discovery (connections inventory, positions, working/completed orders, executions, unrealized daily P&L, per-scope Add-On health) requires **installing + recompiling the updated Add-On source in NinjaTrader** — a write step needing its own approval and a maintenance window. (Daily *realized* P&L and *native lifetime* P&L remain intentionally `SOURCE_UNSUPPORTED` even after install.)
 
 These are two separate approvals. Step A can proceed without Step B.
@@ -17,7 +17,7 @@ These are two separate approvals. Step A can proceed without Step B.
 
 ## STEP A — Read-only bring-up against the deployed v1 Add-On (no install, no writes)
 
-**Exact action:** start the companion in read-only "doctor" mode with an explicit v1 selection so it performs ONE local-IPC read from the already-running Add-On and prints a summary. Nothing is posted, installed, recompiled, connected, enabled, or mutated.
+**Exact action:** start one companion "doctor" invocation with an explicit v1 selection. It performs two authenticated local-IPC reads (`GET_CAPABILITIES`, then `GET_RUNTIME_SNAPSHOT`) from the already-running Add-On and prints a privacy-minimized aggregate summary. Nothing is posted, installed, recompiled, connected, enabled, or mutated.
 
 ```powershell
 powershell -NoProfile -File .\scripts\windows\Start-VincereNinjaManagerCompanion.ps1 -Mode Doctor -DoctorProtocol V1
@@ -28,7 +28,7 @@ powershell -NoProfile -File .\scripts\windows\Start-VincereNinjaManagerCompanion
 - **Preconditions:** IPC secret present at `%LOCALAPPDATA%\Vincere\NinjaManager\secrets\ipc-secret.bin`; companion enrolled (`enroll-local-companion`) — enrollment writes only the local companion config + secret, no NT contact.
 - **Safety checks:** confirm NinjaTrader is on Sim101 and `OrdersGrid=0`/`PositionsGrid=0` before and after; the Add-On declares `read_only_supervised_simulation` authority and has no mutating command in its dispatch surface.
 - **Rollback / stop condition:** none needed (read-only); stop the doctor process if anything is unexpected. No state was changed to roll back.
-- **Success evidence:** the forced-v1 doctor prints the v1 snapshot — accounts (masked), strategies with enabled/sync state, connection status — proving the companion → local-IPC → deployed Add-On chain works read-only end to end.
+- **Success evidence:** the forced-v1 doctor prints the allowlisted commands, Add-On version, collection mode, and aggregate account/strategy counts, proving the companion → local-IPC → deployed Add-On read path works. Visible Sim101, enabled/sync, and connection-state reconciliation require a separately reviewed privacy-safe evidence step; this doctor output alone does not prove them.
 
 **Approval requested for Step A:** run the read-only companion doctor against the current Edith Add-On. No install, no writes.
 

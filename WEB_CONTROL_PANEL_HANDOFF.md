@@ -1,5 +1,7 @@
 # Vincere Web Control Panel — Handoff (2026-07-21)
 
+> **LEGACY AUTOMATION HANDOFF — READ-ONLY REFERENCE.** This file describes the noncanonical `Vincere.Web`/`Vincere.Core` Automation control plane. It is not the current Ninja Manager architecture, roadmap, startup guide, or safety authority. The canonical product is `apps/ninja-manager`; use `apps/ninja-manager/docs/project-head-status.md`, `apps/ninja-manager/README.md`, and their linked runbooks. Do not run the live-control commands below or modify the preserved Automation directories for current Ninja Manager work.
+
 Handoff for the next agent (Codex) picking up the browser-based NinjaTrader control panel.
 Read `AGENT_HANDOFF.md` first (repo handoff policy + the new "Web Control Panel" section), then this file.
 

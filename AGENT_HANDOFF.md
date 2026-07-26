@@ -1,5 +1,7 @@
 # Vincere Ninja Manager Agent Handoff
 
+> **LEGACY AUTOMATION HANDOFF — READ-ONLY REFERENCE.** This document describes the older WPF/Automation control plane and is not current Ninja Manager project memory or implementation authority. The canonical product is `apps/ninja-manager`; use `apps/ninja-manager/docs/project-head-status.md`, `apps/ninja-manager/README.md`, and the referenced canonical runbooks. Do not execute the live/UI-automation actions below or modify the preserved Automation directories as part of current Ninja Manager work.
+
 Date: 2026-05-28
 Repo: vincere-ops
 VPS workspace: `C:\Users\Administrator\Documents\Projects\Vincere\vincere-ops`
@@ -7,7 +9,7 @@ Baseline verified commit: `878a9a5` or newer
 
 ## Agent Handoff Policy
 
-Every agent must treat this file as the persistent project memory.
+Historical policy only: agents working on the preserved Automation project treated this file as persistent project memory. Current Ninja Manager work must use the canonical documents named in the banner above.
 
 At the start of every session:
 

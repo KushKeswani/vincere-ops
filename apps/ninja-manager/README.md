@@ -4,10 +4,10 @@ Vincere Ninja Manager is a secure client and staff operations dashboard that tur
 
 One shared application supports two explicit deployment modes:
 
-- `CENTRAL_CONNECTED`: client and staff portal policy, tenant-scoped staff controls, runtime fleet discovery, and an outbound-only future companion boundary.
+- `CENTRAL_CONNECTED`: client and staff portal policy, tenant-scoped staff controls, runtime fleet discovery, and an outbound-only companion boundary.
 - `LOCAL_ONLY`: client-only dashboard policy on the Windows VPS, central sync/remote delivery/staff-fleet controls disabled, and an exact `127.0.0.1` listener enforced by the managed launcher.
 
-The mode/capability/authority profiles, adapter interfaces, portability schema, both-mode UI behavior, dashboard agent API, and durable queue are implemented foundations. The repository now also contains an initial read-only companion, authenticated local IPC v1, and an offline-compiled NinjaTrader Add-On source. Those components remain `supervised_simulation`: they have not been installed, compiled inside NinjaTrader, or reconciled against a supervised SIM session. Production identity/MFA, centralized secrets retrieval, sync transport/inbox processing, operational cases, mutation commands, and production packaging remain incomplete.
+The mode/capability/authority profiles, adapter interfaces, portability schema, both-mode UI behavior, dashboard agent API, durable queues, read-only companion, authenticated local IPC v1, and NinjaTrader Add-On source are implemented foundations. Runtime-v2 fixture ingestion, Blueprint preview/mapping/approval, immutable EOD capture, weekly schedule persistence, exact process observation, and an opt-in process-control runner also exist in source. These components remain `supervised_simulation`: they have not been installed, compiled inside NinjaTrader, or reconciled against a supervised SIM session. Production MFA, client-issued central support-grant enforcement on detailed runtime reads, centralized secrets retrieval, sync transport/inbox processing, operational cases, scheduler/strategy actuators, production packaging, and a genuinely atomic mutation preflight remain incomplete.
 
 The CENTRAL_CONNECTED dashboard implements one database-backed simulated path:
 
@@ -96,17 +96,17 @@ The installer refuses while NinjaTrader is running, when the detected version is
 Then start NinjaTrader disconnected or in an approved SIM-only configuration, open **New > NinjaScript Editor**, press **F5**, and resolve any NinjaScript compile error before proceeding. Do not connect a live account, enable a strategy, or approve an order-changing prompt for this read-only acceptance test. Once compilation succeeds, verify the authenticated pipe and sanitized snapshot:
 
 ```powershell
-powershell -NoProfile -File .\scripts\windows\Start-VincereNinjaManagerCompanion.ps1 -Mode Doctor
+powershell -NoProfile -File .\scripts\windows\Start-VincereNinjaManagerCompanion.ps1 -Mode Doctor -DoctorProtocol V1
 ```
 
-`Doctor` prints only Add-On version, allowlisted commands, collection mode, and counts. It does not post events or expose account identifiers. After the visible NinjaTrader accounts/strategies have been reconciled with those counts in SIM, start one dashboard exchange or the continuous companion:
+The explicit `V1` selection is required for the Add-On currently deployed on Edith. `Doctor` prints only Add-On version, allowlisted commands, collection mode, and counts. It does not post events or expose account identifiers. After the visible NinjaTrader accounts/strategies have been reconciled with those counts in SIM, start one dashboard exchange or the continuous companion:
 
 ```powershell
 powershell -NoProfile -File .\scripts\windows\Start-VincereNinjaManagerCompanion.ps1 -Mode Once
 powershell -NoProfile -File .\scripts\windows\Start-VincereNinjaManagerCompanion.ps1 -Mode Run
 ```
 
-The Add-On allowlist is exactly `PING`, `GET_CAPABILITIES`, and `GET_RUNTIME_SNAPSHOT`. Snapshots remain labeled `supervised_simulation`. See [local-ipc-v1.md](docs/local-ipc-v1.md) for authentication, privacy, replay, and authority details.
+The Add-On currently deployed on Edith allows exactly `PING`, `GET_CAPABILITIES`, and `GET_RUNTIME_SNAPSHOT`. Branch source adds two authenticated read-only commands: `GET_RUNTIME_OBSERVATION_V2` for sequential display/reconciliation evidence and `GET_MUTATION_READINESS_PREFLIGHT` for a bounded consecutive-stability summary. The latter reports `atomicity: not_guaranteed` and cannot authorize actuation. Snapshots remain labeled `supervised_simulation`. See [local-ipc-v1.md](docs/local-ipc-v1.md) for authentication, privacy, replay, and authority details.
 
 Set `NINJA_MANAGER_MODE` in `.env.local` to exactly `CENTRAL_CONNECTED` or `LOCAL_ONLY`. The `dev` and `start` launchers consume the validated host directly, reject command-line hostname overrides, and accept exactly `NINJA_MANAGER_BIND_HOST=127.0.0.1` in LOCAL_ONLY. Production requires an explicit mode; the generic development default remains CENTRAL_CONNECTED. CENTRAL_CONNECTED also defaults to loopback in this no-public-deployment phase and permits an explicit deployment host only through configuration.
 
@@ -147,7 +147,7 @@ APP_URL=https://ninja.example.com
 NODE_ENV=production
 ```
 
-Migrations are in `migrations/`. Five migrations are currently present: 0004 adds product-installation mode, stable/versioned portable record state, outbox/inbox/conflict evidence, secret references, and origin-aware audit metadata; 0005 adds the canonical audit-subject/evidence invariants and completed product-idempotency ledger fields. The runner records a SHA-256 checksum for every migration and fails closed if an applied file is missing, changed, or represented by a legacy filename-only ledger without an explicitly trusted baseline. `npm run db:verify` proves all five checksums, repeatable demo migration/seeding, and mode-specific installation state on fresh PGlite stores. The seed remains a non-transactional fixture tool. No global migration lock, managed-PostgreSQL execution, or production LOCAL_ONLY storage adapter has been proven in this workspace.
+Migrations are in `migrations/`. The landed P0–P4 source contains 15 checksummed migrations, covering the initial product, runtime security/delivery, deployment portability, foundation integrity, Runtime-v2 observations, process-control queue/FIFO/process heartbeat evidence, EOD snapshots, credential provenance, Blueprint assignment revisions, support OTP grants, weekly schedule persistence, and globally unambiguous case-insensitive sign-in email identity. The runner records a SHA-256 checksum for every migration and fails closed if an applied file is missing, changed, or represented by a legacy filename-only ledger without an explicitly trusted baseline. The recorded P4 `npm run db:verify` proves all 15 checksums, repeatable demo migration/seeding, and mode-specific installation state on fresh PGlite stores. The seed remains a non-transactional fixture tool. No global migration lock, managed-PostgreSQL execution, or production LOCAL_ONLY storage adapter has been proven in this workspace.
 
 ## Safety boundaries
 

@@ -207,6 +207,7 @@ try {
 
   const onlineEnrollment = await runtimeRepository.enrollAgent(staffUser, {
     id: ids.onlineAgent,
+    environmentId: ids.environment,
     displayName: "Primary SIM companion",
     agentVersion: "fixture-1.0.0",
     protocolVersion: "1.0",
@@ -550,6 +551,7 @@ try {
   runtimeNow = new Date(seededAt.getTime() - 10 * 60 * 1000);
   const staleEnrollment = await runtimeRepository.enrollAgent(staffUser, {
     id: ids.staleAgent,
+    environmentId: ids.environment,
     displayName: "Stale companion",
     agentVersion: "fixture-1.0.0",
     protocolVersion: "1.0",
@@ -578,6 +580,7 @@ try {
   runtimeNow = seededAt;
   await runtimeRepository.enrollAgent(staffUser, {
     id: ids.offlineAgent,
+    environmentId: ids.environment,
     displayName: "Offline companion",
     agentVersion: "fixture-1.0.0",
     protocolVersion: "1.0",

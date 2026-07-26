@@ -254,6 +254,7 @@ describe('companion runtime v2 wiring', () => {
         health: 'healthy',
         version: null,
         startedAt: OBSERVED_AT,
+        observedAt: OBSERVED_AT,
       },
       processCollectionScope: { status: 'complete', errors: [] },
     });
@@ -274,6 +275,7 @@ describe('companion runtime v2 wiring', () => {
         health: 'offline',
         version: null,
         startedAt: null,
+        observedAt: OBSERVED_AT,
       },
       processCollectionScope: { status: 'complete', errors: [] },
     });

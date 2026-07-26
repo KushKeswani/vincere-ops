@@ -182,6 +182,7 @@ export function mapExactProcessObservationV2(
           health: 'offline',
           version: null,
           startedAt: null,
+          observedAt: controllerEvidence.observedAt,
         },
         processCollectionScope: { status: 'complete', errors: [] },
       };
@@ -202,6 +203,7 @@ export function mapExactProcessObservationV2(
         health: 'healthy',
         version: null,
         startedAt: exactRunning[0].startedAt,
+        observedAt: controllerEvidence.observedAt,
       },
       processCollectionScope: { status: 'complete', errors: [] },
     };

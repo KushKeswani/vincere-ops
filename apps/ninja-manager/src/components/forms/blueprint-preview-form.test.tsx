@@ -93,13 +93,24 @@ function latest(overrides?: {
         connections: [{
           connectionRef: "conn_abcdefghijklmnop",
           displayLabel: "Connection 1",
+          kind: "simulation",
+          providerCode: "SIMULATED_DATA_FEED",
           status: "connected",
+          health: "healthy",
+          marketDataStatus: "live",
         }],
         accounts: [{
           accountRef: "acct_abcdefghijklmnop",
           maskedIdentifier: "******M101",
           displayLabel: "Simulation account 1",
-          classification: { environment: "simulation", authority: "authoritative" },
+          classification: { environment: "simulation", authority: "authoritative", source: "ninjatrader_simulation_account" },
+          connectionRefs: ["conn_abcdefghijklmnop"],
+          status: "connected",
+        }, {
+          accountRef: "acct_liveaccount0001",
+          maskedIdentifier: "******0003",
+          displayLabel: "Live account 3",
+          classification: { environment: "live", authority: "authoritative", source: "ninjatrader_live_account" },
           connectionRefs: ["conn_abcdefghijklmnop"],
           status: "connected",
         }, {

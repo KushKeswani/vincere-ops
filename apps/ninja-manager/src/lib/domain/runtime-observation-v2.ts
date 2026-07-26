@@ -73,6 +73,8 @@ export const runtimeProcessHealthV2Schema = z.object({
   health: z.enum(["healthy", "degraded", "offline", "unknown"]),
   version: softwareVersionSchema.nullable(),
   startedAt: isoTimestampSchema.nullable(),
+  // Optional only for backward-compatible parsing of already persisted v2 events.
+  observedAt: isoTimestampSchema.optional(),
 }).strict().superRefine((value, context) => {
   if (value.status === "running") {
     if (value.processRef === null) context.addIssue({ code: "custom", message: "A running process requires an opaque process reference", path: ["processRef"] });

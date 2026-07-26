@@ -187,7 +187,7 @@ export class EodSnapshotRepository {
         };
       }
 
-      await this.requireAgent(transaction, user.organizationId, value.agentId);
+      await this.requireAgent(transaction, user, value.agentId);
       const sourceRows = await transaction.query<SourceEventRow>(
         [
           "SELECT event.id, event.protocol_version, event.event_id, event.agent_id, event.sequence, event.event_type,",
@@ -776,13 +776,23 @@ export class EodSnapshotRepository {
 
   private async requireAgent(
     transaction: Pick<DatabaseTransaction, "query">,
-    organizationId: string,
+    user: AuthenticatedUser,
     agentId: string,
   ): Promise<void> {
-    const rows = await transaction.query<{ id: string }>(
-      "SELECT id FROM agent_installations WHERE organization_id = $1 AND id = $2 FOR UPDATE",
-      [organizationId, agentId],
-    );
+    const rows = user.role === "client"
+      ? await transaction.query<{ id: string }>(
+        [
+          "SELECT agent.id FROM agent_installations agent",
+          "JOIN environments environment ON environment.id = agent.environment_id AND environment.organization_id = agent.organization_id",
+          "JOIN clients client ON client.id = environment.client_id AND client.organization_id = agent.organization_id",
+          "WHERE agent.organization_id = $1 AND agent.id = $2 AND client.user_id = $3 FOR UPDATE OF agent",
+        ].join(" "),
+        [user.organizationId, agentId, user.id],
+      )
+      : await transaction.query<{ id: string }>(
+        "SELECT id FROM agent_installations WHERE organization_id = $1 AND id = $2 FOR UPDATE",
+        [user.organizationId, agentId],
+      );
     if (!rows[0]) throw new RuntimeServiceError("AGENT_NOT_FOUND", "Authorized agent installation not found");
   }
 

@@ -10,7 +10,7 @@ The command remains unavailable until all three layers independently enforce:
 
 - exact `LOCAL_ONLY` installation and local operator identity;
 - companion capability `sim.strategy.uia.control` and heartbeat no older than 45 seconds;
-- connected Add-On with a complete snapshot observed within 30 seconds;
+- connected Add-On plus a genuinely atomic, exact-target, just-in-time preflight; ordinary sequential Runtime-v2 evidence cannot satisfy this gate;
 - exact `simulation` account type and `connected` connection state;
 - one unambiguous strategy target and a matching current state version;
 - no pending event backlog or earlier nonterminal mutation;
@@ -22,4 +22,4 @@ The companion must persist `actuator_invoked` before touching the UI. A timeout 
 
 Schedules are durable dashboard records, not long-lived mutation commands. At the due time a schedule enters `awaiting_confirmation`; it never toggles unattended. An operator must obtain a fresh snapshot and confirm within two minutes, which materializes a new 60-second command. Missed, stale, disconnected, locked-desktop, or ambiguous executions become blocked and are not retried automatically.
 
-This document defines the contract and gates; it does not claim that the actuator is enrolled, installed, or SIM-verified on Edith.
+This document defines the contract and gates; it does not claim that the actuator is enrolled, installed, or SIM-verified on Edith. The current bounded consecutive-stability preflight reports `atomicity: not_guaranteed`, so no SIM mutation is presently authorized.

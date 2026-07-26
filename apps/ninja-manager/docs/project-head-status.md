@@ -1,6 +1,6 @@
 # Ninja Manager Project Head Status
 
-Last updated: 2026-07-24 (America/New_York)
+Last updated: 2026-07-26 (America/New_York)
 
 ## Canonical boundary
 
@@ -9,9 +9,9 @@ Last updated: 2026-07-24 (America/New_York)
 - Required topology: Next.js control plane -> durable companion/queue -> in-process NinjaTrader Add-On.
 - The Add-On is the authority for NinjaTrader state. A browser, queue acknowledgement, or process result alone cannot prove a control succeeded.
 
-## Reconciliation branch — current status (2026-07-24)
+## Reconciliation branch — current status (2026-07-26)
 
-- Repository `KushKeswani/vincere-ops`; branch `reconcile/ninja-manager-edith-20260722`. This branch is the continuity source of truth. The Edith transfer snapshot (268 filtered source files) was reconciled onto it by the coordinator; the legacy `Vincere/Automation ` and preserved `Vincere/NinjaManager` checkouts remain untouched. No merge to `main`.
+- Repository `KushKeswani/vincere-ops`; branch `reconcile/ninja-manager-edith-20260722`, currently durable at remote commit `3e02ab0`. This branch is the continuity source of truth. The Edith transfer snapshot (268 filtered source files) was reconciled onto it by the coordinator; the legacy `Vincere/Automation ` and preserved `Vincere/NinjaManager` checkouts remain untouched. No merge to `main`.
 
 ### Landed milestones
 
@@ -24,10 +24,13 @@ Last updated: 2026-07-24 (America/New_York)
   - `local.spec` blueprint field label (`XLSX workbook`) + button (`Preview and stage workbook`), asserted enabled (LOCAL_ONLY enables blueprint upload); activity heading aligned to shipped copy.
   - `central.spec` removed the unwired client strategy-questionnaire flow. The two pending approvals it depended on are now **seeded** via the real `createStrategyRecommendation` path (CENTRAL_CONNECTED-gated, idempotent), preserving the wired staff approve/reject + client deployment coverage.
   - Both specs wait for the mobile-nav sheet to close before the a11y scan, removing a transient sheet-close-animation color-contrast false positive (active link static contrast ~14.5:1).
+- `a6c7399` / `3e304be` — pinned the project-local Node.js 24.14.0/npm 11.12.1 toolchain and recorded the clean commit-bound baseline verification manifest.
+- `dd15ac6` — added the isolated `LOCAL_ONLY` fixture prototype launcher, explicit fixture/demo/local evidence labels, Runtime-v2 fixture ingestion, Operator dashboard, and Blueprint preview/approval surface. The launcher binds only `127.0.0.1`, uses `.data/local-prototype`, and cannot contact or actuate NinjaTrader.
+- `3e02ab0` — repaired Runtime-v2 safety contracts: sequential inventory remains honestly partial; exact opaque process identity is produced; forced-v1/v2 doctor selection is explicit; Blueprint and weekly-authority persistence accept only the narrowly usable sequential partial shape; and a separate authenticated mutation-readiness seam was added.
 
 ### Green gates (source-level; LOCAL_ONLY + CENTRAL_CONNECTED)
 
-typecheck, lint, unit (520 passed / 1 skipped), `db:verify` (both modes), build (both modes), Playwright E2E (8/8). These prove source/domain behavior only — NOT that Edith's installed Add-On/companion is connected. No "SIM-verified production-ready" claim until an approved supervised Edith Sim101 session proves the full chain (Definition of Done).
+typecheck, lint, unit (64 files; 560 passed / 1 skipped), `db:verify` (15 checksummed migrations in both modes), build (both modes), listener gate, and Playwright E2E (8/8). These prove source/domain behavior only — NOT that Edith's installed Add-On/companion is connected. No "SIM-verified production-ready" claim until an approved supervised Edith Sim101 session proves the full chain (Definition of Done).
 
 ### Product decision — client strategy questionnaire
 
@@ -38,6 +41,8 @@ Follow-up product question: with the client questionnaire removed, `strategy_con
 ### Open risks
 
 - The authoritative layer (companion → local IPC → in-process Add-On) is source-complete but UNVERIFIED against real NinjaTrader — the gating dependency for every real-outcome feature.
+- NinjaTrader exposes no demonstrated transaction spanning accounts, strategies, positions, and orders. The new preflight proves only bounded consecutive stability, reports `atomicity: not_guaranteed`, and deliberately cannot authorize actuation. Graceful quit and every future SIM mutation remain fail-closed.
+- CENTRAL_CONNECTED staff detailed Runtime-v2 reads still use fleet role authority rather than validating the existing client-issued, staff-bound, scoped support grant. Treat central detailed evidence as release-blocked until that grant is wired at the repository/page boundary.
 - `deploymentAllows` (runtime-repository) swallows deployment-configuration errors (fail-closed, but a misconfig surfaces as FORBIDDEN rather than a clear config error) — diagnosability follow-up.
 - Period-cycling semantics for M6/M7 (a period flip rotates active account-groups vs. swaps stacks on the same accounts; non-active-period strategies must be disabled/flat) require Kush's confirmation before implementation.
 
@@ -49,9 +54,9 @@ Local prep done (commits `bf5c138`, `b04e1c2`): fields (a)–(g) — connections
 
 ### Next local milestone (proceeding while the Edith approval is pending)
 
-M5 — server-side authenticated tenant identity + ownership foundation (no Edith). Then M6 blueprint completion, M7 scheduling + cycling (pending the period-flip decision), M9 OTP, M10 UI/UX. M3/M4 real execution and M2 Step B unlock only after the Add-On is installed on Edith.
+P4 proportional regression/browser audit and server-side client ownership are complete locally: Runtime-v2 reads/queues, process control, and EOD capture bind client access through agent → environment → client ownership; ambiguous LOCAL_ONLY identity fails closed; sign-in email identity is globally unambiguous. Blueprint preview/mapping/approval and weekly schedule persistence exist, but neither has a scheduler or NinjaTrader actuator. The next external step is the separately approved forced-v1 Edith doctor. M6/M7 can connect records to exact-target SIM controls only after a genuinely atomic preflight becomes available and the period-flip decision is confirmed. Central support-grant enforcement, MFA, UI/release hardening, packaging, and deployment remain later milestones.
 
-## Preserved baseline
+## Historical preserved baseline
 
 - Git branch: `main`, one commit ahead of `origin/main` when implementation began.
 - Existing tracked user change: root `README.md` modified.
@@ -77,13 +82,15 @@ M5 — server-side authenticated tenant identity + ownership foundation (no Edit
 
 ## Current authority and gates
 
-- Existing deployed Add-On IPC is still read-only v1: `PING`, `GET_CAPABILITIES`, and `GET_RUNTIME_SNAPSHOT`.
-- Source now has an additive, read-only `GET_RUNTIME_OBSERVATION_V2` client contract; the Add-On implementation, companion wiring, installation, and supervised verification are not yet complete.
+- Existing deployed Edith Add-On IPC is still read-only v1: `PING`, `GET_CAPABILITIES`, and `GET_RUNTIME_SNAPSHOT`.
+- Branch source implements five authenticated read-only IPC commands: those three plus `GET_RUNTIME_OBSERVATION_V2` and `GET_MUTATION_READINESS_PREFLIGHT`. Companion and Add-On source wiring are implemented; installation, runtime compilation, packaging/recovery, and supervised Edith verification are not.
 - Runtime observation v2 strictly models process/Add-On health, connections, masked accounts, strategies, positions, orders, executions, daily/native/manager P&L availability, freshness, and per-scope completeness.
+- Runtime-v2 collections are sequential display/reconciliation evidence. Accounts, connections, strategies, positions, orders, executions, and P&L remain `partial / CAPABILITY_UNSUPPORTED` even when all rows validate; no consumer may promote them to atomic completeness.
 - V2 account fingerprints plus account/strategy opaque references preserve v1 identity exactly, so existing assignments do not silently retarget during upgrade.
 - Authenticated `runtime.observation_v2` events are durably stored and strictly reparsed on tenant-scoped readback. No raw account identifier is accepted by that external contract.
-- Process-control contracts and a fake-tested controller exist for allowlisted launch and guarded graceful quit. They are not wired to a queue or OS adapter yet and have not touched the running NinjaTrader process.
+- Process-control contracts, durable queue/API, companion runner, exact-path Windows adapter, and guarded controller exist in source. They are disabled unless an explicit local config opts in and have not touched Edith. Launch still requires fresh authenticated Add-On readiness; graceful quit cannot actuate because the current mutation-readiness protocol truthfully reports non-atomic evidence.
 - Existing `sim-control/1.0` is a schema/test foundation and is not wired to a queue or actuator.
+- Blueprint preview/mapping/approval, immutable EOD capture, and weekly settings/authority/occurrence persistence are implemented source boundaries. No schedule executor or Add-On-driven strategy mutation exists.
 - Add-On installation, compilation, authoritative SIM reconciliation, and control verification remain supervised runtime gates.
 - Unknown, live, funded, stale, ambiguous, offline, or indeterminate targets fail closed.
 
@@ -100,26 +107,19 @@ Verified foundation evidence on 2026-07-21:
 
 These are source-level results, not proof that Edith's installed Add-On or companion is connected.
 
-## Active implementation ownership
+## Current implementation ownership
 
-| Owner | Exclusive paths | Purpose |
-|---|---|---|
-| Project Head | shared architecture, migrations, repository/queue integration, companion wiring, Add-On integration, final review | integration and safety authority |
-| Add-On runtime-v2 worker | `runtime/ninjatrader-addon/VincereNinjaManagerIpcAddOn.cs` | read-only NT 8.1.7.2 observation implementation; no runtime installation |
-| Windows process-platform worker | `src/companion/windows-process-platform.*` | injected/fake-tested exact launch and graceful-close OS adapter |
-| runtime-v2 collector worker | `src/companion/runtime-observation-collector.*` | authenticated IPC collection plus companion-owned observation assembly |
-
-Workers must stop before modifying unowned files. The Project Head reviews every diff and runs independent tests before integration.
+The Project Head owns integration and safety review across the dashboard, repository/queue, companion, local IPC, Add-On source, and documentation. Prior bounded worker assignments are complete; no worker ownership table is currently active. No source milestone changes Edith until Kush approves the applicable supervised runbook step.
 
 ## Milestone order
 
-1. Preserve baseline and freeze reviewed interfaces.
-2. Implement authoritative runtime observation v2 and guarded process-control foundations.
-3. Persist and render EOD/P&L plus Feed & Algo Health.
-4. Implement XLSX blueprint mapping and versioned assignments.
-5. Wire exact supervised-SIM controls, weekly scheduling, and guarded recovery.
-6. Implement private, OTP-scoped CSM access.
-7. Complete independent audits, full regression tests, documentation, and supervised Edith acceptance.
+1. Preserve branch durability and the pinned, commit-bound reproducibility baseline — complete.
+2. Deliver and verify the isolated fixture-only local browser prototype — complete at the source/browser boundary.
+3. Keep Runtime-v2 sequential evidence partial and repair every non-mutating consumer to accept only its narrow usable shape — complete in source.
+4. Obtain separate approval for the forced-v1 read-only Edith doctor, then record supervised evidence.
+5. Obtain separate maintenance approval for Add-On installation/recompile and Runtime-v2 read-only reconciliation.
+6. Prove a supported atomic exact-target mutation preflight; until then process and SIM mutation stay blocked.
+7. With authenticated client ownership complete locally, enforce central support grants, then complete companion deployment/recovery, exact SIM controls, Blueprint/schedule/EOD execution, MFA/auth/UI hardening, packaging, and release evidence in that order.
 
 ## Completion evidence rule
 

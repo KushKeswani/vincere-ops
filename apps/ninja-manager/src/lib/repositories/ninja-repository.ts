@@ -20,6 +20,13 @@ export class IdempotencyConflictError extends Error {
   }
 }
 
+export class EmailIdentityConflictError extends Error {
+  constructor() {
+    super("This email is already assigned to a Ninja Manager identity");
+    this.name = "EmailIdentityConflictError";
+  }
+}
+
 export interface ClientRow {
   id: string;
   display_name: string;
@@ -109,7 +116,7 @@ export class NinjaRepository {
   constructor(private readonly database: DatabaseClient = getDatabase()) {}
 
   async findUserByEmail(email: string): Promise<(AuthenticatedUser & { passwordHash: string; status: string }) | null> {
-    const [row] = await this.database.query<{
+    const rows = await this.database.query<{
       id: string;
       organization_id: string;
       email: string;
@@ -117,14 +124,18 @@ export class NinjaRepository {
       role: "staff" | "client";
       password_hash: string;
       status: string;
-    }>("SELECT id, organization_id, email, name, role, password_hash, status FROM users WHERE lower(email) = lower($1) LIMIT 1", [email]);
+    }>("SELECT id, organization_id, email, name, role, password_hash, status FROM users WHERE lower(email) = lower($1) ORDER BY id LIMIT 2", [email]);
+    // Migration 0015 makes this impossible in a current database. Keep the read
+    // boundary fail-closed during rolling upgrades or manual schema drift.
+    if (rows.length !== 1) return null;
+    const row = rows[0];
     return row
       ? { id: row.id, organizationId: row.organization_id, email: row.email, name: row.name, role: row.role, passwordHash: row.password_hash, status: row.status }
       : null;
   }
 
   async findLocalOperatorUser(): Promise<AuthenticatedUser | null> {
-    const [row] = await this.database.query<{
+    const rows = await this.database.query<{
       id: string;
       organization_id: string;
       email: string;
@@ -136,8 +147,12 @@ export class NinjaRepository {
       JOIN clients c ON c.user_id = u.id AND c.organization_id = u.organization_id
       WHERE u.role = 'client' AND u.status = 'active'
       ORDER BY CASE WHEN lower(u.email) = lower($1) THEN 0 ELSE 1 END, u.email
-      LIMIT 1
+      LIMIT 2
     `, [process.env.DEMO_CLIENT_EMAIL ?? "client@vincere.local"]);
+    // LOCAL_ONLY has no tenant selector. More than one active client identity is
+    // therefore ambiguous and must fail closed rather than choosing a tenant.
+    if (rows.length !== 1) return null;
+    const row = rows[0];
     return row
       ? { id: row.id, organizationId: row.organization_id, email: row.email, name: row.name, role: row.role }
       : null;
@@ -202,6 +217,11 @@ export class NinjaRepository {
       phone: input.phone ?? null,
       timezone: input.timezone,
     }, async (transaction) => {
+      const existingIdentity = await transaction.query<{ id: string }>(
+        "SELECT id FROM users WHERE lower(email) = lower($1) LIMIT 1",
+        [input.email],
+      );
+      if (existingIdentity[0]) throw new EmailIdentityConflictError();
       const userId = randomUUID();
       const clientId = randomUUID();
       const passwordHash = await bcrypt.hash(input.temporaryPassword, 12);

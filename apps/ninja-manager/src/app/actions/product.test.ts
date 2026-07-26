@@ -7,7 +7,14 @@ const mocks = vi.hoisted(() => {
       this.name = "IdempotencyConflictError";
     }
   }
+  class EmailIdentityConflictError extends Error {
+    constructor() {
+      super("This email is already assigned to a Ninja Manager identity");
+      this.name = "EmailIdentityConflictError";
+    }
+  }
   return {
+    EmailIdentityConflictError,
     IdempotencyConflictError,
     requireUser: vi.fn(),
     setKillSwitch: vi.fn(),
@@ -19,6 +26,7 @@ vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("@/lib/auth/session", () => ({ requireUser: mocks.requireUser }));
 vi.mock("@/lib/deployment/server", () => ({ requireDeploymentCapability: vi.fn() }));
 vi.mock("@/lib/repositories/ninja-repository", () => ({
+  EmailIdentityConflictError: mocks.EmailIdentityConflictError,
   IdempotencyConflictError: mocks.IdempotencyConflictError,
   getNinjaRepository: () => ({ setKillSwitch: mocks.setKillSwitch }),
 }));
@@ -63,7 +71,7 @@ describe("product action commit boundary", () => {
     warning.mockRestore();
   });
 
-  it("returns the mutation error and never refreshes when no commit occurred", async () => {
+  it("masks an unknown mutation error, sanitizes logging, and never refreshes", async () => {
     const failure = vi.spyOn(console, "error").mockImplementation(() => undefined);
     mocks.setKillSwitch.mockRejectedValueOnce(new Error("Organization not found."));
     const formData = new FormData();
@@ -72,8 +80,15 @@ describe("product action commit boundary", () => {
 
     const result = await setKillSwitchAction(idleState, formData);
 
-    expect(result).toEqual({ status: "error", message: "Organization not found.", values: undefined, requestId });
+    expect(result).toEqual({
+      status: "error",
+      message: "The operation could not be completed. Retry with the same request ID.",
+      values: undefined,
+      requestId,
+    });
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
+    expect(failure).toHaveBeenCalledWith("Ninja Manager action failed safely");
+    expect(JSON.stringify(failure.mock.calls)).not.toContain("Organization not found");
     failure.mockRestore();
   });
 
@@ -87,6 +102,25 @@ describe("product action commit boundary", () => {
     expect(result).toMatchObject({ status: "error", requestId });
     expect(mocks.setKillSwitch).not.toHaveBeenCalled();
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("returns the explicit safe message for a known email identity conflict", async () => {
+    const failure = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    mocks.setKillSwitch.mockRejectedValueOnce(new mocks.EmailIdentityConflictError());
+    const formData = new FormData();
+    formData.set("enabled", "true");
+    formData.set("requestId", requestId);
+
+    const result = await setKillSwitchAction(idleState, formData);
+
+    expect(result).toEqual({
+      status: "error",
+      message: "This email is already assigned to a Ninja Manager identity",
+      values: undefined,
+      requestId,
+    });
+    expect(failure).not.toHaveBeenCalled();
+    failure.mockRestore();
   });
 
   it("returns an explicit conflict and rotates the request ID", async () => {

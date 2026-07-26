@@ -17,7 +17,11 @@ import {
   simulationSchema,
   tradingAccountSchema,
 } from "@/lib/domain/schemas";
-import { IdempotencyConflictError, getNinjaRepository } from "@/lib/repositories/ninja-repository";
+import {
+  EmailIdentityConflictError,
+  IdempotencyConflictError,
+  getNinjaRepository,
+} from "@/lib/repositories/ninja-repository";
 
 export interface ActionState {
   status: "idle" | "error" | "success";
@@ -52,10 +56,18 @@ async function runAction(
         requestId: randomUUID(),
       };
     }
-    console.error("Ninja Manager action failed", error);
+    if (error instanceof EmailIdentityConflictError) {
+      return {
+        status: "error",
+        message: error.message,
+        values: errorValues,
+        requestId,
+      };
+    }
+    console.error("Ninja Manager action failed safely");
     return {
       status: "error",
-      message: error instanceof Error ? error.message : "The operation could not be completed.",
+      message: "The operation could not be completed. Retry with the same request ID.",
       values: errorValues,
       requestId,
     };

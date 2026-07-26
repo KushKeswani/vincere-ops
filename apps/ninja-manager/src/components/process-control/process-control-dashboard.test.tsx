@@ -9,7 +9,7 @@ const model: ProcessControlDashboardModel = {
   installationLabel: "Edith",
   processStatus: "running",
   launch: { ready: false, reason: "NinjaTrader is already running, so launch is unavailable." },
-  quit: { ready: true, reason: "Fresh complete SIM-only evidence is safe for one queued graceful-quit request." },
+  quit: { ready: true, reason: "Fresh usable sequential SIM-only evidence permits a queued readiness check only. Graceful-close actuation remains unavailable because atomic mutation readiness has not been proven." },
 };
 
 describe("ProcessControlDashboard", () => {
@@ -22,12 +22,14 @@ describe("ProcessControlDashboard", () => {
       />,
     );
     expect(markup).toContain("Launch NinjaTrader");
-    expect(markup).toContain("Gracefully quit NinjaTrader");
+    expect(markup).toContain("Graceful quit readiness check");
     expect(markup).toContain("Type LAUNCH NINJATRADER");
     expect(markup).toContain("Type QUIT NINJATRADER");
     expect(markup.match(/name="confirmation"/g)).toHaveLength(2);
     expect(markup).toContain("NinjaTrader is already running");
-    expect(markup).toContain("SIM-only evidence");
+    expect(markup).toContain("actuation remains unavailable");
+    expect(markup).toContain("Queue quit readiness check");
+    expect(markup).toContain("remains blocked before the operating-system call");
   });
 
   it("sends only agent/request/command/confirmation fields and exposes no server-derived evidence", () => {

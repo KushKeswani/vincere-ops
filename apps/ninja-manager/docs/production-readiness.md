@@ -4,11 +4,11 @@
 
 Ninja Manager is **not ready for live client systems, public networking, production deployment, or live NinjaTrader mutation**.
 
-The repository contains one runnable dashboard codebase exercised in CENTRAL_CONNECTED and LOCAL_ONLY, a deployment-portability foundation, and a hardened dashboard-side agent API/queue for supervised read-only runtime discovery. It does not contain:
+The repository contains one runnable dashboard codebase exercised in CENTRAL_CONNECTED and LOCAL_ONLY, an isolated fixture prototype, a deployment-portability foundation, hardened agent/process queues, an initial companion, authenticated local IPC, and in-process NinjaTrader Add-On source. It does not contain:
 
-- the production VPS companion;
-- versioned authenticated local IPC;
-- the in-process NinjaTrader Add-On;
+- a packaged, installed, recovery-tested production VPS companion;
+- a deployed and supervised Edith local-IPC/Add-On integration;
+- a NinjaTrader-wide atomic snapshot primitive capable of authorizing mutation;
 - production implementations of the identity, tenant-directory, secrets, notification, sync, or local-runtime adapters;
 - central sync delivery, inbox application, conflict resolution, or an operational case workflow;
 - authoritative live connector evidence;
@@ -96,15 +96,15 @@ Before a controlled LOCAL_ONLY pilot:
 
 The same application now runs in LOCAL_ONLY with a client-only identity policy, local-mode labels, capability-derived navigation/actions, an exact `127.0.0.1` managed dev/start dashboard listener, rejection of hostname CLI overrides and any other bind host, and a requirement that APP_URL use `127.0.0.1` with the configured port. Socket tests inspect both the development server and built production artifact. The browser suite verifies all four client routes, denial/redirect of staff and central-only surfaces, same-origin requests, a simulated offline interval, keyboard-safe mobile navigation, axe serious/critical checks, and 360/768/1280/1600 px containment. The loopback HTTP listener is not companion/Add-On IPC.
 
-This is application-foundation evidence only. Production local identity, MFA/re-authentication, encrypted storage, OS-backed secrets, installer/update/recovery, backup/restore, offline cold start, companion/local IPC, and an audited central attach/detach migration remain required before a pilot.
+This is application-foundation evidence only. Production local identity, MFA/re-authentication, encrypted storage, OS-backed secrets, installer/update/recovery, backup/restore, offline cold start, supervised companion/local-IPC deployment, and an audited central attach/detach migration remain required before a pilot.
 
 ## Gate 4: companion and Add-On read-only pilot
 
 1. Complete staff enrollment, one-time credential delivery, rotation, revocation, expiry alerts, and re-authentication workflows.
 2. Enforce verified production TLS and rate limits; decide whether request signing, mTLS, or source-network policy is required.
-3. Build the companion with OS-backed credential storage, durable event outbox, command journal, bounded retry/backoff with jitter, offline replay, dead-letter handling, and upgrade/rollback recovery.
-4. Publish and test versioned, authenticated, local-only IPC. Do not expose a general remote-control port.
-5. Build the in-process Add-On only on documented NinjaTrader APIs and verify threading, lifecycle, workspace, reconnect, and shutdown behavior.
+3. Harden the implemented source companion with OS-backed credential storage, bounded retry/backoff with jitter, offline/dead-letter recovery, packaging, upgrade, and rollback proof.
+4. Supervise the implemented versioned, authenticated, local-only IPC on Edith. Do not expose a general remote-control port.
+5. Install/recompile the implemented in-process Add-On source only after separate approval, then verify documented APIs, threading, lifecycle, workspace, reconnect, and shutdown behavior.
 6. Bind enrollment mode, environment, account types, collection mode, and every command to reviewed capability policy.
 7. Prove authoritative account/strategy discovery against visible NinjaTrader SIM state, including empty, duplicate, stale, disconnected, large, and partial-read cases.
 8. Prove stable opaque identities without exporting raw account identifiers.
@@ -112,22 +112,22 @@ This is application-foundation evidence only. Production local identity, MFA/re-
 10. Add metrics/cases for heartbeat staleness, queue depth, delivery attempts, expiry, partial/indeterminate results, credential expiry, and dead letters.
 11. Prove every staff/client control end to end through browser, API, database, companion, local IPC, Add-On, and visible SIM state as applicable.
 
-The dashboard-side protocol and supervised fixture evidence exist. The actual companion, IPC, Add-On, and supervised NinjaTrader SIM comparison do not.
+The dashboard protocol, companion, IPC, Add-On source, and supervised fixture evidence exist. They are not installed/recompiled or runtime-verified on Edith, and no supervised NinjaTrader SIM comparison has occurred.
 
 ## Gate 5: assignment import and approved SIM deployment
 
 Only after Gates 0–4:
 
-1. Define versioned CSV schema, stable client/account/strategy references, row-level provenance, and file-level idempotency.
-2. Build preview and validation with explicit valid, invalid, duplicate, ambiguous, unauthorized, stale, and partial rows.
-3. Require staff approval of the exact validated assignment version.
+1. Retain the implemented versioned XLSX schema, stable client/account/strategy references, row-level provenance, and file-level idempotency; define CSV only as optional parity work.
+2. Retain the implemented preview and validation behavior for valid, invalid, duplicate, ambiguous, unauthorized, stale, and partial inputs.
+3. Retain explicit approval of the exact validated immutable assignment version.
 4. Convert conflicts and partial applications into operational cases.
 5. Restrict deployment to reviewed SIM accounts and an exact approved configuration/state version.
 6. Verify Enabled=true, Sync=true, running state, and green/healthy post-action evidence from the Add-On.
 7. Treat timeout, stale state, reconnect, partial, and indeterminate outcomes as not verified.
 8. Add an independently exercised rollback/disable procedure in SIM.
 
-No CSV assignment import or Add-On-driven SIM deployment exists yet. The current “deployment recorded” dashboard action records status only and does not change NinjaTrader.
+XLSX Blueprint preview, one-to-one Runtime-v2 mapping, immutable draft/approval persistence, and local UI exist. CSV parity and Add-On-driven SIM deployment do not. The current “deployment recorded” dashboard action records status only and does not change NinjaTrader.
 
 ## Gate 6: reconciled reporting and risk phases
 
@@ -156,6 +156,9 @@ Live strategy enabling, order placement/cancellation, flattening, account mutati
 - Typed acknowledgement evidence/message/error codes; partial and indeterminate are terminal.
 - Materialized expiry and audit summaries.
 - Migration-time quarantine/redaction of legacy unverified runtime evidence.
+- Runtime-v2 collection truthfully preserves sequential inventory as partial instead of manufacturing atomic completeness.
+- A separate authenticated mutation-readiness command and collector expose only bounded aggregate evidence; `atomicity: not_guaranteed` keeps every mutation fail-closed.
+- Blueprint assignment, EOD capture, and weekly schedule settings/authority/occurrence persistence are immutable or append-only source boundaries with no NinjaTrader actuation.
 - Bounded authenticated agent APIs with safe error mapping.
 - Production database configuration rejects PGlite and requires PostgreSQL sslmode=verify-full.
 - CENTRAL_CONNECTED and LOCAL_ONLY production builds use separate deterministic output directories and atomically written schema-v2 manifests tied to the mode, output directory, timestamp, and fresh Next.js `BUILD_ID`; `start` rejects a missing, malformed, mode/output-mismatched, or `BUILD_ID`-mismatched artifact.
@@ -165,7 +168,7 @@ Live strategy enabling, order placement/cancellation, flattening, account mutati
 - Portable provider interfaces for identity, tenant directory, secret references, notifications, central sync, and runtime transport.
 - Versioned installation/portable-record/outbox/inbox/conflict/secret-reference schema plus strict content-bound sync envelopes.
 - Transactional portable record, sequence, outbox, and audit staging with stale-version rollback and tenant/actor checks.
-- Five checksum-ledger migrations; startup fails closed for a changed or missing applied file and for a legacy filename-only ledger without an explicitly trusted baseline.
+- Fourteen checksum-ledger migrations; startup fails closed for a changed or missing applied file and for a legacy filename-only ledger without an explicitly trusted baseline.
 - Atomic idempotency plus canonical v1 audit writes for all ten product mutation scopes, conditional concurrency-safe approval/incident transitions, serialized recommendation versions, and replay/conflict/rollback/concurrency tests on PGlite.
 - One shared audit writer across product, portability, and runtime repositories binds event/tenant/entity metadata, a stable actor-subject snapshot, occurrence time, and optional origin in the evidence hash; pre-canonical rows remain explicitly legacy-unverified.
 - Committed server actions remain successful when cache revalidation fails, preventing a false failure from encouraging unsafe retries.
@@ -178,7 +181,7 @@ These safeguards prove only the implemented dashboard boundary and automated fix
 - The global kill switch changes dashboard state but is not connected to an external system.
 - Health connectors are simulations.
 - “Deployment” is a database record, not a NinjaTrader action.
-- No production companion, local IPC, or NinjaTrader Add-On exists.
+- Companion, authenticated local IPC, and NinjaTrader Add-On implementations exist in source but are not production packaged, installed/recompiled, recovery-tested, or supervised against visible Edith SIM state.
 - Current runtime authority is supervised simulation only.
 - collectionMode=authoritative_read_only is parsed but not policy-bound to a reviewed Add-On/environment.
 - COLLECT_EXECUTIONS is explicitly disabled and has no result-event or persistence contract.
@@ -190,7 +193,7 @@ These safeguards prove only the implemented dashboard boundary and automated fix
 - Existing incidents are a simulated guided workflow, not the required operational inbox.
 - The rules engine has starter strategies and still needs domain-owner calibration.
 - Notifications are dashboard-only; real email/SMS/Discord/GHL delivery is not approved.
-- The 2026-07-14 uncommitted checkpoint records typecheck and lint passing; 18 unit files/91 tests; seven TypeScript contract tests and two C# vectors; both schema-v2/`BUILD_ID`-bound production builds; the production LOCAL_ONLY socket gate; all five checksummed migrations plus repeat seed verification in both modes; and 8/8 Playwright tests. Independent `agent-browser` passes covered CENTRAL_CONNECTED and LOCAL_ONLY navigation, permissions, offline behavior, focus/dialog semantics, same-origin requests, and empty page-error logs. All eight retained 360/768/1280/1600 screenshots were opened and visually inspected; no product clipping, overlap, or horizontal overflow was found.
+- The 2026-07-26 P4 source checkpoint records typecheck and lint passing; 64 unit files with 560 passed / 1 skipped; all 15 checksummed migrations plus repeat seed verification in both modes; both mode-specific production builds; the production LOCAL_ONLY listener gate; and 8/8 Playwright tests. This remains automated source/fixture evidence, not Edith or NinjaTrader outcome evidence.
 - Real PostgreSQL MVCC/SKIP LOCKED/TLS runtime behavior is unverified in this workspace.
 
 ## Evidence policy

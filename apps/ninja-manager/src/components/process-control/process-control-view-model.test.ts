@@ -178,7 +178,8 @@ describe("process-control preflight", () => {
     const model = buildProcessControlDashboardModel(agent(), preflight);
     const serialized = JSON.stringify(model);
     expect(model.processStatus).toBe("running");
-    expect(model.quit.reason).toContain("SIM-only evidence");
+    expect(model.quit.reason).toContain("queued readiness check only");
+    expect(model.quit.reason).toContain("actuation remains unavailable");
     expect(serialized).not.toContain(INSTALLATION_REF);
     expect(serialized).not.toContain(PROCESS_REF);
     expect(serialized).not.toContain(STATE_VERSION);

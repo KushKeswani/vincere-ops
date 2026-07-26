@@ -107,6 +107,7 @@ function runningProcess(): CompanionProcessObservationV2 {
       health: "healthy",
       version: "8.1.7.2",
       startedAt: "2026-07-21T11:00:00.000Z",
+      observedAt: "2026-07-21T12:00:00.100Z",
     },
     processCollectionScope: complete,
   };
@@ -205,6 +206,33 @@ describe("RuntimeObservationV2Collector", () => {
     ]) expect(serialized).not.toContain(localValue);
   });
 
+  it("records final receipt only after companion-owned process and ledger evidence", async () => {
+    const deps = dependencies();
+    let clockCall = 0;
+    deps.now = () => new Date(clockCall++ === 0
+      ? "2026-07-21T12:00:00.250Z"
+      : "2026-07-21T12:00:00.500Z");
+    deps.processProvider.observe = vi.fn(async (query) => {
+      expect(query.receivedAt).toBe("2026-07-21T12:00:00.250Z");
+      return {
+        ...runningProcess(),
+        process: {
+          ...runningProcess().process,
+          observedAt: "2026-07-21T12:00:00.400Z",
+        },
+      };
+    });
+    deps.managerLedgerProvider.readCumulativePnl = vi.fn(async (query) => {
+      expect(query.receivedAt).toBe("2026-07-21T12:00:00.250Z");
+      return availableLedger();
+    });
+
+    const observation = await new RuntimeObservationV2Collector(config(), deps).collect();
+    expect(observation.freshness.ageMs).toBe(500);
+    expect(observation.state.process?.observedAt).toBe("2026-07-21T12:00:00.400Z");
+    expect(clockCall).toBe(2);
+  });
+
   it("preserves an explicit unavailable manager-ledger observation", async () => {
     const ledger = {
       [ACCOUNT_LOCAL_ID]: { value: unavailableMoney, observedSince: null },
@@ -273,6 +301,7 @@ describe("RuntimeObservationV2Collector", () => {
           health: "offline",
           version: null,
           startedAt: null,
+          observedAt: "2026-07-21T12:00:00.100Z",
         },
         processCollectionScope: complete,
       },
@@ -283,6 +312,7 @@ describe("RuntimeObservationV2Collector", () => {
       health: "offline",
       version: null,
       startedAt: null,
+      observedAt: "2026-07-21T12:00:00.100Z",
     });
     expect(observation.state.collection.scopes.process).toMatchObject({
       status: "complete",
@@ -300,7 +330,7 @@ describe("RuntimeObservationV2Collector", () => {
     await expect(new RuntimeObservationV2Collector(
       config(),
       dependencies({ now: new Date("2026-07-21T11:59:59.999Z") }),
-    ).collect()).rejects.toThrow(/freshness cannot be measured/);
+    ).collect()).rejects.toThrow(/freshness cannot be measured|observed after final companion receipt/);
   });
 
   it("rejects malformed Add-On payloads before asking local evidence providers", async () => {
